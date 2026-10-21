@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Valet Parking Mokhtar</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mokhtar Valet">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--gold:#c9a227;--bg:#0b0b0b;--card:#151515;--line:#2a2a2a;--text:#f2f2f2;--muted:#8f8f8f;--red:#e5484d;--green:#25a244}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
+.top{background:#000;border-bottom:1px solid var(--gold);padding:16px 12px 12px;text-align:center}
+.brand{margin:0;font-size:20px;letter-spacing:1px;color:var(--gold);font-weight:bold;direction:ltr}
+.tabs{display:flex;gap:6px;margin-top:12px;justify-content:center;flex-wrap:wrap}
+.tab{background:#1a1a1a;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:14px;cursor:pointer;font-weight:bold;font-family:inherit}
+.tab.on{background:var(--gold);color:#000;border-color:var(--gold)}
+main{max-width:640px;margin:auto;padding:14px}
+.view{display:none}
+.view.on{display:block}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+h2{font-size:16px;color:var(--gold);margin:0 0 12px}
+h3.sec-t{font-size:13px;color:var(--gold);margin:18px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0e0e0e;color:var(--text);font-size:15px;font-family:inherit}
+textarea{min-height:70px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{background:var(--gold);color:#000;border:0;border-radius:10px;padding:11px 14px;font-size:14px;font-weight:bold;cursor:pointer;font-family:inherit;text-align:center}
+button.ghost{background:#222;color:var(--text);border:1px solid var(--line)}
+button.danger{background:var(--red);color:#fff}
+button.wa{background:var(--green);color:#fff}
+button.small{padding:7px 10px;font-size:12px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.total{background:#0e0e0e;border:1px solid var(--gold);border-radius:10px;padding:12px;margin-top:12px;line-height:2;font-size:14px}
+.total b{color:var(--gold)}
+.ok{color:#7ee08f}
+.warn{color:#ffb4b4}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;background:#242424;margin:2px 2px 2px 0}
+.tag.gold{background:var(--gold);color:#000;font-weight:bold}
+.tag.red{background:var(--red);color:#fff;font-weight:bold}
+.booking{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#111}
+.bhead{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}
+.bsub{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.8}
+.chev{color:var(--gold);font-size:18px}
+.bdetails{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);line-height:1.9;font-size:14px}
+.sub{background:#0e0e0e;border-radius:10px;padding:12px;margin-top:8px;line-height:1.9}
+.payrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1f1f1f;font-size:14px}
+.staffrow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;margin-top:6px}
+.staffrow input{padding:9px;font-size:14px}
+.staffrow>div{display:flex;gap:4px}
+.staffline{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.staffline a{background:var(--green);color:#fff;border-radius:8px;padding:7px 10px;font-size:12px;text-decoration:none;font-weight:bold}
+.alert{border-right:3px solid var(--gold);background:#16140a;padding:12px;border-radius:10px;margin-bottom:10px}
+.empty{color:var(--muted);font-size:14px;text-align:center;padding:20px 0}
+a{color:var(--gold)}
+.calhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:bold}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.wd{font-size:11px;color:var(--muted);padding:4px 0}
+.day{padding:8px 0;border-radius:8px;background:#0e0e0e;font-size:14px;cursor:pointer;min-height:44px}
+.day small{display:block;font-size:10px;color:var(--red);font-weight:bold}
+.day.busy{border:1px solid #6b5514}
+.day.tod{outline:1px dashed var(--gold)}
+.day.sel{background:var(--gold);color:#000;font-weight:bold}
+.day.sel small{color:#000}
+.day.past{opacity:.35}
+.dayinfo{margin-top:10px;font-size:14px}
+.foot{text-align:center;color:var(--muted);font-size:12px;padding:18px 0 28px;letter-spacing:.5px}
+@media (max-width:420px){.row{grid-template-columns:1fr}.staffrow{grid-template-columns:1fr 1fr}.staffrow>div{grid-column:span 2}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1 class="brand">Valet Parking Mokhtar</h1>
+  <nav class="tabs">
+    <button class="tab on" data-tab="remind">🔔 التذكيرات</button>
+    <button class="tab" data-tab="form">➕ حجز جديد</button>
+    <button class="tab" data-tab="list">📋 الحجوزات</button>
+    <button class="tab" data-tab="lost">🪪 كروت مفقودة</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- Reminders -->
+  <div class="view on" id="view-remind">
+    <div class="panel">
+      <h2>🔔 مناسبات خلال 7 أيام</h2>
+      <div id="reminderList"></div>
+    </div>
+  </div>
+
+  <!-- New / edit booking -->
+  <div class="view" id="view-form">
+    <div class="panel">
+      <h2 id="formTitle">➕ حجز جديد</h2>
+      <form id="bookingForm">
+
+        <h3 class="sec-t">بيانات العميل</h3>
+        <div class="row">
+          <div><label>اسم العميل</label><input id="client" required></div>
+          <div><label>رقم العميل (واتساب)</label><input id="phone" type="tel" placeholder="01xxxxxxxxx"></div>
+        </div>
+
+        <h3 class="sec-t">المناسبة</h3>
+        <div class="row">
+          <div><label>نوع المناسبة</label>
+            <select id="type"><option>فرح</option><option>خطوبة</option><option>عزومة</option><option>شركة</option><option>أخرى</option></select></div>
+          <div><label>ميعاد البداية</label>
+            <input id="time" type="text" inputmode="numeric" placeholder="مثلا 18:30 أو 6:30 م">
+            <div class="hint" id="timeHint">اكتب الساعة بإيدك</div></div>
+        </div>
+
+        <label>التاريخ <span style="color:var(--red)">* (إجباري)</span></label>
+        <button type="button" class="ghost" id="dateBtn" style="width:100%;text-align:right">📅 اختار التاريخ</button>
+        <div id="calBox" style="display:none;background:#0e0e0e;border-radius:10px;padding:10px;margin-top:6px">
+          <div class="calhead">
+            <button type="button" class="ghost small" id="prevMonth">›</button>
+            <span id="calTitle"></span>
+            <button type="button" class="ghost small" id="nextMonth">‹</button>
+          </div>
+          <div class="cal" id="calGrid"></div>
+          <div class="dayinfo" id="dayInfo"></div>
+        </div>
+        <input type="hidden" id="date">
+
+        <div class="row">
+          <div><label>مكان المناسبة <span style="color:var(--red)">* (إجباري)</span></label><input id="venue" placeholder="اسم القاعة / العنوان"></div>
+          <div><label>رابط الموقع (خرائط جوجل)</label><input id="mapLink" type="url" placeholder="https://maps.google.com/..."></div>
+        </div>
+
+        <h3 class="sec-t">الأعداد والأسعار</h3>
+        <div class="row">
+          <div><label>عدد المدعوين</label><input id="guests" type="number" min="0"></div>
+          <div><label>عدد الجولف كار</label><input id="carts" type="number" min="0"></div>
+        </div>
+        <div class="row">
+          <div><label>سعر الجولف كار الواحدة</label><input id="cartPrice" type="number" min="0"></div>
+          <div><label>العربون (اتدفع وقت الحجز)</label><input id="deposit" type="number" min="0"></div>
+        </div>
+        <div class="row">
+          <div><label>عدد أفراد الفاليه (إجمالي)</label><input id="valetCount" type="number" min="0"></div>
+          <div><label>إجمالي سعر الفاليه</label><input id="valetTotal" type="number" min="0"></div>
+        </div>
+        <div class="total" id="totals"></div>
+
+        <h3 class="sec-t">التجهيزات</h3>
+        <div class="row">
+          <div><label>عدد التيشرتات</label><input id="shirts" type="number" min="0"></div>
+          <div><label>عدد الأقماع</label><input id="cones" type="number" min="0"></div>
+        </div>
+        <div class="row">
+          <div><label>إشارات التوجيه</label><input id="signs" type="number" min="0"></div>
+          <div><label>فسفوري عاكس</label><input id="vests" type="number" min="0"></div>
+        </div>
+        <label>الكروت (تم التحضير)</label>
+        <select id="cardsReady"><option value="">اختار</option><option>نعم</option><option>لا</option></select>
+        <label>اليونيفورم (حسب اختيار العميل)</label>
+        <input id="uniform" placeholder="مثال: قميص أسود + كوتشي أسود + بنطلون أسود">
+
+        <h3 class="sec-t">العاملين</h3>
+        <button type="button" class="ghost" id="toggleStaffForm" style="width:100%">👷 تفاصيل العمال</button>
+        <div id="staffBox" style="display:none;margin-top:10px">
+          <div class="btns" style="margin-top:0">
+            <button type="button" class="wa" id="pickContacts">📇 اختار من جهات الاتصال</button>
+            <button type="button" class="ghost" id="addStaff">+ إضافة عامل يدوي</button>
+          </div>
+          <div id="staffList"></div>
+        </div>
+
+        <h3 class="sec-t">طلبات خاصة</h3>
+        <textarea id="requests" placeholder="مثال: ورد على العربية، ترتيب خاص للعروسة..."></textarea>
+
+        <button type="submit" id="submitBtn" style="margin-top:16px;width:100%">حفظ الحجز</button>
+        <button type="button" class="ghost" id="cancelEdit" style="margin-top:8px;width:100%;display:none">إلغاء التعديل</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- All bookings -->
+  <div class="view" id="view-list">
+    <div class="panel">
+      <h2>📋 كل الحجوزات</h2>
+      <div id="bookingList"></div>
+    </div>
+    <div class="panel">
+      <h2>💾 نسخة احتياطية</h2>
+      <div class="btns" style="margin-top:0">
+        <button type="button" class="ghost" id="exportBtn">تصدير</button>
+        <button type="button" class="ghost" id="importBtn">استيراد</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none">
+      </div>
+      <div class="hint">احفظ نسخة قبل ما تغير الموبايل أو تمسح بيانات المتصفح.</div>
+    </div>
+  </div>
+
+  <!-- Lost cards -->
+  <div class="view" id="view-lost">
+    <div class="panel">
+      <h2>🪪 تسجيل كارت مفقود</h2>
+      <label>رخصة السيارة باسم <span style="color:var(--red)">*</span></label>
+      <input id="lcLicense" placeholder="الاسم المكتوب على الرخصة">
+      <label>اسم فاقد الكارت <span style="color:var(--red)">*</span></label>
+      <input id="lcName" placeholder="اسم صاحب الكارت">
+      <div class="row">
+        <div><label>رقم الموبايل <span style="color:var(--red)">*</span></label><input id="lcPhone" type="tel" placeholder="01xxxxxxxxx"></div>
+        <div><label>مكان الفقد <span style="color:var(--red)">*</span></label><input id="lcPlace" placeholder="اكتب المكان"></div>
+      </div>
+      <div class="row">
+        <div><label>رقم الكارت</label><input id="lcNumber" placeholder="اختياري"></div>
+        <div><label>التاريخ</label><input id="lcDate" type="date"></div>
+      </div>
+      <label>ملاحظات</label>
+      <input id="lcNotes" placeholder="اختياري">
+      <div class="hint">الحقول اللي عليها * أساسية. لو مش معاك بياناتها تقدر تتخطاها وتسجل برضه.</div>
+      <button type="button" class="danger" id="lcSave" style="margin-top:12px;width:100%">حفظ</button>
+    </div>
+    <div class="panel">
+      <h2>📋 الكروت المسجلة</h2>
+      <div id="lostList"></div>
+    </div>
+  </div>
+
+</main>
+
+<div class="foot">Designed by rashad</div>
+
+<script>
+const KEY = 'mokhtar_bookings';
+const WEEK = ['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+let bookings = [];
+let staffDraft = [];
+let editingId = null;
+let viewMonth = new Date(); viewMonth.setDate(1);
+let storageOk = true;
+const openSet = new Set(); // keys like "card:123", "pay:123", "staff:123", "rstaff:123", "lost:123"
+const isOpen = k => openSet.has(k);
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const num = id => Number($(id).value) || 0;
+const money = n => Number(n || 0).toLocaleString('en-US') + ' ج.م';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayISO = () => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`; };
+const sumPaid = staff => (staff || []).reduce((s, x) => s + (Number(x.paid) || 0), 0);
+
+// ---- Tabs ----
+function showTab(t) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  ['remind', 'form', 'list', 'lost'].forEach(k => $('view-' + k).classList.toggle('on', k === t));
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+// ---- Storage ----
+function persist() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(bookings));
+    storageOk = true;
+  } catch (e) {
+    storageOk = false;
+  }
+  return storageOk;
+}
+function loadBookings() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY) || '[]').map(normalize);
+  } catch (e) {
+    storageOk = false;
+    return [];
+  }
+}
+function normalize(b) {
+  const x = { ...b };
+  if (x.valetTotal === undefined) x.valetTotal = (x.staffCount || 0) * (x.staffPrice || 0);
+  if (x.valetCount === undefined) x.valetCount = x.staffCount ?? (x.staff || []).length;
+  x.deposit = Number(x.deposit) || 0;
+  x.depositDate = x.depositDate || '';
+  x.staff = (x.staff || []).map(s => ({ name: s.name || '', phone: s.phone || '', paid: Number(s.paid) || 0 }));
+  x.payments = (x.payments || []).map(p => ({ date: p.date || '', amount: Number(p.amount) || 0, note: p.note || '' }));
+  x.cartsTotal = (Number(x.carts) || 0) * (Number(x.cartPrice) || 0);
+  x.total = x.cartsTotal + (Number(x.valetTotal) || 0);
+  x.paidToStaff = sumPaid(x.staff);
+  x.paidTotal = x.deposit + x.payments.reduce((s, p) => s + p.amount, 0);
+  x.remaining = x.total - x.paidTotal;
+  return x;
+}
+
+// ---- Time: typed by hand, e.g. 18:30 or 6:30 م ----
+function parseTime(s) {
+  s = String(s || '').trim();
+  if (!s) return '';
+  s = s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  const m = s.match(/(\d{1,2})(?:\s*[:.]\s*(\d{1,2}))?/);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const mi = Number(m[2] || 0);
+  const hasAM = /ص/.test(s), hasPM = /م/.test(s);
+  if (hasPM && h < 12) h += 12;
+  else if (hasAM && h === 12) h = 0;
+  else if (!hasAM && !hasPM && h >= 1 && h <= 6) h += 12; // بدون ص/م: 1-6 يبقوا عصر/مغرب
+  if (h > 23 || mi > 59) return null;
+  return pad(h) + ':' + pad(mi);
+}
+$('time').addEventListener('input', () => {
+  const t = parseTime($('time').value);
+  $('timeHint').textContent = t ? '= ' + colloquial(t) : 'اكتب الساعة زي 18:30 أو 6:30 م';
+});
+$('time').addEventListener('blur', () => {
+  const t = parseTime($('time').value);
+  if (t !== null) $('time').value = t;
+});
+
+// Egyptian spoken time: "10:00" -> "عشرة الصبح", "14:00" -> "اتنين بعد الضهر", "15:00" -> "تلاتة العصر"
+const EG_HOURS = ['اتناشر','واحدة','اتنين','تلاتة','أربعة','خمسة','ستة','سبعة','تمانية','تسعة','عشرة','حداشر'];
+function colloquial(t) {
+  const m = /^(\d{2}):(\d{2})$/.exec(t || '');
+  if (!m) return t || '';
+  let h = Number(m[1]), mi = Number(m[2]);
+  let prefix = '';
+  if (mi === 45) { h = (h + 1) % 24; prefix = 'إلا ربع '; mi = 0; }
+  const word = EG_HOURS[(h % 12)];
+  let period;
+  if (h === 12) period = 'الضهر';
+  else if (h >= 13 && h <= 14) period = 'بعد الضهر';
+  else if (h >= 15 && h <= 16) period = 'العصر';
+  else if (h >= 17 && h <= 18) period = 'المغرب';
+  else if (h >= 19 || h <= 4) period = 'بالليل';
+  else period = 'الصبح';
+  let minTxt = '';
+  if (mi === 15) minTxt = ' وربع';
+  else if (mi === 30) minTxt = ' ونص';
+  else if (mi) minTxt = ` و${mi} دقيقة`;
+  return `${prefix}${word}${minTxt} ${period}`;
+}
+
+function daysUntil(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  return Math.round((new Date(y, m - 1, d) - t) / 86400000);
+}
+
+// ---- WhatsApp ----
+function waPhone(phone) {
+  let p = (phone || '').replace(/\D/g, '');
+  if (p.startsWith('0')) p = p.slice(1);
+  if (!p.startsWith('20')) p = '20' + p;
+  return p;
+}
+const waUrl = (phone, msg) => `https://wa.me/${waPhone(phone)}?text=${encodeURIComponent(msg)}`;
+
+function clientWa(b) {
+  const where = b.venue ? ` في ${b.venue}` : '';
+  return waUrl(b.phone, `مرحباً ${b.client}، تذكير بحجزكم مع مختار فاليه لمناسبة ${b.type} يوم ${b.date} الساعة ${colloquial(b.time)}${where}. لو عندكم أي طلبات خاصة برجاء إبلاغنا. شكراً لثقتكم 🌟`);
+}
+function staffWa(b, s) {
+  const where = b.venue ? ` في ${b.venue}` : '';
+  const map = b.mapLink ? `\nالموقع: ${b.mapLink}` : '';
+  return waUrl(s.phone, `مرحباً ${s.name || ''}، تذكير بالشغل يوم ${b.date} الساعة ${colloquial(b.time)}${where}.${map}${b.uniform ? '\nاليونيفورم: ' + b.uniform : ''}\nمتتأخرش يا بطل 🙏`);
+}
+function staffLinks(b) {
+  const withPhone = b.staff.filter(s => s.phone);
+  if (!withPhone.length) return '<span class="hint">مفيش أرقام للعمال</span>';
+  return withPhone.map(s => `<a href="${staffWa(b, s)}" target="_blank">واتساب ${esc(s.name) || 'عامل'}</a>`).join('');
+}
+
+// ---- Share to Notes ----
+function noteText(b) {
+  const L = [];
+  L.push(`📋 حجز ${b.type}: ${b.client}`);
+  L.push(`📅 التاريخ: ${b.date}${b.time ? ' - الساعة ' + colloquial(b.time) : ''}`);
+  L.push(`📍 المكان: ${b.venue || '-'}`);
+  if (b.mapLink) L.push(`🗺️ الموقع: ${b.mapLink}`);
+  L.push(`📞 الهاتف: ${b.phone || '-'}`);
+  L.push('');
+  L.push(`👥 المدعوين: ${b.guests}`);
+  L.push(`🚗 الجولف كار: ${b.carts} × ${money(b.cartPrice)} = ${money(b.cartsTotal)}`);
+  L.push(`🧑‍✈️ الفاليه: ${b.valetCount} فرد — ${money(b.valetTotal)}`);
+  L.push('');
+  L.push(`💰 الإجمالي: ${money(b.total)}`);
+  L.push(`💵 اتدفع: ${money(b.paidTotal)}`);
+  L.push(`⏳ اتبقي: ${money(b.remaining)}`);
+  L.push('');
+  L.push(`👕 اليونيفورم: ${b.uniform || '-'}`);
+  L.push('🧾 التجهيزات:');
+  L.push(`• تيشرتات: ${b.shirts || 0} | أقماع: ${b.cones || 0} | إشارات توجيه: ${b.signs || 0} | فسفوري عاكس: ${b.vests || 0}`);
+  L.push(`• الكروت (تم التحضير): ${b.cardsReady || '-'}`);
+  L.push('');
+  L.push('📜 الدفعات:');
+  L.push(`• ${b.depositDate || '-'} — عربون ${money(b.deposit)}`);
+  b.payments.forEach(p => L.push(`• ${p.date} — ${money(p.amount)}${p.note ? ' (' + p.note + ')' : ''}`));
+  L.push('');
+  L.push('🧑‍🤝‍🧑 العاملين:');
+  if (b.staff.length) b.staff.forEach(s => L.push(`• ${s.name || '-'} ${s.phone || ''} — ${money(s.paid)}`));
+  else L.push('-');
+  L.push(`💸 اتصرف للعاملين: ${money(b.paidToStaff)}`);
+  if (b.requests) { L.push(''); L.push(`📝 طلبات خاصة: ${b.requests}`); }
+  return L.join('\n');
+}
+async function saveNote(b) {
+  const text = noteText(b);
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `حجز ${b.client}`, text });
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+  downloadFile(`booking-${b.id}.txt`, 'text/plain;charset=utf-8', text);
+  alert('اتحفظ ملف نص. افتحه من الملفات وشاركه مع تطبيق النوت.');
+}
+function downloadFile(name, type, content) {
+  const blob = new Blob([content], { type });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+// ---- Form totals & staff ----
+function calc() {
+  const cartsT = num('carts') * num('cartPrice');
+  const valetT = num('valetTotal');
+  const total = cartsT + valetT;
+  const paid = sumPaid(staffDraft);
+  $('totals').innerHTML =
+    `تكلفة الجولف كار: <b>${money(cartsT)}</b><br>` +
+    `إجمالي الفاليه: <b>${money(valetT)}</b><br>` +
+    `الإجمالي: <b>${money(total)}</b><br>` +
+    `المتبقي بعد العربون: <b>${money(total - num('deposit'))}</b><br>` +
+    `<span class="ok">اللي هتتصرف للعاملين: <b>${money(paid)}</b></span>`;
+}
+function renderStaff() {
+  $('staffList').innerHTML = staffDraft.map((s, i) =>
+    `<div class="staffrow">
+       <input placeholder="الاسم" value="${esc(s.name)}" data-i="${i}" data-k="name">
+       <input placeholder="الرقم" value="${esc(s.phone)}" data-i="${i}" data-k="phone">
+       <input type="number" min="0" placeholder="المبلغ" value="${s.paid || ''}" data-i="${i}" data-k="paid">
+       <div>
+         <button type="button" class="wa small" data-sw="${i}">واتساب</button>
+         <button type="button" class="danger small" data-rm="${i}">✕</button>
+       </div>
+     </div>`).join('');
+}
+function formStaffWa(s) {
+  if (!s || !s.phone) { alert('اكتب رقم العامل الأول'); return null; }
+  const date = $('date').value;
+  if (!date) { alert('اختار تاريخ المناسبة الأول'); return null; }
+  const time = parseTime($('time').value) || $('time').value;
+  const venue = $('venue').value.trim();
+  const map = $('mapLink').value.trim();
+  const type = $('type').value;
+  const where = venue ? ` في ${venue}` : '';
+  const mapTxt = map ? `\nالموقع: ${map}` : '';
+  const uni = $('uniform').value.trim();
+  const uniTxt = uni ? `\nاليونيفورم: ${uni}` : '';
+  return waUrl(s.phone, `مرحباً ${s.name || ''}، تذكير بالشغل يوم ${date} الساعة ${colloquial(time)}${where} (${type}).${mapTxt}${uniTxt}\nمتتأخرش يا بطل 🙏`);
+}
+
+// ---- Calendar picker ----
+function updateDateBtn() {
+  const v = $('date').value;
+  $('dateBtn').textContent = v ? '📅 ' + v : '📅 اختار التاريخ (إجباري)';
+  $('dateBtn').style.borderColor = v ? '' : 'var(--red)';
+  $('dateBtn').style.color = v ? '' : 'var(--red)';
+}
+function renderCal() {
+  updateDateBtn();
+  const y = viewMonth.getFullYear(), m = viewMonth.getMonth();
+  $('calTitle').textContent = viewMonth.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' });
+  const offset = (new Date(y, m, 1).getDay() + 1) % 7;
+  const days = new Date(y, m + 1, 0).getDate();
+  let html = WEEK.map(w => `<div class="wd">${w}</div>`).join('');
+  for (let i = 0; i < offset; i++) html += '<div></div>';
+  for (let d = 1; d <= days; d++) {
+    const iso = `${y}-${pad(m + 1)}-${pad(d)}`;
+    const cnt = bookings.filter(b => b.date === iso).length;
+    const cls = ['day'];
+    if (iso === $('date').value) cls.push('sel');
+    if (iso === todayISO()) cls.push('tod');
+    if (iso < todayISO()) cls.push('past');
+    if (cnt) cls.push('busy');
+    html += `<div class="${cls.join(' ')}" data-d="${iso}">${d}${cnt ? `<small>${cnt} حجز</small>` : ''}</div>`;
+  }
+  $('calGrid').innerHTML = html;
+  showDay($('date').value);
+}
+function showDay(iso) {
+  if (!iso) { $('dayInfo').innerHTML = 'اختار يوم من التقويم'; return; }
+  const day = bookings.filter(b => b.date === iso && String(b.id) !== String(editingId));
+  const sel = `التاريخ المختار: <b>${iso}</b>`;
+  $('dayInfo').innerHTML = day.length
+    ? `${sel}<br><span class="warn">⚠️ في ${day.length} حجز تاني في اليوم ده: ${day.map(b => esc(b.client)).join('، ')}</span>`
+    : `${sel}<br>اليوم فاضي ✅`;
+}
+$('dateBtn').onclick = () => {
+  const box = $('calBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  renderCal();
+};
+$('calGrid').addEventListener('click', e => {
+  const cell = e.target.closest('.day');
+  if (!cell) return;
+  if (cell.classList.contains('past')) { alert('التاريخ ده عدى، اختار تاريخ جاي'); return; }
+  $('date').value = cell.dataset.d;
+  $('calBox').style.display = 'none';
+  renderCal();
+  const cnt = bookings.filter(b => b.date === cell.dataset.d && String(b.id) !== String(editingId)).length;
+  if (cnt) alert(`تنبيه: في ${cnt} حجز تاني في اليوم ده`);
+});
+$('prevMonth').onclick = () => { viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1); renderCal(); };
+$('nextMonth').onclick = () => { viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1); renderCal(); };
+
+// ---- Form reset / edit ----
+function setStaffBox(open) {
+  $('staffBox').style.display = open ? 'block' : 'none';
+  $('toggleStaffForm').textContent = open ? '🔼 إخفاء تفاصيل العمال' : '👷 تفاصيل العمال';
+}
+function resetForm() {
+  $('bookingForm').reset();
+  editingId = null;
+  $('date').value = '';
+  $('calBox').style.display = 'none';
+  staffDraft = [];
+  renderStaff();
+  setStaffBox(false);
+  calc();
+  $('formTitle').textContent = '➕ حجز جديد';
+  $('submitBtn').textContent = 'حفظ الحجز';
+  $('cancelEdit').style.display = 'none';
+  viewMonth = new Date(); viewMonth.setDate(1);
+  renderCal();
+}
+function startEdit(id) {
+  const b = bookings.find(x => String(x.id) === String(id));
+  if (!b) return;
+  editingId = b.id;
+  $('client').value = b.client;
+  $('phone').value = b.phone;
+  $('type').value = b.type;
+  $('time').value = b.time;
+  $('venue').value = b.venue;
+  $('mapLink').value = b.mapLink;
+  $('guests').value = b.guests || '';
+  $('carts').value = b.carts || '';
+  $('cartPrice').value = b.cartPrice || '';
+  $('valetCount').value = b.valetCount || '';
+  $('valetTotal').value = b.valetTotal || '';
+  $('deposit').value = b.deposit || '';
+  $('requests').value = b.requests;
+  $('shirts').value = b.shirts || '';
+  $('cones').value = b.cones || '';
+  $('signs').value = b.signs || '';
+  $('vests').value = b.vests || '';
+  $('cardsReady').value = b.cardsReady || '';
+  $('uniform').value = b.uniform || '';
+  staffDraft = b.staff.map(s => ({ name: s.name, phone: s.phone, paid: s.paid }));
+  renderStaff();
+  setStaffBox(false);
+  calc();
+  const [y, m] = b.date.split('-').map(Number);
+  viewMonth = new Date(y, m - 1, 1);
+  $('date').value = b.date;
+  $('calBox').style.display = 'none';
+  renderCal();
+  $('formTitle').textContent = '✏️ تعديل الحجز';
+  $('submitBtn').textContent = 'حفظ التعديل';
+  $('cancelEdit').style.display = 'block';
+  showTab('form');
+}
+
+// ---- Payments ----
+function paymentsPanel(b) {
+  const k = 'pay:' + b.id;
+  const rows = [
+    `<div class="payrow"><span>📅 ${esc(b.depositDate) || '-'} — عربون وقت الحجز</span><b>${money(b.deposit)}</b></div>`,
+    ...b.payments.map((p, i) =>
+      `<div class="payrow"><span>📅 ${esc(p.date)}${p.note ? ' — ' + esc(p.note) : ''}</span>
+        <span><b>${money(p.amount)}</b> <button class="danger small" data-delpay="${b.id}:${i}">✕</button></span></div>`)
+  ].join('');
+  return `<div class="btns"><button class="ghost small" data-k="${k}">💵 دفعات العميل</button></div>
+    ${isOpen(k) ? `<div class="sub">
+      <div>إجمالي الحساب: <b>${money(b.total)}</b></div>
+      <div class="ok">اتدفع لحد دلوقتي: <b>${money(b.paidTotal)}</b></div>
+      <div class="warn">اتبقي: <b>${money(b.remaining)}</b></div>
+      <div style="margin-top:8px">${rows}</div>
+      <label>دفعة جديدة</label>
+      <div class="row">
+        <input id="payAmt-${b.id}" type="number" min="0" placeholder="المبلغ">
+        <input id="payDate-${b.id}" type="date" value="${todayISO()}">
+      </div>
+      <input id="payNote-${b.id}" placeholder="ملاحظة (اختياري)" style="margin-top:8px">
+      <button class="wa small" data-addpay="${b.id}" style="margin-top:8px">+ سجل الدفعة</button>
+    </div>` : ''}`;
+}
+
+// ---- Staff details (hidden until pressed) ----
+function staffSection(b) {
+  if (!b.staff.length) return '';
+  const k = 'staff:' + b.id;
+  return `<div class="btns"><button class="ghost small" data-k="${k}">👷 تفاصيل العمال (${b.staff.length})</button></div>
+    ${isOpen(k) ? `<div class="sub">
+      ${b.staff.map(s => `${esc(s.name)} ${s.phone ? `<a href="tel:${esc(s.phone)}">${esc(s.phone)}</a>` : ''} — ${money(s.paid)}`).join('<br>')}
+      <div class="staffline">${staffLinks(b)}</div>
+    </div>` : ''}`;
+}
+
+// ---- Cards ----
+function card(b) {
+  const d = daysUntil(b.date);
+  const when = d < 0 ? 'تمت' : d === 0 ? 'النهارده' : `بعد ${d} يوم`;
+  const soon = d >= 0 && d <= 7;
+  const k = 'card:' + b.id;
+  const open = isOpen(k);
+  return `<div class="booking">
+    <div class="bhead" data-k="${k}">
+      <div><b>${esc(b.client)}</b> <span class="tag">${esc(b.type)}</span> <span class="tag ${soon ? 'gold' : ''}">${when}</span></div>
+      <span class="chev">${open ? '▴' : '▾'}</span>
+    </div>
+    <div class="bsub">📅 ${esc(b.date)} ${esc(colloquial(b.time))} · 💵 اتبقي: <b style="color:var(--gold)">${money(b.remaining)}</b></div>
+    ${open ? `<div class="bdetails">
+      📍 ${esc(b.venue) || '-'} ${b.mapLink ? `<a href="${esc(b.mapLink)}" target="_blank">الخريطة</a>` : ''}<br>
+      📞 ${esc(b.phone) || '-'}<br>
+      👥 المدعوين: ${b.guests} · 🚗 جولف كار: ${b.carts} · 🧑‍✈️ أفراد الفاليه: ${b.valetCount}<br>
+      التجهيزات: تيشرتات ${b.shirts || 0} · أقماع ${b.cones || 0} · إشارات ${b.signs || 0} · فسفوري ${b.vests || 0} · الكروت: ${b.cardsReady || '-'}<br>
+      👕 اليونيفورم: ${esc(b.uniform) || '-'}
+      <div class="total">
+        جولف كار: <b>${money(b.cartsTotal)}</b><br>
+        إجمالي الفاليه: <b>${money(b.valetTotal)}</b><br>
+        الإجمالي: <b>${money(b.total)}</b><br>
+        <span class="ok">اتصرف للعاملين: <b>${money(b.paidToStaff)}</b></span>
+      </div>
+      ${paymentsPanel(b)}
+      ${staffSection(b)}
+      ${b.requests ? `<div style="margin-top:10px"><b>طلبات خاصة:</b><br>${esc(b.requests)}</div>` : ''}
+      <div class="btns">
+        <button class="wa small" data-wa="${b.id}">واتساب العميل</button>
+        <button class="ghost small" data-note="${b.id}">📤 شارك للنوت</button>
+        <button class="ghost small" data-edit="${b.id}">✏️ تعديل</button>
+        <button class="danger small" data-del="${b.id}">حذف</button>
+      </div>
+    </div>` : ''}
+  </div>`;
+}
+
+// ---- Reminders ----
+function reminderCard(b) {
+  const d = daysUntil(b.date);
+  const lab = d === 0 ? 'النهارده' : d === 1 ? 'بكرة' : `بعد ${d} يوم`;
+  const rk = 'rstaff:' + b.id;
+  const hasPhones = b.staff.some(s => s.phone);
+  return `<div class="alert">
+    <div><span class="tag ${d <= 1 ? 'red' : 'gold'}">${lab}</span> <b>${esc(b.client)}</b></div>
+    <div class="bsub">${esc(b.type)} · ${esc(b.date)} ${esc(colloquial(b.time))}${b.venue ? ' · ' + esc(b.venue) : ''}</div>
+    <div class="btns">
+      <button class="wa small" data-wa="${b.id}">تذكير العميل</button>
+      ${hasPhones ? `<button class="ghost small" data-k="${rk}">👷 تفاصيل العمال</button>` : ''}
+    </div>
+    ${hasPhones && isOpen(rk) ? `<div class="staffline">${staffLinks(b)}</div>` : ''}
+  </div>`;
+}
+
+// ---- Lost cards (separate from bookings) ----
+const LOST_KEY = 'mokhtar_lost';
+let lostCards = [];
+function loadLost() {
+  try { return JSON.parse(localStorage.getItem(LOST_KEY) || '[]'); } catch (e) { return []; }
+}
+function saveLost() {
+  try { localStorage.setItem(LOST_KEY, JSON.stringify(lostCards)); return true; } catch (e) { return false; }
+}
+function lostMissing(c) {
+  const miss = [];
+  if (!c.license) miss.push('رخصة السيارة باسم');
+  if (!c.name) miss.push('اسم فاقد الكارت');
+  if (!c.phone) miss.push('رقم الموبايل');
+  if (!c.place) miss.push('مكان الفقد');
+  return miss;
+}
+function renderLost() {
+  const active = lostCards.filter(c => !c.found);
+  $('lostList').innerHTML = active.length ? active.map(c => {
+    const k = 'lost:' + c.id;
+    const open = isOpen(k);
+    const miss = lostMissing(c);
+    return `<div class="booking">
+      <div class="bhead" data-lk="${k}">
+        <div><b>${esc(c.name) || 'بدون اسم'}</b> <span class="tag red">مفقود</span>${miss.length ? ' <span class="tag">ناقص</span>' : ''}</div>
+        <span class="chev">${open ? '▴' : '▾'}</span>
+      </div>
+      <div class="bsub">📅 ${esc(c.date)} · 📍 ${esc(c.place) || '-'}</div>
+      ${open ? `<div class="bdetails">
+        🚗 رخصة السيارة باسم: ${esc(c.license) || '-'}<br>
+        👤 اسم فاقد الكارت: ${esc(c.name) || '-'}<br>
+        📞 ${c.phone ? `<a href="tel:${esc(c.phone)}">${esc(c.phone)}</a>` : '-'}<br>
+        📍 مكان الفقد: ${esc(c.place) || '-'}<br>
+        🪪 رقم الكارت: ${esc(c.number) || '-'}<br>
+        ${c.notes ? `📝 ${esc(c.notes)}<br>` : ''}
+        ${miss.length ? `<div class="warn" style="margin-top:6px">ناقص: ${miss.join('، ')}</div>` : ''}
+        <div class="btns">
+          ${c.phone ? `<button class="wa small" data-lwa="${c.id}">واتساب صاحب الكارت</button>` : ''}
+          <button class="ghost small" data-lfound="${c.id}">✅ اتلقى</button>
+          <button class="danger small" data-ldel="${c.id}">حذف</button>
+        </div>
+      </div>` : ''}
+    </div>`;
+  }).join('') : '<div class="empty">مفيش كروت مفقودة</div>';
+}
+$('lcSave').onclick = () => {
+  const c = {
+    id: Date.now(),
+    license: $('lcLicense').value.trim(),
+    name: $('lcName').value.trim(),
+    phone: $('lcPhone').value.trim(),
+    place: $('lcPlace').value.trim(),
+    number: $('lcNumber').value.trim(),
+    date: $('lcDate').value || todayISO(),
+    notes: $('lcNotes').value.trim(),
+    found: false
+  };
+  const miss = lostMissing(c);
+  if (miss.length && !confirm(`البيانات دي ناقصة: ${miss.join('، ')}\nتتخطى وتسجل برضه؟`)) return;
+  lostCards.push(c);
+  const ok = saveLost();
+  ['lcLicense', 'lcName', 'lcPhone', 'lcPlace', 'lcNumber', 'lcNotes'].forEach(id => $(id).value = '');
+  $('lcDate').value = todayISO();
+  renderLost();
+  alert(ok ? 'اتسجل الكارت ✅' : 'اتسجل في الصفحة دي بس، والمتصفح مش مسموح له يحفظ على الجهاز.');
+};
+document.addEventListener('click', e => {
+  const t = e.target;
+  const lk = t.closest('[data-lk]');
+  if (lk) {
+    const k = lk.dataset.lk;
+    if (isOpen(k)) openSet.delete(k); else openSet.add(k);
+    renderLost();
+    return;
+  }
+  const id = t.dataset.lwa || t.dataset.lfound || t.dataset.ldel;
+  if (!id) return;
+  const c = lostCards.find(x => String(x.id) === id);
+  if (!c) return;
+  if (t.dataset.lwa) {
+    window.open(waUrl(c.phone, `مرحباً ${c.name || ''}، لقينا كارت مفقود باسمك${c.number ? ' رقم ' + c.number : ''}${c.place ? ' من مكان ' + c.place : ''}. تواصل معانا على الرقم ده لاستلامه. شكراً 🙏`), '_blank');
+    return;
+  } else if (t.dataset.lfound) {
+    if (!confirm('الكارت اتلقى؟ هيتشال من القائمة')) return;
+    c.found = true;
+    c.foundDate = todayISO();
+  } else if (t.dataset.ldel) {
+    if (!confirm('تحذف الكارت ده من السجل؟')) return;
+    lostCards = lostCards.filter(x => String(x.id) !== id);
+  }
+  saveLost();
+  renderLost();
+});
+
+function render() {
+  bookings = bookings.map(normalize);
+  const list = [...bookings].sort((a, b) => a.date.localeCompare(b.date));
+  const rem = list.filter(b => { const d = daysUntil(b.date); return d >= 0 && d <= 7; });
+  $('reminderList').innerHTML = rem.length ? rem.map(reminderCard).join('') : '<div class="empty">مفيش مناسبات خلال الـ 7 أيام الجاية</div>';
+  $('bookingList').innerHTML = list.length ? list.map(card).join('') : '<div class="empty">لا توجد حجوزات بعد</div>';
+  renderCal();
+}
+
+// ---- Events ----
+document.querySelectorAll('#bookingForm input').forEach(i => i.addEventListener('input', calc));
+$('toggleStaffForm').onclick = () => setStaffBox($('staffBox').style.display === 'none');
+$('addStaff').onclick = () => { staffDraft.push({ name: '', phone: '', paid: 0 }); renderStaff(); calc(); };
+$('staffList').addEventListener('input', e => {
+  const i = e.target.dataset.i;
+  if (i === undefined) return;
+  const k = e.target.dataset.k;
+  staffDraft[i][k] = k === 'paid' ? (Number(e.target.value) || 0) : e.target.value;
+  calc();
+});
+$('staffList').addEventListener('click', e => {
+  const r = e.target.dataset.rm;
+  if (r !== undefined) { staffDraft.splice(Number(r), 1); renderStaff(); calc(); return; }
+  const sw = e.target.dataset.sw;
+  if (sw !== undefined) {
+    const url = formStaffWa(staffDraft[Number(sw)]);
+    if (url) window.open(url, '_blank');
+  }
+});
+$('pickContacts').onclick = async () => {
+  if (!('contacts' in navigator) || !('ContactsManager' in window)) {
+    alert('المتصفح ده مش بيدعم جهات الاتصال. افتح الصفحة من كروم على أندرويد من رابط آمن (GitHub Pages)، أو أضف العمال يدوي.');
+    return;
+  }
+  try {
+    const picked = await navigator.contacts.select(['name', 'tel'], { multiple: true });
+    if (!picked || !picked.length) return;
+    picked.forEach(c => staffDraft.push({ name: (c.name && c.name[0]) || '', phone: (c.tel && c.tel[0]) || '', paid: 0 }));
+    renderStaff();
+    calc();
+    setStaffBox(true);
+  } catch (e) {
+    if (e.name !== 'AbortError') alert('ما قدرتش أفتح جهات الاتصال: ' + e.message);
+  }
+};
+$('cancelEdit').onclick = () => { resetForm(); showTab('list'); };
+
+$('bookingForm').addEventListener('submit', e => {
+  e.preventDefault();
+  try {
+    if (!$('date').value) {
+      $('calBox').style.display = 'block';
+      renderCal();
+      alert('التاريخ إجباري، اختار تاريخ المناسبة من التقويم');
+      return;
+    }
+    if ($('date').value < todayISO() && !confirm('التاريخ ده عدى! متأكد إنه صح؟')) return;
+    if (!$('venue').value.trim()) {
+      alert('مكان المناسبة إجباري، اكتب اسم القاعة أو العنوان');
+      $('venue').focus();
+      return;
+    }
+    const time = parseTime($('time').value);
+    if (time === null) { alert('الساعة مش واضحة، اكتبها زي 18:30 أو 6:30 م'); return; }
+
+    const old = editingId ? bookings.find(x => String(x.id) === String(editingId)) : null;
+    const dep = num('deposit');
+    const data = normalize({
+      client: $('client').value.trim(),
+      phone: $('phone').value.trim(),
+      type: $('type').value,
+      date: $('date').value,
+      time: time,
+      venue: $('venue').value.trim(),
+      mapLink: $('mapLink').value.trim(),
+      guests: num('guests'),
+      carts: num('carts'),
+      cartPrice: num('cartPrice'),
+      valetCount: num('valetCount'),
+      valetTotal: num('valetTotal'),
+      deposit: dep,
+      depositDate: old && old.depositDate ? old.depositDate : (dep > 0 ? todayISO() : ''),
+      payments: old ? old.payments : [],
+      staff: staffDraft.filter(s => s.name || s.phone || s.paid),
+      requests: $('requests').value.trim(),
+      shirts: num('shirts'),
+      cones: num('cones'),
+      signs: num('signs'),
+      vests: num('vests'),
+      cardsReady: $('cardsReady').value,
+      uniform: $('uniform').value.trim()
+    });
+    if (old) {
+      const i = bookings.findIndex(x => String(x.id) === String(editingId));
+      bookings[i] = { ...data, id: editingId };
+    } else {
+      bookings.push({ ...data, id: Date.now() });
+    }
+    const saved = persist();
+    resetForm();
+    render();
+    alert(saved ? 'تم الحفظ ✅' : 'تم الحفظ في الصفحة دي بس، لكن المتصفح مش مسموح له يحفظ على الجهاز. افتح الصفحة من GitHub Pages أو من كروم عادي.');
+    showTab('list');
+  } catch (err) {
+    alert('حصلت مشكلة وماتحفظش: ' + (err && err.message ? err.message : err));
+  }
+});
+
+document.addEventListener('click', e => {
+  const t = e.target;
+
+  // Open / close any section (cards, details, payments, staff)
+  const kEl = t.closest('[data-k]');
+  if (kEl && !kEl.closest('#staffList') && !kEl.closest('#bookingForm')) {
+    const k = kEl.dataset.k;
+    if (isOpen(k)) openSet.delete(k); else openSet.add(k);
+    render();
+    return;
+  }
+
+  if (t.dataset.addpay) {
+    const id = t.dataset.addpay;
+    const b = bookings.find(x => String(x.id) === id);
+    const amount = Number($('payAmt-' + id).value) || 0;
+    if (!b) return;
+    if (amount <= 0) { alert('اكتب مبلغ الدفعة الأول'); return; }
+    if (amount > b.remaining && !confirm(`المبلغ أكبر من اللي متبقي (${money(b.remaining)}). تسجله برضه؟`)) return;
+    b.payments.push({
+      date: $('payDate-' + id).value || todayISO(),
+      amount: amount,
+      note: $('payNote-' + id).value.trim()
+    });
+    openSet.add('pay:' + id);
+    persist();
+    render();
+    alert(`تم تسجيل الدفعة ✅ — اتبقي: ${money(normalize(b).remaining)}`);
+  }
+  if (t.dataset.delpay) {
+    const [id, idx] = t.dataset.delpay.split(':');
+    const b = bookings.find(x => String(x.id) === id);
+    if (b && confirm('تمسح الدفعة دي؟')) {
+      b.payments.splice(Number(idx), 1);
+      openSet.add('pay:' + id);
+      persist();
+      render();
+    }
+  }
+  if (t.dataset.wa) {
+    const b = bookings.find(x => String(x.id) === t.dataset.wa);
+    if (b) window.open(clientWa(b), '_blank');
+  }
+  if (t.dataset.note) {
+    const b = bookings.find(x => String(x.id) === t.dataset.note);
+    if (b) saveNote(b);
+  }
+  if (t.dataset.edit) startEdit(t.dataset.edit);
+  if (t.dataset.del && confirm('تحذف الحجز ده؟')) {
+    bookings = bookings.filter(x => String(x.id) !== t.dataset.del);
+    persist();
+    if (String(editingId) === t.dataset.del) resetForm();
+    render();
+  }
+});
+
+// ---- Backup ----
+$('exportBtn').onclick = () => {
+  downloadFile('bookings-backup.json', 'application/json', JSON.stringify(bookings, null, 2));
+};
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const incoming = JSON.parse(reader.result).map(normalize);
+      const ids = new Set(bookings.map(b => String(b.id)));
+      incoming.forEach(b => { if (!ids.has(String(b.id))) bookings.push(b); });
+      persist();
+      render();
+      alert('تم الاستيراد ✅');
+    } catch (err) { alert('الملف مش صالح'); }
+  };
+  reader.readAsText(f);
+});
+
+// ---- Start ----
+bookings = loadBookings();
+if (!storageOk) {
+  alert('المتصفح ده مش بيسمح بالحفظ على الجهاز، فالحجوزات هتتمسح لما تقفل الصفحة. افتح الصفحة من GitHub Pages أو من كروم عادي.');
+}
+lostCards = loadLost();
+$('lcDate').value = todayISO();
+renderLost();
+resetForm();
+render();
+</script>
+<script>
+// Offline support once installed (needs https, e.g. GitHub Pages)
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
