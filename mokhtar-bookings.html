@@ -226,9 +226,9 @@ a{color:var(--gold)}
 <div class="foot">Designed by rashad <button type="button" id="signOutBtn" class="ghost small" style="margin-right:8px">🚪 خروج</button></div>
 
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebase/10.14.1/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithRedirect, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebase/10.14.1/firebase-auth.js';
-import { initializeFirestore, persistentLocalCache, collection, doc, onSnapshot, writeBatch, addDoc, deleteDoc, setDoc, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebase/10.14.1/firebase-firestore.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithRedirect, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { initializeFirestore, persistentLocalCache, collection, doc, onSnapshot, writeBatch, addDoc, deleteDoc, setDoc, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBWEMq8z2QpzGKhEikX3kPTNJFjuNSTklg",
