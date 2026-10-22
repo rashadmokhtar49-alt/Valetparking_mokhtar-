@@ -47,10 +47,17 @@ button.small{padding:7px 10px;font-size:12px}
 .bhead{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}
 .bsub{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.8}
 .chev{color:var(--gold);font-size:18px}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.nums label{font-size:11px;margin:0 0 4px}
+.nums input{padding:8px 6px;font-size:14px;text-align:center}
+.bsum{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.bsum div{background:#0e0e0e;border:1px solid var(--line);border-radius:10px;padding:7px 9px}
+.bsum span{display:block;font-size:11px;color:var(--muted)}
+.bsum b{font-size:14px;word-break:break-word}
 .bdetails{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);line-height:1.9;font-size:14px}
 .sub{background:#0e0e0e;border-radius:10px;padding:12px;margin-top:8px;line-height:1.9}
 .payrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1f1f1f;font-size:14px}
-.staffrow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;margin-top:6px}
+.staffrow{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-top:6px}
 .staffrow input{padding:9px;font-size:14px}
 .staffrow>div{display:flex;gap:4px}
 .staffline{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
@@ -70,7 +77,7 @@ a{color:var(--gold)}
 .day.past{opacity:.35}
 .dayinfo{margin-top:10px;font-size:14px}
 .foot{text-align:center;color:var(--muted);font-size:12px;padding:18px 0 28px;letter-spacing:.5px}
-@media (max-width:420px){.row{grid-template-columns:1fr}.staffrow{grid-template-columns:1fr 1fr}.staffrow>div{grid-column:span 2}}
+@media (max-width:420px){.row{grid-template-columns:1fr}.staffrow{grid-template-columns:1fr auto}.staffrow>div{grid-column:span 1}}
 </style>
 </head>
 <body>
@@ -81,7 +88,7 @@ a{color:var(--gold)}
     <button class="tab on" data-tab="remind">🔔 التذكيرات</button>
     <button class="tab" data-tab="form">➕ حجز جديد</button>
     <button class="tab" data-tab="list">📋 الحجوزات</button>
-    <button class="tab" data-tab="lost">🪪 كروت مفقودة</button>
+    <button class="tab" data-tab="clients">👥 العملاء</button>
   </nav>
 </header>
 
@@ -135,31 +142,17 @@ a{color:var(--gold)}
         </div>
 
         <h3 class="sec-t">الأعداد والأسعار</h3>
-        <div class="row">
-          <div><label>عدد المدعوين</label><input id="guests" type="number" min="0"></div>
-          <div><label>عدد الجولف كار</label><input id="carts" type="number" min="0"></div>
-        </div>
-        <div class="row">
-          <div><label>سعر الجولف كار الواحدة</label><input id="cartPrice" type="number" min="0"></div>
-          <div><label>العربون (اتدفع وقت الحجز)</label><input id="deposit" type="number" min="0"></div>
-        </div>
-        <div class="row">
-          <div><label>عدد أفراد الفاليه (إجمالي)</label><input id="valetCount" type="number" min="0"></div>
-          <div><label>إجمالي سعر الفاليه</label><input id="valetTotal" type="number" min="0"></div>
+        <div class="nums">
+          <div><label>المدعوين</label><input id="guests" type="number" min="0" inputmode="numeric"></div>
+          <div><label>الجولف كار</label><input id="carts" type="number" min="0" inputmode="numeric"></div>
+          <div><label>سعر الكار</label><input id="cartPrice" type="number" min="0" inputmode="numeric"></div>
+          <div><label>أفراد الفاليه</label><input id="valetCount" type="number" min="0" inputmode="numeric"></div>
+          <div><label>سعر الفاليه</label><input id="valetTotal" type="number" min="0" inputmode="numeric"></div>
+          <div><label>العربون</label><input id="deposit" type="number" min="0" inputmode="numeric"></div>
         </div>
         <div class="total" id="totals"></div>
 
-        <h3 class="sec-t">التجهيزات</h3>
-        <div class="row">
-          <div><label>عدد التيشرتات</label><input id="shirts" type="number" min="0"></div>
-          <div><label>عدد الأقماع</label><input id="cones" type="number" min="0"></div>
-        </div>
-        <div class="row">
-          <div><label>إشارات التوجيه</label><input id="signs" type="number" min="0"></div>
-          <div><label>فسفوري عاكس</label><input id="vests" type="number" min="0"></div>
-        </div>
-        <label>الكروت (تم التحضير)</label>
-        <select id="cardsReady"><option value="">اختار</option><option>نعم</option><option>لا</option></select>
+        <h3 class="sec-t">اليونيفورم</h3>
         <label>اليونيفورم (حسب اختيار العميل)</label>
         <input id="uniform" placeholder="مثال: قميص أسود + كوتشي أسود + بنطلون أسود">
 
@@ -173,8 +166,6 @@ a{color:var(--gold)}
           <div id="staffList"></div>
         </div>
 
-        <h3 class="sec-t">طلبات خاصة</h3>
-        <textarea id="requests" placeholder="مثال: ورد على العربية، ترتيب خاص للعروسة..."></textarea>
 
         <button type="submit" id="submitBtn" style="margin-top:16px;width:100%">حفظ الحجز</button>
         <button type="button" class="ghost" id="cancelEdit" style="margin-top:8px;width:100%;display:none">إلغاء التعديل</button>
@@ -182,10 +173,22 @@ a{color:var(--gold)}
     </div>
   </div>
 
+  <!-- Clients (built automatically from bookings) -->
+  <div class="view" id="view-clients">
+    <div class="panel">
+      <h2>👥 العملاء</h2>
+      <input id="clientSearch" placeholder="🔍 ابحث باسم العميل أو الرقم أو المكان" style="margin-bottom:10px">
+      <button class="ghost small" id="exportClients" style="width:100%;margin-bottom:12px">📥 تصدير الداتا (Excel / CSV)</button>
+      <div id="clientList"></div>
+    </div>
+  </div>
+
   <!-- All bookings -->
   <div class="view" id="view-list">
     <div class="panel">
-      <h2>📋 كل الحجوزات</h2>
+      <h2 id="listTitle">📋 كل الحجوزات</h2>
+      <input id="bookingSearch" placeholder="🔍 ابحث باسم العميل أو الرقم أو المكان أو التاريخ" style="margin-bottom:10px">
+      <button class="ghost small" id="toggleArchive" style="width:100%;margin-bottom:12px">🗄️ الأرشيف</button>
       <div id="bookingList"></div>
     </div>
     <div class="panel">
@@ -196,33 +199,6 @@ a{color:var(--gold)}
         <input type="file" id="importFile" accept="application/json" style="display:none">
       </div>
       <div class="hint">احفظ نسخة قبل ما تغير الموبايل أو تمسح بيانات المتصفح.</div>
-    </div>
-  </div>
-
-  <!-- Lost cards -->
-  <div class="view" id="view-lost">
-    <div class="panel">
-      <h2>🪪 تسجيل كارت مفقود</h2>
-      <label>رخصة السيارة باسم <span style="color:var(--red)">*</span></label>
-      <input id="lcLicense" placeholder="الاسم المكتوب على الرخصة">
-      <label>اسم فاقد الكارت <span style="color:var(--red)">*</span></label>
-      <input id="lcName" placeholder="اسم صاحب الكارت">
-      <div class="row">
-        <div><label>رقم الموبايل <span style="color:var(--red)">*</span></label><input id="lcPhone" type="tel" placeholder="01xxxxxxxxx"></div>
-        <div><label>مكان الفقد <span style="color:var(--red)">*</span></label><input id="lcPlace" placeholder="اكتب المكان"></div>
-      </div>
-      <div class="row">
-        <div><label>رقم الكارت</label><input id="lcNumber" placeholder="اختياري"></div>
-        <div><label>التاريخ</label><input id="lcDate" type="date"></div>
-      </div>
-      <label>ملاحظات</label>
-      <input id="lcNotes" placeholder="اختياري">
-      <div class="hint">الحقول اللي عليها * أساسية. لو مش معاك بياناتها تقدر تتخطاها وتسجل برضه.</div>
-      <button type="button" class="danger" id="lcSave" style="margin-top:12px;width:100%">حفظ</button>
-    </div>
-    <div class="panel">
-      <h2>📋 الكروت المسجلة</h2>
-      <div id="lostList"></div>
     </div>
   </div>
 
@@ -238,7 +214,7 @@ let staffDraft = [];
 let editingId = null;
 let viewMonth = new Date(); viewMonth.setDate(1);
 let storageOk = true;
-const openSet = new Set(); // keys like "card:123", "pay:123", "staff:123", "rstaff:123", "lost:123"
+const openSet = new Set(); // keys like "card:123", "pay:123", "staff:123", "rstaff:123"
 const isOpen = k => openSet.has(k);
 
 const $ = id => document.getElementById(id);
@@ -252,7 +228,8 @@ const sumPaid = staff => (staff || []).reduce((s, x) => s + (Number(x.paid) || 0
 // ---- Tabs ----
 function showTab(t) {
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
-  ['remind', 'form', 'list', 'lost'].forEach(k => $('view-' + k).classList.toggle('on', k === t));
+  ['remind', 'form', 'list', 'clients'].forEach(k => $('view-' + k).classList.toggle('on', k === t));
+  if (t === 'clients') renderClients();
   window.scrollTo({ top: 0 });
 }
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => showTab(b.dataset.tab));
@@ -387,19 +364,15 @@ function noteText(b) {
   L.push(`⏳ اتبقي: ${money(b.remaining)}`);
   L.push('');
   L.push(`👕 اليونيفورم: ${b.uniform || '-'}`);
-  L.push('🧾 التجهيزات:');
-  L.push(`• تيشرتات: ${b.shirts || 0} | أقماع: ${b.cones || 0} | إشارات توجيه: ${b.signs || 0} | فسفوري عاكس: ${b.vests || 0}`);
-  L.push(`• الكروت (تم التحضير): ${b.cardsReady || '-'}`);
   L.push('');
   L.push('📜 الدفعات:');
   L.push(`• ${b.depositDate || '-'} — عربون ${money(b.deposit)}`);
   b.payments.forEach(p => L.push(`• ${p.date} — ${money(p.amount)}${p.note ? ' (' + p.note + ')' : ''}`));
   L.push('');
   L.push('🧑‍🤝‍🧑 العاملين:');
-  if (b.staff.length) b.staff.forEach(s => L.push(`• ${s.name || '-'} ${s.phone || ''} — ${money(s.paid)}`));
+  if (b.staff.length) b.staff.forEach(s => L.push(`• ${s.name || '-'} ${s.phone || ''}`));
   else L.push('-');
   L.push(`💸 اتصرف للعاملين: ${money(b.paidToStaff)}`);
-  if (b.requests) { L.push(''); L.push(`📝 طلبات خاصة: ${b.requests}`); }
   return L.join('\n');
 }
 async function saveNote(b) {
@@ -443,7 +416,6 @@ function renderStaff() {
     `<div class="staffrow">
        <input placeholder="الاسم" value="${esc(s.name)}" data-i="${i}" data-k="name">
        <input placeholder="الرقم" value="${esc(s.phone)}" data-i="${i}" data-k="phone">
-       <input type="number" min="0" placeholder="المبلغ" value="${s.paid || ''}" data-i="${i}" data-k="paid">
        <div>
          <button type="button" class="wa small" data-sw="${i}">واتساب</button>
          <button type="button" class="danger small" data-rm="${i}">✕</button>
@@ -555,12 +527,6 @@ function startEdit(id) {
   $('valetCount').value = b.valetCount || '';
   $('valetTotal').value = b.valetTotal || '';
   $('deposit').value = b.deposit || '';
-  $('requests').value = b.requests;
-  $('shirts').value = b.shirts || '';
-  $('cones').value = b.cones || '';
-  $('signs').value = b.signs || '';
-  $('vests').value = b.vests || '';
-  $('cardsReady').value = b.cardsReady || '';
   $('uniform').value = b.uniform || '';
   staffDraft = b.staff.map(s => ({ name: s.name, phone: s.phone, paid: s.paid }));
   renderStaff();
@@ -607,7 +573,7 @@ function paymentsPanel(b) {
 function staffDetails(b) {
   if (!b.staff.length) return '<span class="hint">مفيش عمال في الحجز ده</span>';
   const rows = b.staff.map(s =>
-    `<div class="staffinfo">👤 <b>${esc(s.name) || '-'}</b> ${s.phone ? `<a href="tel:${esc(s.phone)}">📞 ${esc(s.phone)}</a>` : ''} — ${money(s.paid)}</div>`
+    `<div class="staffinfo">👤 <b>${esc(s.name) || '-'}</b> ${s.phone ? `<a href="tel:${esc(s.phone)}">📞 ${esc(s.phone)}</a>` : ''}</div>`
   ).join('');
   return rows + `<div class="staffline">${staffLinks(b)}</div>`;
 }
@@ -630,12 +596,16 @@ function card(b) {
       <div><b>${esc(b.client)}</b> <span class="tag">${esc(b.type)}</span> <span class="tag ${soon ? 'gold' : ''}">${when}</span></div>
       <span class="chev">${open ? '▴' : '▾'}</span>
     </div>
-    <div class="bsub">📅 ${esc(b.date)} ${esc(colloquial(b.time))} · 💵 اتبقي: <b style="color:var(--gold)">${money(b.remaining)}</b></div>
+    <div class="bsum">
+      <div><span>📞 الموبايل</span><b>${esc(b.phone) || '-'}</b></div>
+      <div><span>📍 المكان</span><b>${esc(b.venue) || '-'}</b></div>
+      <div><span>👥 المدعوين</span><b>${b.guests || 0}</b></div>
+      <div><span>📅 التاريخ</span><b>${esc(b.date)} ${esc(colloquial(b.time))}</b></div>
+    </div>
+    <div class="bsub">💵 اتبقي: <b style="color:var(--gold)">${money(b.remaining)}</b></div>
     ${open ? `<div class="bdetails">
-      📍 ${esc(b.venue) || '-'} ${b.mapLink ? `<a href="${esc(b.mapLink)}" target="_blank">الخريطة</a>` : ''}<br>
-      📞 ${esc(b.phone) || '-'}<br>
-      👥 المدعوين: ${b.guests} · 🚗 جولف كار: ${b.carts} · 🧑‍✈️ أفراد الفاليه: ${b.valetCount}<br>
-      التجهيزات: تيشرتات ${b.shirts || 0} · أقماع ${b.cones || 0} · إشارات ${b.signs || 0} · فسفوري ${b.vests || 0} · الكروت: ${b.cardsReady || '-'}<br>
+      ${b.mapLink ? `🗺️ <a href="${esc(b.mapLink)}" target="_blank">فتح الخريطة</a><br>` : ''}
+      🚗 جولف كار: ${b.carts} · 🧑‍✈️ أفراد الفاليه: ${b.valetCount}<br>
       👕 اليونيفورم: ${esc(b.uniform) || '-'}
       <div class="total">
         جولف كار: <b>${money(b.cartsTotal)}</b><br>
@@ -645,7 +615,6 @@ function card(b) {
       </div>
       ${paymentsPanel(b)}
       ${staffSection(b)}
-      ${b.requests ? `<div style="margin-top:10px"><b>طلبات خاصة:</b><br>${esc(b.requests)}</div>` : ''}
       <div class="btns">
         <button class="wa small" data-wa="${b.id}">واتساب العميل</button>
         <button class="ghost small" data-note="${b.id}">📤 شارك للنوت</button>
@@ -673,112 +642,79 @@ function reminderCard(b) {
   </div>`;
 }
 
-// ---- Lost cards (separate from bookings) ----
-const LOST_KEY = 'mokhtar_lost';
-let lostCards = [];
-function loadLost() {
-  try { return JSON.parse(localStorage.getItem(LOST_KEY) || '[]'); } catch (e) { return []; }
-}
-function saveLost() {
-  try { localStorage.setItem(LOST_KEY, JSON.stringify(lostCards)); return true; } catch (e) { return false; }
-}
-function lostMissing(c) {
-  const miss = [];
-  if (!c.license) miss.push('رخصة السيارة باسم');
-  if (!c.name) miss.push('اسم فاقد الكارت');
-  if (!c.phone) miss.push('رقم الموبايل');
-  if (!c.place) miss.push('مكان الفقد');
-  return miss;
-}
-function renderLost() {
-  const active = lostCards.filter(c => !c.found);
-  $('lostList').innerHTML = active.length ? active.map(c => {
-    const k = 'lost:' + c.id;
-    const open = isOpen(k);
-    const miss = lostMissing(c);
-    return `<div class="booking">
-      <div class="bhead" data-lk="${k}">
-        <div><b>${esc(c.name) || 'بدون اسم'}</b> <span class="tag red">مفقود</span>${miss.length ? ' <span class="tag">ناقص</span>' : ''}</div>
-        <span class="chev">${open ? '▴' : '▾'}</span>
-      </div>
-      <div class="bsub">📅 ${esc(c.date)} · 📍 ${esc(c.place) || '-'}</div>
-      ${open ? `<div class="bdetails">
-        🚗 رخصة السيارة باسم: ${esc(c.license) || '-'}<br>
-        👤 اسم فاقد الكارت: ${esc(c.name) || '-'}<br>
-        📞 ${c.phone ? `<a href="tel:${esc(c.phone)}">${esc(c.phone)}</a>` : '-'}<br>
-        📍 مكان الفقد: ${esc(c.place) || '-'}<br>
-        🪪 رقم الكارت: ${esc(c.number) || '-'}<br>
-        ${c.notes ? `📝 ${esc(c.notes)}<br>` : ''}
-        ${miss.length ? `<div class="warn" style="margin-top:6px">ناقص: ${miss.join('، ')}</div>` : ''}
-        <div class="btns">
-          ${c.phone ? `<button class="wa small" data-lwa="${c.id}">واتساب صاحب الكارت</button>` : ''}
-          <button class="ghost small" data-lfound="${c.id}">✅ اتلقى</button>
-          <button class="danger small" data-ldel="${c.id}">حذف</button>
-        </div>
-      </div>` : ''}
-    </div>`;
-  }).join('') : '<div class="empty">مفيش كروت مفقودة</div>';
-}
-$('lcSave').onclick = () => {
-  const c = {
-    id: Date.now(),
-    license: $('lcLicense').value.trim(),
-    name: $('lcName').value.trim(),
-    phone: $('lcPhone').value.trim(),
-    place: $('lcPlace').value.trim(),
-    number: $('lcNumber').value.trim(),
-    date: $('lcDate').value || todayISO(),
-    notes: $('lcNotes').value.trim(),
-    found: false
-  };
-  const miss = lostMissing(c);
-  if (miss.length && !confirm(`البيانات دي ناقصة: ${miss.join('، ')}\nتتخطى وتسجل برضه؟`)) return;
-  lostCards.push(c);
-  const ok = saveLost();
-  ['lcLicense', 'lcName', 'lcPhone', 'lcPlace', 'lcNumber', 'lcNotes'].forEach(id => $(id).value = '');
-  $('lcDate').value = todayISO();
-  renderLost();
-  alert(ok ? 'اتسجل الكارت ✅' : 'اتسجل في الصفحة دي بس، والمتصفح مش مسموح له يحفظ على الجهاز.');
-};
-document.addEventListener('click', e => {
-  const t = e.target;
-  const lk = t.closest('[data-lk]');
-  if (lk) {
-    const k = lk.dataset.lk;
-    if (isOpen(k)) openSet.delete(k); else openSet.add(k);
-    renderLost();
-    return;
-  }
-  const id = t.dataset.lwa || t.dataset.lfound || t.dataset.ldel;
-  if (!id) return;
-  const c = lostCards.find(x => String(x.id) === id);
-  if (!c) return;
-  if (t.dataset.lwa) {
-    window.open(waUrl(c.phone, `مرحباً ${c.name || ''}، لقينا كارت مفقود باسمك${c.number ? ' رقم ' + c.number : ''}${c.place ? ' من مكان ' + c.place : ''}. تواصل معانا على الرقم ده لاستلامه. شكراً 🙏`), '_blank');
-    return;
-  } else if (t.dataset.lfound) {
-    if (!confirm('الكارت اتلقى؟ هيتشال من القائمة')) return;
-    c.found = true;
-    c.foundDate = todayISO();
-  } else if (t.dataset.ldel) {
-    if (!confirm('تحذف الكارت ده من السجل؟')) return;
-    lostCards = lostCards.filter(x => String(x.id) !== id);
-  }
-  saveLost();
-  renderLost();
-});
-
+let showArchive = false; // true = showing finished bookings
 function render() {
   bookings = bookings.map(normalize);
   const list = [...bookings].sort((a, b) => a.date.localeCompare(b.date));
   const rem = list.filter(b => { const d = daysUntil(b.date); return d >= 0 && d <= 7; });
   $('reminderList').innerHTML = rem.length ? rem.map(reminderCard).join('') : '<div class="empty">مفيش مناسبات خلال الـ 7 أيام الجاية</div>';
-  $('bookingList').innerHTML = list.length ? list.map(card).join('') : '<div class="empty">لا توجد حجوزات بعد</div>';
+  // Finished events (before today) go to the archive; upcoming ones stay in the list
+  const past = list.filter(b => daysUntil(b.date) < 0).reverse();
+  const upcoming = list.filter(b => daysUntil(b.date) >= 0);
+  const base = showArchive ? past : upcoming;
+  const q = ($('bookingSearch')?.value || '').trim().toLowerCase();
+  const shown = q ? base.filter(b => [b.client, b.phone, b.venue, b.type, b.date]
+    .some(v => String(v || '').toLowerCase().includes(q))) : base;
+  $('listTitle').textContent = showArchive ? '🗄️ الأرشيف' : '📋 كل الحجوزات';
+  $('toggleArchive').textContent = showArchive ? '↩️ رجوع للحجوزات الجاية' : `🗄️ الأرشيف (${past.length})`;
+  $('bookingList').innerHTML = shown.length ? shown.map(card).join('')
+    : (base.length ? '<div class="empty">مفيش نتايج للبحث ده</div>'
+      : `<div class="empty">${showArchive ? 'الأرشيف فاضي' : 'مفيش حجوزات جاية'}</div>`);
   renderCal();
 }
 
+// ---- Clients (grouped automatically from all bookings, nothing stored twice) ----
+function buildClients() {
+  const map = new Map();
+  bookings.forEach(b => {
+    const digits = (b.phone || '').replace(/\D/g, '');
+    // last 10 digits so +20 / 0 prefixes of the same number group together
+    const key = digits.length >= 10 ? digits.slice(-10) : (digits || 'name:' + (b.client || '').trim());
+    if (!map.has(key)) map.set(key, { name: b.client || '', phone: b.phone || '', events: [] });
+    const c = map.get(key);
+    if (b.client) c.name = b.client; // keep the latest name used
+    if (b.phone) c.phone = b.phone;
+    c.events.push({ date: b.date, time: b.time, type: b.type, venue: b.venue || '', guests: b.guests || 0, total: b.total || 0, remaining: b.remaining || 0 });
+  });
+  const out = [...map.values()];
+  out.forEach(c => c.events.sort((a, b) => b.date.localeCompare(a.date)));
+  out.sort((a, b) => (b.events[0]?.date || '').localeCompare(a.events[0]?.date || ''));
+  return out;
+}
+function renderClients() {
+  const q = ($('clientSearch')?.value || '').trim().toLowerCase();
+  const all = buildClients();
+  const list = q ? all.filter(c => [c.name, c.phone, ...c.events.map(e => e.venue)]
+    .some(v => String(v || '').toLowerCase().includes(q))) : all;
+  $('clientList').innerHTML = list.length ? list.map(c => `
+    <div class="booking">
+      <div class="bhead"><div><b>${esc(c.name) || '-'}</b> <span class="tag">${c.events.length} مناسبة</span></div></div>
+      <div class="bsub">📞 ${esc(c.phone) || '-'}</div>
+      <div class="btns"><a class="wa small" style="padding:7px 10px;border-radius:8px;text-decoration:none" href="${waUrl(c.phone, '')}" target="_blank">واتساب</a></div>
+      <div class="bdetails" style="margin-top:8px">
+        ${c.events.map(e => `<div class="payrow"><span>📅 ${esc(e.date)} ${esc(colloquial(e.time))} · ${esc(e.type)}<br>📍 ${esc(e.venue) || '-'}</span><b>${money(e.total)}</b></div>`).join('')}
+      </div>
+    </div>`).join('')
+    : '<div class="empty">مفيش عملاء بعد</div>';
+}
+function clientsCsv() {
+  const esc2 = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const rows = [['الاسم', 'الموبايل', 'عدد المناسبات', 'آخر تاريخ', 'آخر مكان', 'كل المناسبات (تاريخ - نوع - مكان)']];
+  buildClients().forEach(c => {
+    rows.push([
+      c.name, c.phone, c.events.length, c.events[0]?.date || '', c.events[0]?.venue || '',
+      c.events.map(e => `${e.date} - ${e.type} - ${e.venue || '-'}`).join(' | ')
+    ]);
+  });
+  return '﻿' + rows.map(r => r.map(esc2).join(',')).join('\r\n');
+}
+$('clientSearch').addEventListener('input', renderClients);
+$('exportClients').onclick = () => downloadFile('mokhtar-clients.csv', 'text/csv;charset=utf-8', clientsCsv());
+
 // ---- Events ----
 document.querySelectorAll('#bookingForm input').forEach(i => i.addEventListener('input', calc));
+$('bookingSearch').addEventListener('input', render);
+$('toggleArchive').onclick = () => { showArchive = !showArchive; render(); };
 $('toggleStaffForm').onclick = () => setStaffBox($('staffBox').style.display === 'none');
 $('addStaff').onclick = () => { staffDraft.push({ name: '', phone: '', paid: 0 }); renderStaff(); calc(); };
 $('staffList').addEventListener('input', e => {
@@ -797,6 +733,26 @@ $('staffList').addEventListener('click', e => {
     if (url) window.open(url, '_blank');
   }
 });
+// Shows a small chooser when a contact has more than one number. Resolves to the chosen number, or null if skipped.
+function chooseNumber(name, tels) {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:99;padding:16px';
+    ov.innerHTML = `<div style="background:#151515;border:1px solid var(--gold);border-radius:14px;padding:16px;width:100%;max-width:340px">
+      <h2 style="margin-bottom:6px">📞 اختار الرقم</h2>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:12px">${esc(name) || 'العامل'} ليه أكتر من رقم</div>
+      ${tels.map((t, i) => `<button type="button" class="ghost" data-i="${i}" style="width:100%;margin-bottom:8px;direction:ltr">${esc(t)}</button>`).join('')}
+      <button type="button" class="danger small" data-i="skip" style="width:100%">تخطي هذا العامل</button>
+    </div>`;
+    ov.addEventListener('click', e => {
+      const v = e.target.closest('button')?.dataset.i;
+      if (v === undefined) return;
+      ov.remove();
+      resolve(v === 'skip' ? null : tels[Number(v)]);
+    });
+    document.body.appendChild(ov);
+  });
+}
 $('pickContacts').onclick = async () => {
   if (!('contacts' in navigator) || !('ContactsManager' in window)) {
     alert('المتصفح ده مش بيدعم جهات الاتصال. افتح الصفحة من كروم على أندرويد من رابط آمن (GitHub Pages)، أو أضف العمال يدوي.');
@@ -805,11 +761,20 @@ $('pickContacts').onclick = async () => {
   try {
     const picked = await navigator.contacts.select(['name', 'tel'], { multiple: true });
     if (!picked || !picked.length) return;
-    picked.forEach(c => staffDraft.push({ name: (c.name && c.name[0]) || '', phone: (c.tel && c.tel[0]) || '', paid: 0 }));
+    let added = 0;
+    for (const c of picked) {
+      const name = (c.name && c.name[0]) || '';
+      const tels = (c.tel || []).filter(Boolean);
+      // one number: use it. several numbers: let the user choose. none: add the name only
+      const phone = tels.length > 1 ? await chooseNumber(name, tels) : (tels[0] || '');
+      if (phone === null) continue; // user skipped this contact
+      staffDraft.push({ name, phone, paid: 0 });
+      added++;
+    }
     renderStaff();
     calc();
     setStaffBox(true);
-    alert(`اتضاف ${picked.length} عامل من جهات الاتصال ✅ — اتأكد من الاسم والرقم قبل الحفظ`);
+    if (added) alert(`اتضاف ${added} عامل من جهات الاتصال ✅ — اتأكد من الاسم والرقم قبل الحفظ`);
   } catch (e) {
     if (e.name !== 'AbortError') alert('ما قدرتش أفتح جهات الاتصال: ' + e.message);
   }
@@ -853,12 +818,6 @@ $('bookingForm').addEventListener('submit', e => {
       depositDate: old && old.depositDate ? old.depositDate : (dep > 0 ? todayISO() : ''),
       payments: old ? old.payments : [],
       staff: staffDraft.filter(s => s.name || s.phone || s.paid),
-      requests: $('requests').value.trim(),
-      shirts: num('shirts'),
-      cones: num('cones'),
-      signs: num('signs'),
-      vests: num('vests'),
-      cardsReady: $('cardsReady').value,
       uniform: $('uniform').value.trim()
     });
     if (old) {
@@ -960,9 +919,6 @@ bookings = loadBookings();
 if (!storageOk) {
   alert('المتصفح ده مش بيسمح بالحفظ على الجهاز، فالحجوزات هتتمسح لما تقفل الصفحة. افتح الصفحة من GitHub Pages أو من كروم عادي.');
 }
-lostCards = loadLost();
-$('lcDate').value = todayISO();
-renderLost();
 resetForm();
 render();
 </script>
