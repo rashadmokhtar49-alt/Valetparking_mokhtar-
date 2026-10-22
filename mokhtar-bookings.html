@@ -670,11 +670,11 @@ function buildClients() {
     const digits = (b.phone || '').replace(/\D/g, '');
     // last 10 digits so +20 / 0 prefixes of the same number group together
     const key = digits.length >= 10 ? digits.slice(-10) : (digits || 'name:' + (b.client || '').trim());
-    if (!map.has(key)) map.set(key, { name: b.client || '', phone: b.phone || '', events: [] });
+    if (!map.has(key)) map.set(key, { key, name: b.client || '', phone: b.phone || '', events: [] });
     const c = map.get(key);
     if (b.client) c.name = b.client; // keep the latest name used
     if (b.phone) c.phone = b.phone;
-    c.events.push({ date: b.date, time: b.time, type: b.type, venue: b.venue || '', guests: b.guests || 0, total: b.total || 0, remaining: b.remaining || 0 });
+    c.events.push({ date: b.date, time: b.time, type: b.type, venue: b.venue || '', guests: b.guests || 0, total: b.total || 0, remaining: b.remaining || 0, valetTotal: b.valetTotal || 0, cartsTotal: b.cartsTotal || 0 });
   });
   const out = [...map.values()];
   out.forEach(c => c.events.sort((a, b) => b.date.localeCompare(a.date)));
@@ -686,15 +686,28 @@ function renderClients() {
   const all = buildClients();
   const list = q ? all.filter(c => [c.name, c.phone, ...c.events.map(e => e.venue)]
     .some(v => String(v || '').toLowerCase().includes(q))) : all;
-  $('clientList').innerHTML = list.length ? list.map(c => `
-    <div class="booking">
-      <div class="bhead"><div><b>${esc(c.name) || '-'}</b> <span class="tag">${c.events.length} مناسبة</span></div></div>
-      <div class="bsub">📞 ${esc(c.phone) || '-'}</div>
-      <div class="btns"><a class="wa small" style="padding:7px 10px;border-radius:8px;text-decoration:none" href="${waUrl(c.phone, '')}" target="_blank">واتساب</a></div>
-      <div class="bdetails" style="margin-top:8px">
-        ${c.events.map(e => `<div class="payrow"><span>📅 ${esc(e.date)} ${esc(colloquial(e.time))} · ${esc(e.type)}<br>📍 ${esc(e.venue) || '-'}</span><b>${money(e.total)}</b></div>`).join('')}
+  $('clientList').innerHTML = list.length ? list.map(c => {
+    const k = 'client:' + c.key;
+    const open = isOpen(k);
+    const last = c.events[0];
+    return `<div class="booking">
+      <div class="bhead" data-ck="${esc(c.key)}" style="cursor:pointer">
+        <div><b>${esc(c.name) || '-'}</b> <span class="tag">${c.events.length} مناسبة</span></div>
+        <span class="chev">${open ? '▴' : '▾'}</span>
       </div>
-    </div>`).join('')
+      <div class="bsub">📞 ${esc(c.phone) || '-'}</div>
+      ${open ? `<div class="bdetails">
+        📍 المكان: ${esc(last.venue) || '-'}<br>
+        <div class="bsum" style="margin-top:8px">
+          <div><span>🧑‍✈️ حساب الفاليه</span><b>${money(last.valetTotal)}</b></div>
+          <div><span>🚗 حساب الجولف كار</span><b>${money(last.cartsTotal)}</b></div>
+        </div>
+        <div class="btns"><a class="wa small" style="padding:7px 10px;border-radius:8px;text-decoration:none" href="${waUrl(c.phone, '')}" target="_blank">واتساب</a></div>
+        <div style="margin-top:10px"><b>كل المناسبات:</b></div>
+        ${c.events.map(e => `<div class="payrow"><span>📅 ${esc(e.date)} ${esc(colloquial(e.time))} · ${esc(e.type)}<br>📍 ${esc(e.venue) || '-'}</span><b>${money(e.total)}</b></div>`).join('')}
+      </div>` : ''}
+    </div>`;
+  }).join('')
     : '<div class="empty">مفيش عملاء بعد</div>';
 }
 function clientsCsv() {
@@ -709,6 +722,13 @@ function clientsCsv() {
   return '﻿' + rows.map(r => r.map(esc2).join(',')).join('\r\n');
 }
 $('clientSearch').addEventListener('input', renderClients);
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-ck]');
+  if (!btn) return;
+  const k = 'client:' + btn.dataset.ck;
+  if (isOpen(k)) openSet.delete(k); else openSet.add(k);
+  renderClients();
+});
 $('exportClients').onclick = () => downloadFile('mokhtar-clients.csv', 'text/csv;charset=utf-8', clientsCsv());
 
 // ---- Events ----
