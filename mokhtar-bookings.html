@@ -16,7 +16,25 @@
 body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
 .top{background:#000;border-bottom:1px solid var(--gold);padding:16px 12px 12px;text-align:center}
 .brand{margin:0;font-size:20px;letter-spacing:1px;color:var(--gold);font-weight:bold;direction:ltr}
-.tabs{display:flex;gap:6px;margin-top:12px;justify-content:center;flex-wrap:wrap}
+.gear-row{display:flex;align-items:center;gap:8px;background:#0e0e0e;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.gear-row label{flex:1;display:flex;align-items:center;gap:10px;cursor:pointer;font-size:16px}
+.gear-row input[type=checkbox]{width:22px;height:22px;flex:none;accent-color:#c9a227;margin:0}
+.gear-row.done span{text-decoration:line-through;opacity:.45}
+.palm-alert{background:#0d2a3a;border:1px solid #2a7fa8;color:#9fd8f5;border-radius:10px;padding:12px;margin-bottom:10px;font-weight:bold}
+.sugg-box{background:#101010;border:1px solid var(--gold);border-radius:10px;margin-top:6px;overflow:hidden}
+.sugg-box .sugg-t{color:var(--muted);font-size:12px;padding:8px 10px 0}
+.sugg-box button{display:block;width:100%;text-align:right;background:#161616;color:var(--text);border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px;font-weight:normal}
+.sugg-box button small{color:var(--muted);margin-right:8px;direction:ltr;display:inline-block}
+.tabs{display:flex;gap:4px;margin-top:12px;justify-content:safe center;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:0 2px 4px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs .tab{flex:0 0 auto;white-space:nowrap;padding:7px 6px;font-size:12px}
+.view{will-change:transform,opacity}
+.view.enter-next{animation:vNext .3s cubic-bezier(.2,.8,.2,1)}
+.view.enter-prev{animation:vPrev .3s cubic-bezier(.2,.8,.2,1)}
+.view.enter-fade{animation:vFade .25s ease}
+@keyframes vNext{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+@keyframes vPrev{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:none}}
+@keyframes vFade{from{opacity:0}to{opacity:1}}
 .tab{background:#1a1a1a;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:14px;cursor:pointer;font-weight:bold;font-family:inherit}
 .tab.on{background:var(--gold);color:#000;border-color:var(--gold)}
 main{max-width:640px;margin:auto;padding:14px}
@@ -85,10 +103,11 @@ a{color:var(--gold)}
 <header class="top">
   <h1 class="brand">Valet Parking Mokhtar</h1>
   <nav class="tabs">
-    <button class="tab on" data-tab="remind">🔔 التذكيرات</button>
-    <button class="tab" data-tab="form">➕ حجز جديد</button>
-    <button class="tab" data-tab="list">📋 الحجوزات</button>
-    <button class="tab" data-tab="clients">👥 العملاء</button>
+    <button class="tab on" data-tab="remind">🔔 تذكير</button>
+    <button class="tab" data-tab="form">➕ حجز</button>
+    <button class="tab" data-tab="list">📋 حجوزات</button>
+    <button class="tab" data-tab="clients">👥 عملاء</button>
+    <button class="tab" data-tab="gear">🧰 تجهيز</button>
   </nav>
 </header>
 
@@ -160,10 +179,10 @@ a{color:var(--gold)}
         <button type="button" class="ghost" id="toggleStaffForm" style="width:100%">👷 بيانات الموظفين</button>
         <div id="staffBox" style="display:none;margin-top:10px">
           <div class="btns" style="margin-top:0">
-            <button type="button" class="wa" id="pickContacts">📇 اختار من جهات الاتصال</button>
             <button type="button" class="ghost" id="addStaff">+ إضافة عامل يدوي</button>
           </div>
           <div id="staffList"></div>
+          <div id="staffSugg" class="sugg-box" style="display:none"></div>
         </div>
 
 
@@ -180,6 +199,20 @@ a{color:var(--gold)}
       <input id="clientSearch" placeholder="🔍 ابحث باسم العميل أو الرقم أو المكان" style="margin-bottom:10px">
       <button class="ghost small" id="exportClients" style="width:100%;margin-bottom:12px">📥 تصدير الداتا (Excel / CSV)</button>
       <div id="clientList"></div>
+    </div>
+  </div>
+
+  <!-- Equipment checklist -->
+  <div class="view" id="view-gear">
+    <div class="panel">
+      <h2>🧰 التجهيزات</h2>
+      <div id="gearCount" style="color:#888;margin-bottom:10px"></div>
+      <div id="gearList"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input id="gearNew" placeholder="➕ اكتب بند جديد" style="flex:1">
+        <button id="gearAdd" type="button">إضافة</button>
+      </div>
+      <button class="ghost small" id="gearReset" type="button" style="width:100%;margin-top:12px">🔄 إعادة تعيين (لحدث جديد)</button>
     </div>
   </div>
 
@@ -226,10 +259,21 @@ const todayISO = () => { const t = new Date(); return `${t.getFullYear()}-${pad(
 const sumPaid = staff => (staff || []).reduce((s, x) => s + (Number(x.paid) || 0), 0);
 
 // ---- Tabs ----
-function showTab(t) {
+function showTab(t, dir) {
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
-  ['remind', 'form', 'list', 'clients'].forEach(k => $('view-' + k).classList.toggle('on', k === t));
+  ['remind', 'form', 'list', 'clients', 'gear'].forEach(k => {
+    const el = $('view-' + k);
+    const was = el.classList.contains('on');
+    el.classList.toggle('on', k === t);
+    el.style.transform = ''; el.style.opacity = '';
+    if (k === t && !was) {
+      el.classList.remove('enter-next', 'enter-prev', 'enter-fade');
+      void el.offsetWidth; // restart the animation
+      el.classList.add(dir === 'next' ? 'enter-next' : dir === 'prev' ? 'enter-prev' : 'enter-fade');
+    }
+  });
   if (t === 'clients') renderClients();
+  if (t === 'gear') renderGear();
   window.scrollTo({ top: 0 });
 }
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => showTab(b.dataset.tab));
@@ -647,7 +691,9 @@ function render() {
   bookings = bookings.map(normalize);
   const list = [...bookings].sort((a, b) => a.date.localeCompare(b.date));
   const rem = list.filter(b => { const d = daysUntil(b.date); return d >= 0 && d <= 7; });
-  $('reminderList').innerHTML = rem.length ? rem.map(reminderCard).join('') : '<div class="empty">مفيش مناسبات خلال الـ 7 أيام الجاية</div>';
+  const palms = rem.filter(b => /palm|palms|نخيل|بالم/i.test(b.venue || ''));
+  const palmBanner = palms.map(b => `<div class="palm-alert">💧 خد مياه: عندك شغل في ${esc(b.venue)} (${esc(b.date)})</div>`).join('');
+  $('reminderList').innerHTML = palmBanner + (rem.length ? rem.map(reminderCard).join('') : '<div class="empty">مفيش مناسبات خلال الـ 7 أيام الجاية</div>');
   // Finished events (before today) go to the archive; upcoming ones stay in the list
   const past = list.filter(b => daysUntil(b.date) < 0).reverse();
   const upcoming = list.filter(b => daysUntil(b.date) >= 0);
@@ -773,32 +819,62 @@ function chooseNumber(name, tels) {
     document.body.appendChild(ov);
   });
 }
-$('pickContacts').onclick = async () => {
-  if (!('contacts' in navigator) || !('ContactsManager' in window)) {
-    alert('المتصفح ده مش بيدعم جهات الاتصال. افتح الصفحة من كروم على أندرويد من رابط آمن (GitHub Pages)، أو أضف العمال يدوي.');
-    return;
-  }
-  try {
-    const picked = await navigator.contacts.select(['name', 'tel'], { multiple: true });
-    if (!picked || !picked.length) return;
-    let added = 0;
-    for (const c of picked) {
-      const name = (c.name && c.name[0]) || '';
-      const tels = (c.tel || []).filter(Boolean);
-      // one number: use it. several numbers: let the user choose. none: add the name only
-      const phone = tels.length > 1 ? await chooseNumber(name, tels) : (tels[0] || '');
-      if (phone === null) continue; // user skipped this contact
-      staffDraft.push({ name, phone, paid: 0 });
-      added++;
-    }
-    renderStaff();
-    calc();
-    setStaffBox(true);
-    if (added) alert(`اتضاف ${added} عامل من جهات الاتصال ✅ — اتأكد من الاسم والرقم قبل الحفظ`);
-  } catch (e) {
-    if (e.name !== 'AbortError') alert('ما قدرتش أفتح جهات الاتصال: ' + e.message);
-  }
-};
+// ---- Staff suggestions (from past bookings, unique by phone) ----
+const phoneKey = p => { const d = String(p || '').replace(/\D/g, ''); return d.length >= 10 ? d.slice(-10) : d; };
+function staffDirectory() {
+  const map = new Map();
+  bookings.forEach(b => (b.staff || []).forEach(st => {
+    const name = (st.name || '').trim(), phone = (st.phone || '').trim();
+    if (!name && !phone) return;
+    const key = phoneKey(phone) || 'n:' + name;
+    const cur = map.get(key);
+    if (!cur) map.set(key, { name, phone });
+    else if (!cur.name && name) cur.name = name;
+  }));
+  return [...map.values()];
+}
+let suggRow = -1;
+function hideSugg() { $('staffSugg').style.display = 'none'; $('staffSugg').innerHTML = ''; suggRow = -1; }
+function showSugg(i, typed) {
+  const q = (typed || '').trim().toLowerCase();
+  if (!q) return hideSugg();
+  const taken = new Set(staffDraft.map(x => phoneKey(x.phone)).filter(Boolean));
+  const matches = staffDirectory().filter(d => d.name.toLowerCase().includes(q)).slice(0, 6);
+  if (!matches.length) return hideSugg();
+  suggRow = i;
+  $('staffSugg').innerHTML = '<div class="sugg-t">👤 اقتراحات من العاملين السابقين</div>' +
+    matches.map((d, k) => `<button type="button" data-pick="${k}">${esc(d.name)} <small>${esc(d.phone) || ''}</small></button>`).join('');
+  $('staffSugg').style.display = 'block';
+  $('staffSugg').dataset.list = JSON.stringify(matches);
+  return taken;
+}
+$('staffSugg').addEventListener('click', e => {
+  const k = e.target.closest('[data-pick]')?.dataset.pick;
+  if (k === undefined || suggRow < 0) return;
+  const list = JSON.parse($('staffSugg').dataset.list || '[]');
+  const pick = list[Number(k)];
+  if (!pick || !staffDraft[suggRow]) return;
+  staffDraft[suggRow].name = pick.name;
+  staffDraft[suggRow].phone = pick.phone;
+  hideSugg(); renderStaff(); calc();
+});
+// staff name input: show suggestions as the user types
+$('staffList').addEventListener('input', e => {
+  if (e.target.dataset.k !== 'name') return;
+  showSugg(Number(e.target.dataset.i), e.target.value);
+});
+// phone typed: if this number is known, fill the name automatically
+$('staffList').addEventListener('input', e => {
+  if (e.target.dataset.k !== 'phone') return;
+  const i = Number(e.target.dataset.i);
+  const key = phoneKey(e.target.value);
+  if (key.length < 10 || !staffDraft[i] || staffDraft[i].name) return;
+  const known = staffDirectory().find(d => phoneKey(d.phone) === key && d.name);
+  if (!known) return;
+  staffDraft[i].name = known.name;
+  const nameInput = document.querySelector(`#staffList input[data-i="${i}"][data-k="name"]`);
+  if (nameInput) nameInput.value = known.name;
+});
 $('cancelEdit').onclick = () => { resetForm(); showTab('list'); };
 
 $('bookingForm').addEventListener('submit', e => {
@@ -939,6 +1015,107 @@ bookings = loadBookings();
 if (!storageOk) {
   alert('المتصفح ده مش بيسمح بالحفظ على الجهاز، فالحجوزات هتتمسح لما تقفل الصفحة. افتح الصفحة من GitHub Pages أو من كروم عادي.');
 }
+
+// ---- Equipment checklist ----
+const GEAR_KEY = 'mokhtar_gear';
+const GEAR_DEFAULT = ['الكروت', 'يونيفورم الشباب', 'الاقماع', 'اشارات التوجيه', 'اللبس الفسفوري', 'كاتل الشاي'];
+function loadGear() {
+  try {
+    const v = JSON.parse(localStorage.getItem(GEAR_KEY) || 'null');
+    if (Array.isArray(v)) return v;
+  } catch (e) {}
+  return [...GEAR_DEFAULT, 'دفتر التسليم والقلم', 'مفرش الترابيزة'].map((n, i) => ({ id: 'g' + i, name: n, done: false }));
+}
+let gear = loadGear();
+if (localStorage.getItem('mokhtar_gear_v') !== '3') {
+  // one-time: add new default items to an existing saved list
+  ['دفتر التسليم والقلم', 'مفرش الترابيزة'].forEach((n, i) => {
+    if (!gear.some(g => g.name === n)) gear.push({ id: 'g_new' + i, name: n, done: false });
+  });
+  try { localStorage.setItem(GEAR_KEY, JSON.stringify(gear)); localStorage.setItem('mokhtar_gear_v', '3'); } catch (e) {}
+}
+function saveGear() {
+  try { localStorage.setItem(GEAR_KEY, JSON.stringify(gear)); } catch (e) {}
+}
+function renderGear() {
+  $('gearCount').textContent = `تم ${gear.filter(g => g.done).length} من ${gear.length}`;
+  $('gearList').innerHTML = gear.length
+    ? gear.map(g => `<div class="gear-row${g.done ? ' done' : ''}">
+        <label><input type="checkbox" data-gid="${esc(g.id)}" ${g.done ? 'checked' : ''}><span>${esc(g.name)}</span></label>
+        <button type="button" class="ghost small" data-gdel="${esc(g.id)}">🗑️</button>
+      </div>`).join('')
+    : '<p style="color:#888">مفيش بنود، أضف بند من تحت</p>';
+}
+$('gearList').onchange = e => {
+  const id = e.target.dataset.gid;
+  if (!id) return;
+  const g = gear.find(x => x.id === id);
+  if (g) { g.done = e.target.checked; saveGear(); renderGear(); }
+};
+$('gearList').onclick = e => {
+  const id = e.target.dataset.gdel;
+  if (!id || !confirm('تشيل البند ده؟')) return;
+  gear = gear.filter(x => x.id !== id);
+  saveGear(); renderGear();
+};
+$('gearAdd').onclick = () => {
+  const n = $('gearNew').value.trim();
+  if (!n) return;
+  gear.push({ id: 'g' + Date.now(), name: n, done: false });
+  $('gearNew').value = '';
+  saveGear(); renderGear();
+};
+$('gearReset').onclick = () => {
+  if (!confirm('تفضي كل العلامات عشان تبدأ حدث جديد؟')) return;
+  gear.forEach(g => g.done = false);
+  saveGear(); renderGear();
+};
+
+// ---- Swipe between sections ----
+(function () {
+  const ORDER = ['remind', 'form', 'list', 'clients', 'gear'];
+  let sx = 0, sy = 0, st = 0, tracking = false, horiz = null, el = null;
+  const reset = (animated) => {
+    if (!el) return;
+    el.style.transition = animated ? 'transform .22s ease, opacity .22s ease' : 'none';
+    el.style.transform = ''; el.style.opacity = '';
+    el = null;
+  };
+  document.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1 || e.target.closest('input, textarea, select, [contenteditable]')) { tracking = false; return; }
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now();
+    tracking = true; horiz = null;
+    el = document.querySelector('.view.on');
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!tracking || !el) return;
+    const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+    if (horiz === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) horiz = Math.abs(dx) > 1.5 * Math.abs(dy);
+    if (!horiz) return;
+    el.style.transition = 'none';
+    el.style.transform = `translateX(${dx * 0.4}px)`;
+    el.style.opacity = String(1 - Math.min(Math.abs(dx) / 500, 0.35));
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (!tracking) return;
+    tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx, dy = t.clientY - sy;
+    const quick = Date.now() - st <= 600;
+    const cur = ORDER.findIndex(k => $('view-' + k).classList.contains('on'));
+    // RTL layout: swiping right-to-left moves to the next section
+    const dir = dx < 0 ? 'next' : 'prev';
+    const next = dir === 'next' ? cur + 1 : cur - 1;
+    const commit = quick && horiz && Math.abs(dx) >= 70 && next >= 0 && next < ORDER.length;
+    if (commit) {
+      reset(false);
+      showTab(ORDER[next], dir);
+    } else {
+      reset(true); // snap back
+    }
+    horiz = null;
+  }, { passive: true });
+})();
 resetForm();
 render();
 </script>
