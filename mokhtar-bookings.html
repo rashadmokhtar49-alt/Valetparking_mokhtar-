@@ -888,14 +888,14 @@ function renderTeam() {
   else {
     html = `<div class="tm-head"><span style="flex:1;text-align:right">العامل</span>${evs.map(e =>
       `<span>${esc(e.venue || '-')}<small>${esc(colloquial(e.time))}</small></span>`).join('')}</div>`;
-    html += people.map(p => `<div class="tm-row"><b>${esc(p.name) || '-'}</b>${evs.map(e => {
+    html += people.map((p, i) => `<div class="tm-row"><span style="color:var(--gold);font-weight:bold;min-width:22px">${i + 1}</span><b>${esc(p.name) || '-'}</b>${evs.map(e => {
       const on = (e.staff || []).some(s => samePerson(p, s));
       return `<button type="button" class="sq${on ? ' on' : ''}" data-p="${esc(p.id)}" data-e="${esc(String(e.id))}">${on ? '✓' : ''}</button>`;
     }).join('')}</div>`).join('');
   }
   $('teamGrid').innerHTML = html;
   $('rosterList').innerHTML = people.length
-    ? people.map(p => `<div class="staffrow" style="grid-template-columns:1fr 1fr auto"><span>${esc(p.name)}</span><span style="direction:ltr">${esc(p.phone)}</span><button type="button" class="danger small" data-dp="${esc(p.id)}">✕</button></div>`).join('')
+    ? `<div style="color:#888;font-size:13px;margin-bottom:6px">عدد العمال: ${people.length}</div>` + people.map((p, i) => `<div class="staffrow" style="grid-template-columns:auto 1fr 1fr auto"><b style="color:var(--gold);align-self:center">${i + 1}</b><span>${esc(p.name)}</span><span style="direction:ltr">${esc(p.phone)}</span><button type="button" class="danger small" data-dp="${esc(p.id)}">✕</button></div>`).join('')
     : '<p style="color:#888">مفيش عمال لسه</p>';
 }
 $('teamDate').onchange = renderTeam;
@@ -911,12 +911,15 @@ $('teamGrid').addEventListener('click', e => {
   if (!was) target.staff = [...(target.staff || []), { name: p.name, phone: p.phone, paid: 0 }];
   persist(); renderTeam(); render();
 });
-$('rosterAdd').onclick = () => {
+$('rosterAdd').onclick = async () => {
   if (!people) { people = loadPeople(); }
   const name = $('rosterName').value.trim(), phone = $('rosterPhone').value.trim();
   if (!name) { appToast('اكتب اسم العامل'); return; }
   const k = phoneKey(phone);
   if (k && people.some(p => phoneKey(p.phone) === k)) { appToast('الرقم ده موجود في القايمة قبل كده'); return; }
+  const nk = name.toLowerCase().replace(/\s+/g, ' ');
+  const dup = people.find(p => (p.name || '').trim().toLowerCase().replace(/\s+/g, ' ') === nk);
+  if (dup && !(await appConfirm(`فيه عامل اسمه "${dup.name}" في القايمة (رقمه ${dup.phone || 'مش مكتوب'}).\nالاسم ده لشخص تاني؟`))) return;
   people.push({ id: 'p' + Date.now(), name, phone });
   savePeople();
   $('rosterName').value = ''; $('rosterPhone').value = '';
