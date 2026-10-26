@@ -25,6 +25,13 @@ body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var
 .sugg-box .sugg-t{color:var(--muted);font-size:12px;padding:8px 10px 0}
 .sugg-box button{display:block;width:100%;text-align:right;background:#161616;color:var(--text);border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px;font-weight:normal}
 .sugg-box button small{color:var(--muted);margin-right:8px;direction:ltr;display:inline-block}
+.tm-head,.tm-row{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--line)}
+.tm-head{font-size:12px;color:var(--muted)}
+.tm-head span{flex:0 0 52px;text-align:center}
+.tm-head span small{display:block;font-size:11px}
+.tm-row b{flex:1;min-width:80px;font-size:14px}
+.sq{width:44px;height:44px;flex:0 0 44px;border-radius:10px;background:#1a1a1a;border:1px solid var(--line);color:#c9a227;font-size:18px;padding:0}
+.sq.on{background:var(--gold);color:#000;border-color:var(--gold)}
 .tabs{display:flex;gap:4px;margin-top:12px;justify-content:safe center;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:0 2px 4px}
 .tabs::-webkit-scrollbar{display:none}
 .tabs .tab{flex:0 0 auto;white-space:nowrap;padding:7px 6px;font-size:12px}
@@ -106,6 +113,7 @@ a{color:var(--gold)}
     <button class="tab on" data-tab="remind">🔔 تذكير</button>
     <button class="tab" data-tab="form">➕ حجز</button>
     <button class="tab" data-tab="list">📋 حجوزات</button>
+    <button class="tab" data-tab="team">👷 عمال</button>
     <button class="tab" data-tab="clients">👥 عملاء</button>
     <button class="tab" data-tab="gear">🧰 تجهيز</button>
   </nav>
@@ -175,15 +183,6 @@ a{color:var(--gold)}
         <label>اليونيفورم (حسب اختيار العميل)</label>
         <input id="uniform" placeholder="مثال: قميص أسود + كوتشي أسود + بنطلون أسود">
 
-        <h3 class="sec-t">العاملين</h3>
-        <button type="button" class="ghost" id="toggleStaffForm" style="width:100%">👷 بيانات الموظفين</button>
-        <div id="staffBox" style="display:none;margin-top:10px">
-          <div class="btns" style="margin-top:0">
-            <button type="button" class="ghost" id="addStaff">+ إضافة عامل يدوي</button>
-          </div>
-          <div id="staffList"></div>
-          <div id="staffSugg" class="sugg-box" style="display:none"></div>
-        </div>
 
 
         <button type="submit" id="submitBtn" style="margin-top:16px;width:100%">حفظ الحجز</button>
@@ -199,6 +198,26 @@ a{color:var(--gold)}
       <input id="clientSearch" placeholder="🔍 ابحث باسم العميل أو الرقم أو المكان" style="margin-bottom:10px">
       <button class="ghost small" id="exportClients" style="width:100%;margin-bottom:12px">📥 تصدير الداتا (Excel / CSV)</button>
       <div id="clientList"></div>
+    </div>
+  </div>
+
+  <!-- Staff per event -->
+  <div class="view" id="view-team">
+    <div class="panel">
+      <h2>👷 العاملين حسب المناسبة</h2>
+      <label style="display:block;margin-bottom:6px">📅 اختار اليوم</label>
+      <input type="date" id="teamDate" style="margin-bottom:12px">
+      <div id="teamGrid"></div>
+    </div>
+    <div class="panel">
+      <h2>📋 قايمة العمال</h2>
+      <div class="staffrow" style="grid-template-columns:1fr 1fr auto">
+        <input id="rosterName" placeholder="الاسم">
+        <input id="rosterPhone" placeholder="الرقم">
+        <button id="rosterAdd" type="button">إضافة</button>
+      </div>
+      <button type="button" class="wa" id="rosterContacts" style="width:100%;margin-top:10px">📇 اختار من جهات الاتصال</button>
+      <div id="rosterList" style="margin-top:10px"></div>
     </div>
   </div>
 
@@ -243,7 +262,6 @@ a{color:var(--gold)}
 const KEY = 'mokhtar_bookings';
 const WEEK = ['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
 let bookings = [];
-let staffDraft = [];
 let editingId = null;
 let viewMonth = new Date(); viewMonth.setDate(1);
 let storageOk = true;
@@ -261,7 +279,7 @@ const sumPaid = staff => (staff || []).reduce((s, x) => s + (Number(x.paid) || 0
 // ---- Tabs ----
 function showTab(t, dir) {
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
-  ['remind', 'form', 'list', 'clients', 'gear'].forEach(k => {
+  ['remind', 'form', 'list', 'team', 'clients', 'gear'].forEach(k => {
     const el = $('view-' + k);
     const was = el.classList.contains('on');
     el.classList.toggle('on', k === t);
@@ -274,6 +292,7 @@ function showTab(t, dir) {
   });
   if (t === 'clients') renderClients();
   if (t === 'gear') renderGear();
+  if (t === 'team') renderTeam();
   window.scrollTo({ top: 0 });
 }
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => showTab(b.dataset.tab));
@@ -447,24 +466,11 @@ function calc() {
   const cartsT = num('carts') * num('cartPrice');
   const valetT = num('valetTotal');
   const total = cartsT + valetT;
-  const paid = sumPaid(staffDraft);
   $('totals').innerHTML =
     `تكلفة الجولف كار: <b>${money(cartsT)}</b><br>` +
     `إجمالي الفاليه: <b>${money(valetT)}</b><br>` +
     `الإجمالي: <b>${money(total)}</b><br>` +
-    `المتبقي بعد العربون: <b>${money(total - num('deposit'))}</b><br>` +
-    `<span class="ok">اللي هتتصرف للعاملين: <b>${money(paid)}</b></span>`;
-}
-function renderStaff() {
-  $('staffList').innerHTML = staffDraft.map((s, i) =>
-    `<div class="staffrow">
-       <input placeholder="الاسم" value="${esc(s.name)}" data-i="${i}" data-k="name">
-       <input placeholder="الرقم" value="${esc(s.phone)}" data-i="${i}" data-k="phone">
-       <div>
-         <button type="button" class="wa small" data-sw="${i}">واتساب</button>
-         <button type="button" class="danger small" data-rm="${i}">✕</button>
-       </div>
-     </div>`).join('');
+    `المتبقي بعد العربون: <b>${money(total - num('deposit'))}</b>`;
 }
 function formStaffWa(s) {
   if (!s || !s.phone) { alert('اكتب رقم العامل الأول'); return null; }
@@ -536,18 +542,11 @@ $('prevMonth').onclick = () => { viewMonth = new Date(viewMonth.getFullYear(), v
 $('nextMonth').onclick = () => { viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1); renderCal(); };
 
 // ---- Form reset / edit ----
-function setStaffBox(open) {
-  $('staffBox').style.display = open ? 'block' : 'none';
-  $('toggleStaffForm').textContent = open ? '🔼 إخفاء بيانات الموظفين' : '👷 بيانات الموظفين';
-}
 function resetForm() {
   $('bookingForm').reset();
   editingId = null;
   $('date').value = '';
   $('calBox').style.display = 'none';
-  staffDraft = [];
-  renderStaff();
-  setStaffBox(false);
   calc();
   $('formTitle').textContent = '➕ حجز جديد';
   $('submitBtn').textContent = 'حفظ الحجز';
@@ -572,9 +571,6 @@ function startEdit(id) {
   $('valetTotal').value = b.valetTotal || '';
   $('deposit').value = b.deposit || '';
   $('uniform').value = b.uniform || '';
-  staffDraft = b.staff.map(s => ({ name: s.name, phone: s.phone, paid: s.paid }));
-  renderStaff();
-  setStaffBox(false);
   calc();
   const [y, m] = b.date.split('-').map(Number);
   viewMonth = new Date(y, m - 1, 1);
@@ -781,25 +777,87 @@ $('exportClients').onclick = () => downloadFile('mokhtar-clients.csv', 'text/csv
 document.querySelectorAll('#bookingForm input').forEach(i => i.addEventListener('input', calc));
 $('bookingSearch').addEventListener('input', render);
 $('toggleArchive').onclick = () => { showArchive = !showArchive; render(); };
-$('toggleStaffForm').onclick = () => setStaffBox($('staffBox').style.display === 'none');
-$('addStaff').onclick = () => { staffDraft.push({ name: '', phone: '', paid: 0 }); renderStaff(); calc(); };
-$('staffList').addEventListener('input', e => {
-  const i = e.target.dataset.i;
-  if (i === undefined) return;
-  const k = e.target.dataset.k;
-  staffDraft[i][k] = k === 'paid' ? (Number(e.target.value) || 0) : e.target.value;
-  calc();
-});
-$('staffList').addEventListener('click', e => {
-  const r = e.target.dataset.rm;
-  if (r !== undefined) { staffDraft.splice(Number(r), 1); renderStaff(); calc(); return; }
-  const sw = e.target.dataset.sw;
-  if (sw !== undefined) {
-    const url = formStaffWa(staffDraft[Number(sw)]);
-    if (url) window.open(url, '_blank');
+// ---- Helpers for staff people ----
+const phoneKey = p => { const d = String(p || '').replace(/\D/g, ''); return d.length >= 10 ? d.slice(-10) : d; };
+function staffDirectory() {
+  const map = new Map();
+  bookings.forEach(b => (b.staff || []).forEach(st => {
+    const name = (st.name || '').trim(), phone = (st.phone || '').trim();
+    if (!name && !phone) return;
+    const key = phoneKey(phone) || 'n:' + name;
+    const cur = map.get(key);
+    if (!cur) map.set(key, { name, phone });
+    else if (!cur.name && name) cur.name = name;
+  }));
+  return [...map.values()];
+}
+// ---- Staff per event ----
+const PEOPLE_KEY = 'mokhtar_people';
+let people = null;
+function loadPeople() {
+  try { const v = JSON.parse(localStorage.getItem(PEOPLE_KEY) || 'null'); if (Array.isArray(v)) return v; } catch (e) {}
+  // first time: start the roster from people already in past bookings
+  return staffDirectory().map((d, i) => ({ id: 'p' + Date.now() + i, name: d.name, phone: d.phone }));
+}
+function savePeople() { try { localStorage.setItem(PEOPLE_KEY, JSON.stringify(people)); } catch (e) {} }
+const samePerson = (p, s) => {
+  const a = phoneKey(p.phone), b = phoneKey(s.phone);
+  return a && b ? a === b : (p.name || '').trim() === (s.name || '').trim();
+};
+const dayEvents = () => bookings
+  .filter(b => b.date === $('teamDate').value)
+  .sort((x, y) => String(x.time).localeCompare(String(y.time)));
+function renderTeam() {
+  if (!people) { people = loadPeople(); savePeople(); }
+  if (!$('teamDate').value) $('teamDate').value = todayISO();
+  const evs = dayEvents();
+  let html = '';
+  if (!evs.length) html = '<p style="color:#888">مفيش مناسبات في اليوم ده</p>';
+  else if (!people.length) html = '<p style="color:#888">ضيف عمال من القايمة تحت الأول</p>';
+  else {
+    html = `<div class="tm-head"><span style="flex:1;text-align:right">العامل</span>${evs.map(e =>
+      `<span>${esc(e.venue || '-')}<small>${esc(colloquial(e.time))}</small></span>`).join('')}</div>`;
+    html += people.map(p => `<div class="tm-row"><b>${esc(p.name) || '-'}</b>${evs.map(e => {
+      const on = (e.staff || []).some(s => samePerson(p, s));
+      return `<button type="button" class="sq${on ? ' on' : ''}" data-p="${esc(p.id)}" data-e="${esc(String(e.id))}">${on ? '✓' : ''}</button>`;
+    }).join('')}</div>`).join('');
   }
+  $('teamGrid').innerHTML = html;
+  $('rosterList').innerHTML = people.length
+    ? people.map(p => `<div class="staffrow" style="grid-template-columns:1fr 1fr auto"><span>${esc(p.name)}</span><span style="direction:ltr">${esc(p.phone)}</span><button type="button" class="danger small" data-dp="${esc(p.id)}">✕</button></div>`).join('')
+    : '<p style="color:#888">مفيش عمال لسه</p>';
+}
+$('teamDate').onchange = renderTeam;
+$('teamGrid').addEventListener('click', e => {
+  const sq = e.target.closest('.sq');
+  if (!sq) return;
+  const p = people.find(x => x.id === sq.dataset.p);
+  const target = bookings.find(b => String(b.id) === sq.dataset.e);
+  if (!p || !target) return;
+  const was = (target.staff || []).some(s => samePerson(p, s));
+  // one event per person per day: remove from every event of that day first
+  dayEvents().forEach(ev => { ev.staff = (ev.staff || []).filter(s => !samePerson(p, s)); });
+  if (!was) target.staff = [...(target.staff || []), { name: p.name, phone: p.phone, paid: 0 }];
+  persist(); renderTeam(); render();
 });
-// Shows a small chooser when a contact has more than one number. Resolves to the chosen number, or null if skipped.
+$('rosterAdd').onclick = () => {
+  if (!people) { people = loadPeople(); }
+  const name = $('rosterName').value.trim(), phone = $('rosterPhone').value.trim();
+  if (!name) { alert('اكتب اسم العامل'); return; }
+  const k = phoneKey(phone);
+  if (k && people.some(p => phoneKey(p.phone) === k)) { alert('الرقم ده موجود في القايمة قبل كده'); return; }
+  people.push({ id: 'p' + Date.now(), name, phone });
+  savePeople();
+  $('rosterName').value = ''; $('rosterPhone').value = '';
+  renderTeam();
+};
+$('rosterList').addEventListener('click', e => {
+  const id = e.target.dataset.dp;
+  if (!id || !confirm('تشيل العامل ده من القايمة؟ (هيفضل ظاهر في الحجوزات القديمة)')) return;
+  people = people.filter(p => p.id !== id);
+  savePeople(); renderTeam();
+});
+// ---- Pick from contacts (multi-number contacts let you choose the number) ----
 function chooseNumber(name, tels) {
   return new Promise(resolve => {
     const ov = document.createElement('div');
@@ -819,62 +877,34 @@ function chooseNumber(name, tels) {
     document.body.appendChild(ov);
   });
 }
-// ---- Staff suggestions (from past bookings, unique by phone) ----
-const phoneKey = p => { const d = String(p || '').replace(/\D/g, ''); return d.length >= 10 ? d.slice(-10) : d; };
-function staffDirectory() {
-  const map = new Map();
-  bookings.forEach(b => (b.staff || []).forEach(st => {
-    const name = (st.name || '').trim(), phone = (st.phone || '').trim();
-    if (!name && !phone) return;
-    const key = phoneKey(phone) || 'n:' + name;
-    const cur = map.get(key);
-    if (!cur) map.set(key, { name, phone });
-    else if (!cur.name && name) cur.name = name;
-  }));
-  return [...map.values()];
-}
-let suggRow = -1;
-function hideSugg() { $('staffSugg').style.display = 'none'; $('staffSugg').innerHTML = ''; suggRow = -1; }
-function showSugg(i, typed) {
-  const q = (typed || '').trim().toLowerCase();
-  if (!q) return hideSugg();
-  const taken = new Set(staffDraft.map(x => phoneKey(x.phone)).filter(Boolean));
-  const matches = staffDirectory().filter(d => d.name.toLowerCase().includes(q)).slice(0, 6);
-  if (!matches.length) return hideSugg();
-  suggRow = i;
-  $('staffSugg').innerHTML = '<div class="sugg-t">👤 اقتراحات من العاملين السابقين</div>' +
-    matches.map((d, k) => `<button type="button" data-pick="${k}">${esc(d.name)} <small>${esc(d.phone) || ''}</small></button>`).join('');
-  $('staffSugg').style.display = 'block';
-  $('staffSugg').dataset.list = JSON.stringify(matches);
-  return taken;
-}
-$('staffSugg').addEventListener('click', e => {
-  const k = e.target.closest('[data-pick]')?.dataset.pick;
-  if (k === undefined || suggRow < 0) return;
-  const list = JSON.parse($('staffSugg').dataset.list || '[]');
-  const pick = list[Number(k)];
-  if (!pick || !staffDraft[suggRow]) return;
-  staffDraft[suggRow].name = pick.name;
-  staffDraft[suggRow].phone = pick.phone;
-  hideSugg(); renderStaff(); calc();
-});
-// staff name input: show suggestions as the user types
-$('staffList').addEventListener('input', e => {
-  if (e.target.dataset.k !== 'name') return;
-  showSugg(Number(e.target.dataset.i), e.target.value);
-});
-// phone typed: if this number is known, fill the name automatically
-$('staffList').addEventListener('input', e => {
-  if (e.target.dataset.k !== 'phone') return;
-  const i = Number(e.target.dataset.i);
-  const key = phoneKey(e.target.value);
-  if (key.length < 10 || !staffDraft[i] || staffDraft[i].name) return;
-  const known = staffDirectory().find(d => phoneKey(d.phone) === key && d.name);
-  if (!known) return;
-  staffDraft[i].name = known.name;
-  const nameInput = document.querySelector(`#staffList input[data-i="${i}"][data-k="name"]`);
-  if (nameInput) nameInput.value = known.name;
-});
+$('rosterContacts').onclick = async () => {
+  if (!people) people = loadPeople();
+  if (!('contacts' in navigator) || !('ContactsManager' in window)) {
+    alert('المتصفح ده مش بيدعم جهات الاتصال. افتح الصفحة من كروم على أندرويد من رابط آمن، أو أضف العمال يدوي.');
+    return;
+  }
+  try {
+    const picked = await navigator.contacts.select(['name', 'tel'], { multiple: true });
+    if (!picked || !picked.length) return;
+    let added = 0;
+    for (const c of picked) {
+      const name = ((c.name && c.name[0]) || '').trim();
+      const tels = (c.tel || []).filter(Boolean);
+      // one number: use it. several numbers: the user chooses which one goes on the label
+      const phone = tels.length > 1 ? await chooseNumber(name, tels) : (tels[0] || '');
+      if (phone === null) continue;
+      const k = phoneKey(phone);
+      if (k && people.some(p => phoneKey(p.phone) === k)) continue; // already in the list
+      people.push({ id: 'p' + Date.now() + added, name, phone });
+      added++;
+    }
+    savePeople();
+    renderTeam();
+    if (added) alert(`اتضاف ${added} عامل من جهات الاتصال ✅`);
+  } catch (e) {
+    if (e.name !== 'AbortError') alert('ما قدرتش أفتح جهات الاتصال: ' + e.message);
+  }
+};
 $('cancelEdit').onclick = () => { resetForm(); showTab('list'); };
 
 $('bookingForm').addEventListener('submit', e => {
@@ -913,7 +943,7 @@ $('bookingForm').addEventListener('submit', e => {
       deposit: dep,
       depositDate: old && old.depositDate ? old.depositDate : (dep > 0 ? todayISO() : ''),
       payments: old ? old.payments : [],
-      staff: staffDraft.filter(s => s.name || s.phone || s.paid),
+      staff: old ? old.staff : [],
       uniform: $('uniform').value.trim()
     });
     if (old) {
@@ -1073,7 +1103,7 @@ $('gearReset').onclick = () => {
 
 // ---- Swipe between sections ----
 (function () {
-  const ORDER = ['remind', 'form', 'list', 'clients', 'gear'];
+  const ORDER = ['remind', 'form', 'list', 'team', 'clients', 'gear'];
   let sx = 0, sy = 0, st = 0, tracking = false, horiz = null, el = null;
   const reset = (animated) => {
     if (!el) return;
