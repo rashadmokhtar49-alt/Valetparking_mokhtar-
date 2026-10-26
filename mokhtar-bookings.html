@@ -81,14 +81,6 @@ a{color:var(--gold)}
 </style>
 </head>
 <body>
-<div id="gate" style="display:none;position:fixed;inset:0;background:#0b0b0b;z-index:200;align-items:center;justify-content:center;padding:24px;text-align:center">
-  <div style="width:100%;max-width:340px">
-    <h2 style="font-size:20px;margin-bottom:12px">Valet Parking Mokhtar</h2>
-    <p id="gateMsg" class="hint" style="font-size:14px;margin:0 0 16px"></p>
-    <button type="button" id="loginBtn" style="width:100%">🔐 دخول بحساب Google</button>
-    <button type="button" id="logoutBtn" class="ghost" style="width:100%;display:none">تسجيل خروج</button>
-  </div>
-</div>
 
 <header class="top">
   <h1 class="brand">Valet Parking Mokhtar</h1>
@@ -197,17 +189,6 @@ a{color:var(--gold)}
       <h2 id="listTitle">📋 كل الحجوزات</h2>
       <input id="bookingSearch" placeholder="🔍 ابحث باسم العميل أو الرقم أو المكان أو التاريخ" style="margin-bottom:10px">
       <button class="ghost small" id="toggleArchive" style="width:100%;margin-bottom:12px">🗄️ الأرشيف</button>
-      <div id="approvals" style="display:none;background:#0e0e0e;border:1px solid var(--gold);border-radius:12px;padding:12px;margin-bottom:14px">
-        <h3 class="sec-t" style="margin-top:0">⏳ محتاجة موافقتك</h3>
-        <button type="button" class="ghost small" id="migrateBtn" style="display:none;width:100%;margin-bottom:10px">⬆️ نقل الحجوزات القديمة للسحابة</button>
-        <div id="approvalList"></div>
-        <h3 class="sec-t">👥 فريق العمل</h3>
-        <div class="row">
-          <input id="teamEmail" type="email" placeholder="إيميل Gmail للموظف">
-          <button type="button" class="wa small" id="teamAdd">+ إضافة</button>
-        </div>
-        <div id="teamList" style="margin-top:8px"></div>
-      </div>
       <div id="bookingList"></div>
     </div>
     <div class="panel">
@@ -223,32 +204,16 @@ a{color:var(--gold)}
 
 </main>
 
-<div class="foot">Designed by rashad <button type="button" id="signOutBtn" class="ghost small" style="margin-right:8px">🚪 خروج</button></div>
+<div class="foot">Designed by rashad</div>
 
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithRedirect, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { initializeFirestore, persistentLocalCache, collection, doc, onSnapshot, writeBatch, addDoc, deleteDoc, setDoc, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBWEMq8z2QpzGKhEikX3kPTNJFjuNSTklg",
-  authDomain: "valetmokhtar.firebaseapp.com",
-  projectId: "valetmokhtar",
-  storageBucket: "valetmokhtar.firebasestorage.app",
-  messagingSenderId: "62804859673",
-  appId: "1:62804859673:web:7bd054883493e33ac18388",
-  measurementId: "G-P3N25N2FX2"
-};
-const fbApp = initializeApp(firebaseConfig);
-const auth = getAuth(fbApp);
-const db = initializeFirestore(fbApp, { localCache: persistentLocalCache({}) }); // keeps data available offline
-
-const KEY = 'mokhtar_bookings'; // old phone-only storage, used only for the one-time move to the cloud
+<script>
+const KEY = 'mokhtar_bookings';
 const WEEK = ['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
 let bookings = [];
 let staffDraft = [];
 let editingId = null;
 let viewMonth = new Date(); viewMonth.setDate(1);
+let storageOk = true;
 const openSet = new Set(); // keys like "card:123", "pay:123", "staff:123", "rstaff:123"
 const isOpen = k => openSet.has(k);
 
@@ -269,162 +234,24 @@ function showTab(t) {
 }
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => showTab(b.dataset.tab));
 
-// ---- Cloud storage + login (Firebase) ----
-const ADMIN_EMAIL = 'rashadmokhtar49@gmail.com'; // the admin (owner)
-let currentUser = null;
-let lastSaved = new Map();   // booking id -> JSON of what the cloud already has
-let pendingRequests = [];    // edit/delete requests waiting for the admin
-let teamEmails = [];
-let unsubs = [];
-let storageOk = true;
-const isAdmin = () => !!currentUser && (currentUser.email || '').toLowerCase() === ADMIN_EMAIL;
-const stripForDb = b => { const { cartsTotal, total, paidToStaff, paidTotal, remaining, ...rest } = normalize(b); return rest; };
-
-function showGate(msg, canLogout) {
-  $('gate').style.display = 'flex';
-  $('gateMsg').textContent = msg;
-  $('loginBtn').style.display = canLogout ? 'none' : 'block';
-  $('logoutBtn').style.display = canLogout ? 'block' : 'none';
-}
-function hideGate() { $('gate').style.display = 'none'; }
-
-function initAuth() {
-  $('loginBtn').onclick = () => signInWithRedirect(auth, new GoogleAuthProvider());
-  $('logoutBtn').onclick = () => signOut(auth);
-  $('signOutBtn').onclick = () => signOut(auth);
-  onAuthStateChanged(auth, user => {
-    currentUser = user;
-    if (!user) {
-      stopSync();
-      bookings = [];
-      render();
-      showGate('سجل دخول بحساب Google المسجل في الفريق', false);
-      return;
-    }
-    startSync();
-  });
-}
-
-function startSync() {
-  if (unsubs.length) return;
-  const fail = err => {
-    stopSync();
-    showGate(err.code === 'permission-denied'
-      ? 'الحساب ده مش مسجل في فريق مختار. كلم الأدمن علشان يضيفك.'
-      : 'حصلت مشكلة في الاتصال: ' + err.message, true);
-  };
-  unsubs.push(onSnapshot(collection(db, 'bookings'), snap => {
-    lastSaved = new Map();
-    bookings = snap.docs.map(d => {
-      const b = normalize(d.data());
-      lastSaved.set(String(b.id), JSON.stringify(stripForDb(b)));
-      return b;
-    });
-    hideGate();
-    render();
-  }, fail));
-  unsubs.push(onSnapshot(collection(db, 'requests'), snap => {
-    pendingRequests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderApprovals();
-  }, fail));
-  unsubs.push(onSnapshot(doc(db, 'team', 'list'), snap => {
-    teamEmails = snap.exists() ? (snap.data().emails || []) : [];
-    renderApprovals();
-  }, fail));
-}
-function stopSync() { unsubs.forEach(u => u()); unsubs = []; }
-
-// Writes only the bookings that changed (and deletes the removed ones)
+// ---- Storage ----
 function persist() {
-  if (!currentUser) return false;
   try {
-    const batch = writeBatch(db);
-    const seen = new Set();
-    let writes = 0;
-    bookings.forEach(b => {
-      const id = String(b.id);
-      seen.add(id);
-      const data = stripForDb(b);
-      const json = JSON.stringify(data);
-      if (lastSaved.get(id) !== json) {
-        batch.set(doc(db, 'bookings', id), data);
-        lastSaved.set(id, json);
-        writes++;
-      }
-    });
-    [...lastSaved.keys()].forEach(id => {
-      if (!seen.has(id)) { batch.delete(doc(db, 'bookings', id)); lastSaved.delete(id); writes++; }
-    });
-    if (writes) batch.commit().catch(err => alert('ما اتحفظش على السحابة: ' + err.message));
+    localStorage.setItem(KEY, JSON.stringify(bookings));
     storageOk = true;
-    return true;
   } catch (e) {
     storageOk = false;
-    return false;
+  }
+  return storageOk;
+}
+function loadBookings() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY) || '[]').map(normalize);
+  } catch (e) {
+    storageOk = false;
+    return [];
   }
 }
-
-// Subscriber asks the admin to edit or delete a booking
-async function sendRequest({ type, booking, data }) {
-  try {
-    await addDoc(collection(db, 'requests'), {
-      type,
-      bookingId: String(booking.id),
-      clientName: booking.client || '',
-      by: currentUser?.email || '',
-      at: new Date().toISOString(),
-      data: data || null
-    });
-    alert(type === 'delete' ? 'اتبعت طلب الحذف للأدمن ✅' : 'اتبعت طلب التعديل للأدمن ✅');
-  } catch (err) {
-    alert('الطلب ما اتبعتش: ' + err.message);
-  }
-}
-
-// Admin-only panel: approvals, team members, one-time move from the phone
-function renderApprovals() {
-  const box = $('approvals');
-  if (!box) return;
-  box.style.display = isAdmin() ? 'block' : 'none';
-  if (!isAdmin()) return;
-  const pays = [];
-  bookings.forEach(b => b.payments.forEach((p, i) => { if (p.status === 'pending') pays.push({ b, p, i }); }));
-  const reqHtml = pendingRequests.map(r => `
-    <div class="payrow"><span>${r.type === 'delete' ? '🗑️ طلب حذف' : '✏️ طلب تعديل'}: <b>${esc(r.clientName)}</b><br>من: ${esc(r.by)}</span>
-      <span><button class="wa small" data-rok="${esc(r.id)}">موافقة</button> <button class="danger small" data-rno="${esc(r.id)}">رفض</button></span></div>`).join('');
-  const payHtml = pays.map(({ b, p, i }) => `
-    <div class="payrow"><span>💵 ${esc(b.client)} — <b>${money(p.amount)}</b><br>📅 ${esc(p.date)} · من: ${esc(p.by)}</span>
-      <span><button class="wa small" data-pok="${b.id}:${i}">موافقة</button> <button class="danger small" data-pno="${b.id}:${i}">رفض</button></span></div>`).join('');
-  $('approvalList').innerHTML = (reqHtml + payHtml) || '<div class="empty">مفيش حاجة مستنية موافقتك</div>';
-
-  let legacy = [];
-  try { legacy = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { legacy = []; }
-  const ids = new Set(bookings.map(b => String(b.id)));
-  const missing = legacy.filter(b => !ids.has(String(b.id)));
-  $('migrateBtn').style.display = missing.length ? 'block' : 'none';
-  $('migrateBtn').textContent = `⬆️ نقل ${missing.length} حجز قديم من الموبايل للسحابة`;
-
-  $('teamList').innerHTML = teamEmails.length
-    ? teamEmails.map(e => `<div class="payrow"><span>${esc(e)}</span><button class="danger small" data-tdel="${esc(e)}">✕</button></div>`).join('')
-    : '<div class="hint">مفيش موظفين مضافين لسه</div>';
-}
-$('teamAdd')?.addEventListener('click', async () => {
-  const email = $('teamEmail').value.trim().toLowerCase();
-  if (!email.includes('@')) { alert('اكتب الإيميل صح'); return; }
-  try {
-    await setDoc(doc(db, 'team', 'list'), { emails: arrayUnion(email) }, { merge: true });
-    $('teamEmail').value = '';
-  } catch (err) { alert('ما اتضافش: ' + err.message); }
-});
-$('migrateBtn')?.addEventListener('click', () => {
-  let legacy = [];
-  try { legacy = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { legacy = []; }
-  const ids = new Set(bookings.map(b => String(b.id)));
-  legacy.forEach(b => { if (!ids.has(String(b.id))) bookings.push(normalize(b)); });
-  persist();
-  render();
-  alert('تم النقل للسحابة ✅');
-});
 function normalize(b) {
   const x = { ...b };
   if (x.valetTotal === undefined) x.valetTotal = (x.staffCount || 0) * (x.staffPrice || 0);
@@ -432,11 +259,11 @@ function normalize(b) {
   x.deposit = Number(x.deposit) || 0;
   x.depositDate = x.depositDate || '';
   x.staff = (x.staff || []).map(s => ({ name: s.name || '', phone: s.phone || '', paid: Number(s.paid) || 0 }));
-  x.payments = (x.payments || []).map(p => ({ date: p.date || '', amount: Number(p.amount) || 0, note: p.note || '', status: p.status === 'pending' ? 'pending' : 'approved', by: p.by || '' }));
+  x.payments = (x.payments || []).map(p => ({ date: p.date || '', amount: Number(p.amount) || 0, note: p.note || '' }));
   x.cartsTotal = (Number(x.carts) || 0) * (Number(x.cartPrice) || 0);
   x.total = x.cartsTotal + (Number(x.valetTotal) || 0);
   x.paidToStaff = sumPaid(x.staff);
-  x.paidTotal = x.deposit + x.payments.filter(p => p.status !== 'pending').reduce((s, p) => s + p.amount, 0);
+  x.paidTotal = x.deposit + x.payments.reduce((s, p) => s + p.amount, 0);
   x.remaining = x.total - x.paidTotal;
   return x;
 }
@@ -692,8 +519,8 @@ function startEdit(id) {
   $('phone').value = b.phone;
   $('type').value = b.type;
   $('time').value = b.time;
-  $('venue').value = b.venue || '';
-  $('mapLink').value = b.mapLink || '';
+  $('venue').value = b.venue;
+  $('mapLink').value = b.mapLink;
   $('guests').value = b.guests || '';
   $('carts').value = b.carts || '';
   $('cartPrice').value = b.cartPrice || '';
@@ -711,7 +538,7 @@ function startEdit(id) {
   $('calBox').style.display = 'none';
   renderCal();
   $('formTitle').textContent = '✏️ تعديل الحجز';
-  $('submitBtn').textContent = isAdmin() ? 'حفظ التعديل' : 'إرسال طلب التعديل';
+  $('submitBtn').textContent = 'حفظ التعديل';
   $('cancelEdit').style.display = 'block';
   showTab('form');
 }
@@ -722,8 +549,8 @@ function paymentsPanel(b) {
   const rows = [
     `<div class="payrow"><span>📅 ${esc(b.depositDate) || '-'} — عربون وقت الحجز</span><b>${money(b.deposit)}</b></div>`,
     ...b.payments.map((p, i) =>
-      `<div class="payrow"><span>📅 ${esc(p.date)}${p.note ? ' — ' + esc(p.note) : ''}${p.status === 'pending' ? ' <span class="tag gold">⏳ منتظر موافقة الأدمن</span>' : ''}</span>
-        <span><b>${money(p.amount)}</b> ${isAdmin() ? `<button class="danger small" data-delpay="${b.id}:${i}">✕</button>` : ''}</span></div>`)
+      `<div class="payrow"><span>📅 ${esc(p.date)}${p.note ? ' — ' + esc(p.note) : ''}</span>
+        <span><b>${money(p.amount)}</b> <button class="danger small" data-delpay="${b.id}:${i}">✕</button></span></div>`)
   ].join('');
   return `<div class="btns"><button class="ghost small" data-k="${k}">💵 دفعات العميل</button></div>
     ${isOpen(k) ? `<div class="sub">
@@ -731,7 +558,6 @@ function paymentsPanel(b) {
       <div class="ok">اتدفع لحد دلوقتي: <b>${money(b.paidTotal)}</b></div>
       <div class="warn">اتبقي: <b>${money(b.remaining)}</b></div>
       <div style="margin-top:8px">${rows}</div>
-      ${isAdmin() ? '' : '<div class="hint">الدفعة هتتحسب بعد موافقة الأدمن</div>'}
       <label>دفعة جديدة</label>
       <div class="row">
         <input id="payAmt-${b.id}" type="number" min="0" placeholder="المبلغ">
@@ -792,8 +618,8 @@ function card(b) {
       <div class="btns">
         <button class="wa small" data-wa="${b.id}">واتساب العميل</button>
         <button class="ghost small" data-note="${b.id}">📤 شارك للنوت</button>
-        <button class="ghost small" data-edit="${b.id}">${isAdmin() ? '✏️ تعديل' : '✏️ طلب تعديل'}</button>
-        <button class="danger small" data-del="${b.id}">${isAdmin() ? 'حذف' : 'طلب حذف'}</button>
+        <button class="ghost small" data-edit="${b.id}">✏️ تعديل</button>
+        <button class="danger small" data-del="${b.id}">حذف</button>
       </div>
     </div>` : ''}
   </div>`;
@@ -835,7 +661,6 @@ function render() {
     : (base.length ? '<div class="empty">مفيش نتايج للبحث ده</div>'
       : `<div class="empty">${showArchive ? 'الأرشيف فاضي' : 'مفيش حجوزات جاية'}</div>`);
   renderCal();
-  renderApprovals();
 }
 
 // ---- Clients (grouped automatically from all bookings, nothing stored twice) ----
@@ -1015,15 +840,6 @@ $('bookingForm').addEventListener('submit', e => {
       staff: staffDraft.filter(s => s.name || s.phone || s.paid),
       uniform: $('uniform').value.trim()
     });
-    if (old && !isAdmin()) {
-      // subscribers do not change bookings directly: the admin approves the change
-      const { payments, ...changes } = stripForDb(data);
-      sendRequest({ type: 'edit', booking: old, data: changes });
-      resetForm();
-      render();
-      showTab('list');
-      return;
-    }
     if (old) {
       const i = bookings.findIndex(x => String(x.id) === String(editingId));
       bookings[i] = { ...data, id: editingId };
@@ -1033,7 +849,7 @@ $('bookingForm').addEventListener('submit', e => {
     const saved = persist();
     resetForm();
     render();
-    alert(saved ? 'تم الحفظ ✅' : 'الحفظ مش متاح دلوقتي، سجل دخول تاني.');
+    alert(saved ? 'تم الحفظ ✅' : 'تم الحفظ في الصفحة دي بس، لكن المتصفح مش مسموح له يحفظ على الجهاز. افتح الصفحة من GitHub Pages أو من كروم عادي.');
     showTab('list');
   } catch (err) {
     alert('حصلت مشكلة وماتحفظش: ' + (err && err.message ? err.message : err));
@@ -1062,49 +878,16 @@ document.addEventListener('click', e => {
     b.payments.push({
       date: $('payDate-' + id).value || todayISO(),
       amount: amount,
-      note: $('payNote-' + id).value.trim(),
-      status: isAdmin() ? 'approved' : 'pending',
-      by: currentUser?.email || ''
+      note: $('payNote-' + id).value.trim()
     });
     openSet.add('pay:' + id);
     persist();
     render();
-    alert(isAdmin()
-      ? `تم تسجيل الدفعة ✅ — اتبقي: ${money(normalize(b).remaining)}`
-      : 'اتسجلت الدفعة ✅ — هتتحسب بعد موافقة الأدمن');
+    alert(`تم تسجيل الدفعة ✅ — اتبقي: ${money(normalize(b).remaining)}`);
   }
-  // Admin approvals
-  if (t.dataset.pok || t.dataset.pno) {
-    const [id, idx] = (t.dataset.pok || t.dataset.pno).split(':');
-    const b = bookings.find(x => String(x.id) === id);
-    if (b && b.payments[Number(idx)]) {
-      if (t.dataset.pok) b.payments[Number(idx)].status = 'approved';
-      else b.payments.splice(Number(idx), 1);
-      persist();
-      render();
-    }
-  }
-  if (t.dataset.rok || t.dataset.rno) {
-    const r = pendingRequests.find(x => x.id === (t.dataset.rok || t.dataset.rno));
-    if (r) {
-      const b = bookings.find(x => String(x.id) === r.bookingId);
-      if (t.dataset.rok && b) {
-        if (r.type === 'delete') bookings = bookings.filter(x => x !== b);
-        else bookings[bookings.indexOf(b)] = normalize({ ...r.data, id: b.id, payments: b.payments });
-        persist();
-      }
-      deleteDoc(doc(db, 'requests', r.id));
-      render();
-    }
-  }
-  if (t.dataset.tdel) {
-    setDoc(doc(db, 'team', 'list'), { emails: arrayRemove(t.dataset.tdel) }, { merge: true });
-  }
-
   if (t.dataset.delpay) {
     const [id, idx] = t.dataset.delpay.split(':');
     const b = bookings.find(x => String(x.id) === id);
-    if (!isAdmin()) { alert('الأدمن بس يقدر يمسح دفعة'); return; }
     if (b && confirm('تمسح الدفعة دي؟')) {
       b.payments.splice(Number(idx), 1);
       openSet.add('pay:' + id);
@@ -1121,16 +904,11 @@ document.addEventListener('click', e => {
     if (b) saveNote(b);
   }
   if (t.dataset.edit) startEdit(t.dataset.edit);
-  if (t.dataset.del) {
-    const b = bookings.find(x => String(x.id) === t.dataset.del);
-    if (isAdmin() && confirm('تحذف الحجز ده؟')) {
-      bookings = bookings.filter(x => String(x.id) !== t.dataset.del);
-      persist();
-      if (String(editingId) === t.dataset.del) resetForm();
-      render();
-    } else if (!isAdmin() && b && confirm('تبعت طلب حذف الحجز ده للأدمن؟')) {
-      sendRequest({ type: 'delete', booking: b, data: null });
-    }
+  if (t.dataset.del && confirm('تحذف الحجز ده؟')) {
+    bookings = bookings.filter(x => String(x.id) !== t.dataset.del);
+    persist();
+    if (String(editingId) === t.dataset.del) resetForm();
+    render();
   }
 });
 
@@ -1157,9 +935,12 @@ $('importFile').addEventListener('change', e => {
 });
 
 // ---- Start ----
+bookings = loadBookings();
+if (!storageOk) {
+  alert('المتصفح ده مش بيسمح بالحفظ على الجهاز، فالحجوزات هتتمسح لما تقفل الصفحة. افتح الصفحة من GitHub Pages أو من كروم عادي.');
+}
 resetForm();
 render();
-initAuth();
 </script>
 <script>
 // Offline support once installed (needs https, e.g. GitHub Pages)
