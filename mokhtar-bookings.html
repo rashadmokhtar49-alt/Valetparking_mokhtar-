@@ -32,6 +32,9 @@ body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var
 .tm-row b{flex:1;min-width:80px;font-size:14px}
 .sq{width:44px;height:44px;flex:0 0 44px;border-radius:10px;background:#1a1a1a;border:1px solid var(--line);color:#c9a227;font-size:18px;padding:0}
 .sq.on{background:var(--gold);color:#000;border-color:var(--gold)}
+.note-dt{color:var(--gold);font-weight:bold;margin:10px 0 6px}
+.note-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0e0e0e;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.note-row small{display:block;color:var(--muted);margin-top:4px}
 .tabs{display:flex;gap:4px;margin-top:12px;justify-content:safe center;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:0 2px 4px}
 .tabs::-webkit-scrollbar{display:none}
 .tabs .tab{flex:0 0 auto;white-space:nowrap;padding:7px 6px;font-size:12px}
@@ -69,7 +72,8 @@ button.small{padding:7px 10px;font-size:12px}
 .tag.gold{background:var(--gold);color:#000;font-weight:bold}
 .tag.red{background:var(--red);color:#fff;font-weight:bold}
 .booking{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#111}
-.bhead{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}
+.bhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.bmini{color:var(--muted);font-size:13px;margin-top:4px}
 .bsub{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.8}
 .chev{color:var(--gold);font-size:18px}
 .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -123,6 +127,15 @@ a{color:var(--gold)}
 
   <!-- Reminders -->
   <div class="view on" id="view-remind">
+    <div class="panel">
+      <h2>📝 الملاحظات</h2>
+      <input id="noteText" placeholder="اكتب الملاحظة">
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input type="date" id="noteDate" style="flex:1">
+        <button type="button" id="noteAdd">حفظ</button>
+      </div>
+      <div id="noteList" style="margin-top:12px"></div>
+    </div>
     <div class="panel">
       <h2>🔔 مناسبات خلال 7 أيام</h2>
       <div id="reminderList"></div>
@@ -216,7 +229,6 @@ a{color:var(--gold)}
         <input id="rosterPhone" placeholder="الرقم">
         <button id="rosterAdd" type="button">إضافة</button>
       </div>
-      <button type="button" class="wa" id="rosterContacts" style="width:100%;margin-top:10px">📇 اختار من جهات الاتصال</button>
       <div id="rosterList" style="margin-top:10px"></div>
     </div>
   </div>
@@ -632,18 +644,21 @@ function card(b) {
   const k = 'card:' + b.id;
   const open = isOpen(k);
   return `<div class="booking">
-    <div class="bhead" data-k="${k}">
-      <div><b>${esc(b.client)}</b> <span class="tag">${esc(b.type)}</span> <span class="tag ${soon ? 'gold' : ''}">${when}</span></div>
-      <span class="chev">${open ? '▴' : '▾'}</span>
+    <div class="bhead">
+      <div>
+        <b>${esc(b.client)}</b> <span class="tag ${soon ? 'gold' : ''}">${when}</span>
+        <div class="bmini">📅 ${esc(b.date)} · 📍 ${esc(b.venue) || '-'}</div>
+      </div>
     </div>
-    <div class="bsum">
-      <div><span>📞 الموبايل</span><b>${esc(b.phone) || '-'}</b></div>
-      <div><span>📍 المكان</span><b>${esc(b.venue) || '-'}</b></div>
-      <div><span>👥 المدعوين</span><b>${b.guests || 0}</b></div>
-      <div><span>📅 التاريخ</span><b>${esc(b.date)} ${esc(colloquial(b.time))}</b></div>
-    </div>
-    <div class="bsub">💵 اتبقي: <b style="color:var(--gold)">${money(b.remaining)}</b></div>
+    <div class="btns" style="margin-top:8px"><button class="ghost small" data-k="${k}">${open ? '🔼 إخفاء التفاصيل' : '👁️ عرض التفاصيل'}</button></div>
     ${open ? `<div class="bdetails">
+      <div class="bsum">
+        <div><span>📞 الموبايل</span><b>${esc(b.phone) || '-'}</b></div>
+        <div><span>📍 المكان</span><b>${esc(b.venue) || '-'}</b></div>
+        <div><span>👥 المدعوين</span><b>${b.guests || 0}</b></div>
+        <div><span>📅 التاريخ</span><b>${esc(b.date)} ${esc(colloquial(b.time))}</b></div>
+      </div>
+      <div class="bsub">💵 اتبقي: <b style="color:var(--gold)">${money(b.remaining)}</b></div>
       ${b.mapLink ? `🗺️ <a href="${esc(b.mapLink)}" target="_blank">فتح الخريطة</a><br>` : ''}
       🚗 جولف كار: ${b.carts} · 🧑‍✈️ أفراد الفاليه: ${b.valetCount}<br>
       👕 اليونيفورم: ${esc(b.uniform) || '-'}
@@ -655,6 +670,7 @@ function card(b) {
       </div>
       ${paymentsPanel(b)}
       ${staffSection(b)}
+      ${notesSection(b)}
       <div class="btns">
         <button class="wa small" data-wa="${b.id}">واتساب العميل</button>
         <button class="ghost small" data-note="${b.id}">📤 شارك للنوت</button>
@@ -684,6 +700,7 @@ function reminderCard(b) {
 
 let showArchive = false; // true = showing finished bookings
 function render() {
+  renderNotes();
   bookings = bookings.map(normalize);
   const list = [...bookings].sort((a, b) => a.date.localeCompare(b.date));
   const rem = list.filter(b => { const d = daysUntil(b.date); return d >= 0 && d <= 7; });
@@ -857,54 +874,89 @@ $('rosterList').addEventListener('click', e => {
   people = people.filter(p => p.id !== id);
   savePeople(); renderTeam();
 });
-// ---- Pick from contacts (multi-number contacts let you choose the number) ----
-function chooseNumber(name, tels) {
+// ---- Notes (linked to a day, and to an event when chosen) ----
+const NOTES_KEY = 'mokhtar_notes';
+let notes = (() => {
+  try { const v = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+})();
+function saveNotes() { try { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); } catch (e) {} }
+const eventsOn = date => bookings.filter(b => b.date === date);
+function evLabel(b) { return `${b.venue || '-'} · ${colloquial(b.time)} · ${b.type}`; }
+// asks which event (or the whole day) the note belongs to. Resolves: event id string, 'day', or undefined if cancelled
+function chooseEvent(evs) {
   return new Promise(resolve => {
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:99;padding:16px';
     ov.innerHTML = `<div style="background:#151515;border:1px solid var(--gold);border-radius:14px;padding:16px;width:100%;max-width:340px">
-      <h2 style="margin-bottom:6px">📞 اختار الرقم</h2>
-      <div style="color:var(--muted);font-size:13px;margin-bottom:12px">${esc(name) || 'العامل'} ليه أكتر من رقم</div>
-      ${tels.map((t, i) => `<button type="button" class="ghost" data-i="${i}" style="width:100%;margin-bottom:8px;direction:ltr">${esc(t)}</button>`).join('')}
-      <button type="button" class="danger small" data-i="skip" style="width:100%">تخطي هذا العامل</button>
+      <h2 style="margin-bottom:6px">📝 الملاحظة دي لأنهي مناسبة؟</h2>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:12px">في أكتر من مناسبة في اليوم ده</div>
+      ${evs.map((b, i) => `<button type="button" class="ghost" data-i="${i}" style="width:100%;margin-bottom:8px">${esc(evLabel(b))}</button>`).join('')}
+      <button type="button" class="ghost" data-i="day" style="width:100%;margin-bottom:8px">📅 لليوم كله (من غير مناسبة معينة)</button>
+      <button type="button" class="danger small" data-i="cancel" style="width:100%">إلغاء</button>
     </div>`;
     ov.addEventListener('click', e => {
       const v = e.target.closest('button')?.dataset.i;
       if (v === undefined) return;
       ov.remove();
-      resolve(v === 'skip' ? null : tels[Number(v)]);
+      if (v === 'cancel') return resolve(undefined);
+      if (v === 'day') return resolve('day');
+      resolve(String(evs[Number(v)].id));
     });
     document.body.appendChild(ov);
   });
 }
-$('rosterContacts').onclick = async () => {
-  if (!people) people = loadPeople();
-  if (!('contacts' in navigator) || !('ContactsManager' in window)) {
-    alert('المتصفح ده مش بيدعم جهات الاتصال. افتح الصفحة من كروم على أندرويد من رابط آمن، أو أضف العمال يدوي.');
-    return;
+$('noteAdd').onclick = async () => {
+  const text = $('noteText').value.trim();
+  const date = $('noteDate').value;
+  if (!text) { alert('اكتب الملاحظة'); return; }
+  if (!date) { alert('اختار التاريخ'); return; }
+  const evs = eventsOn(date);
+  let eventId = null;
+  if (evs.length === 1) eventId = String(evs[0].id);
+  else if (evs.length > 1) {
+    const pick = await chooseEvent(evs);
+    if (pick === undefined) return;
+    eventId = pick === 'day' ? null : pick;
   }
-  try {
-    const picked = await navigator.contacts.select(['name', 'tel'], { multiple: true });
-    if (!picked || !picked.length) return;
-    let added = 0;
-    for (const c of picked) {
-      const name = ((c.name && c.name[0]) || '').trim();
-      const tels = (c.tel || []).filter(Boolean);
-      // one number: use it. several numbers: the user chooses which one goes on the label
-      const phone = tels.length > 1 ? await chooseNumber(name, tels) : (tels[0] || '');
-      if (phone === null) continue;
-      const k = phoneKey(phone);
-      if (k && people.some(p => phoneKey(p.phone) === k)) continue; // already in the list
-      people.push({ id: 'p' + Date.now() + added, name, phone });
-      added++;
-    }
-    savePeople();
-    renderTeam();
-    if (added) alert(`اتضاف ${added} عامل من جهات الاتصال ✅`);
-  } catch (e) {
-    if (e.name !== 'AbortError') alert('ما قدرتش أفتح جهات الاتصال: ' + e.message);
-  }
+  notes.push({ id: 'n' + Date.now(), text, date, eventId });
+  saveNotes();
+  $('noteText').value = '';
+  render();
 };
+function noteWhere(n) {
+  if (!n.eventId) return '📅 لليوم كله';
+  const b = bookings.find(x => String(x.id) === n.eventId);
+  return b ? '📍 ' + esc(evLabel(b)) : '📍 مناسبة اتشالت';
+}
+function renderNotes() {
+  if (!$('noteList')) return;
+  if (!$('noteDate').value) $('noteDate').value = todayISO();
+  if (!notes.length) { $('noteList').innerHTML = '<p style="color:#888">مفيش ملاحظات لسه</p>'; return; }
+  const sorted = [...notes].sort((a, b) => a.date.localeCompare(b.date));
+  let html = '', lastDate = null;
+  sorted.forEach(n => {
+    if (n.date !== lastDate) { html += `<div class="note-dt">📅 ${esc(n.date)}</div>`; lastDate = n.date; }
+    html += `<div class="note-row"><div><b>${esc(n.text)}</b><small>${noteWhere(n)}</small></div><button type="button" class="danger small" data-nd="${esc(n.id)}">✕</button></div>`;
+  });
+  $('noteList').innerHTML = html;
+}
+// per-event notes, shown from the booking card
+function notesSection(b) {
+  const k = 'nt:' + b.id;
+  const mine = notes.filter(n => n.eventId === String(b.id));
+  return `<div class="btns"><button class="ghost small" data-k="${k}">📝 ملاحظات المناسبة (${mine.length})</button></div>
+    ${isOpen(k) ? (mine.length
+      ? mine.map(n => `<div class="note-row"><div><b>${esc(n.text)}</b><small>📅 ${esc(n.date)}</small></div><button type="button" class="danger small" data-nd="${esc(n.id)}">✕</button></div>`).join('')
+      : '<p style="color:#888">مفيش ملاحظات للمناسبة دي</p>') : ''}`;
+}
+document.addEventListener('click', e => {
+  const id = e.target.dataset.nd;
+  if (!id) return;
+  if (!confirm('تمسح الملاحظة دي؟')) return;
+  notes = notes.filter(n => n.id !== id);
+  saveNotes();
+  render();
+});
 $('cancelEdit').onclick = () => { resetForm(); showTab('list'); };
 
 $('bookingForm').addEventListener('submit', e => {
