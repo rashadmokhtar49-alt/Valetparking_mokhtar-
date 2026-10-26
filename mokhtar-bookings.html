@@ -35,6 +35,19 @@ body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var
 .note-dt{color:var(--gold);font-weight:bold;margin:10px 0 6px}
 .note-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0e0e0e;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
 .note-row small{display:block;color:var(--muted);margin-top:4px}
+.app-toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,20px);background:#151515;color:var(--text);border:1px solid var(--gold);border-radius:12px;padding:12px 16px;max-width:88vw;text-align:center;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transition:opacity .25s ease,transform .25s ease;z-index:200;pointer-events:none}
+.app-toast.show{opacity:1;transform:translate(-50%,0)}
+.app-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:150;padding:16px;animation:fadeIn .2s ease}
+.app-modal{background:#151515;border:1px solid var(--gold);border-radius:16px;padding:20px 18px 16px;width:100%;max-width:340px;box-shadow:0 12px 32px rgba(0,0,0,.6);animation:popIn .22s cubic-bezier(.2,.8,.2,1)}
+.app-modal-msg{font-size:16px;line-height:1.7;margin-bottom:18px;text-align:center}
+.app-modal-btns{display:flex;gap:10px}
+.app-modal-btns button{flex:1}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.edge-nav{position:fixed;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(201,162,39,.18);border:1px solid rgba(201,162,39,.6);color:var(--gold);font-size:22px;line-height:1;display:none;align-items:center;justify-content:center;padding:0;z-index:40;opacity:.8}
+.edge-nav.left{left:4px}
+.edge-nav.right{right:4px}
+.edge-nav.show{display:flex}
 .tabs{display:flex;gap:4px;margin-top:12px;justify-content:safe center;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:0 2px 4px}
 .tabs::-webkit-scrollbar{display:none}
 .tabs .tab{flex:0 0 auto;white-space:nowrap;padding:7px 6px;font-size:12px}
@@ -111,6 +124,8 @@ a{color:var(--gold)}
 </head>
 <body>
 
+<button type="button" class="edge-nav left" id="edgeNext" aria-label="القسم اللي بعده">›</button>
+<button type="button" class="edge-nav right" id="edgePrev" aria-label="القسم اللي قبله">‹</button>
 <header class="top">
   <h1 class="brand">Valet Parking Mokhtar</h1>
   <nav class="tabs">
@@ -288,7 +303,45 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const todayISO = () => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`; };
 const sumPaid = staff => (staff || []).reduce((s, x) => s + (Number(x.paid) || 0), 0);
 
+// ---- Styled dialogs (replace the browser's native popups) ----
+function appToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'app-toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000);
+}
+function appConfirm(msg) {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'app-modal-bg';
+    ov.innerHTML = `<div class="app-modal">
+      <div class="app-modal-msg">${esc(msg)}</div>
+      <div class="app-modal-btns">
+        <button type="button" class="ghost" data-v="0">إلغاء</button>
+        <button type="button" data-v="1">تأكيد</button>
+      </div>
+    </div>`;
+    ov.addEventListener('click', e => {
+      const v = e.target.closest('button')?.dataset.v;
+      if (v === undefined) return;
+      ov.remove();
+      resolve(v === '1');
+    });
+    document.body.appendChild(ov);
+  });
+}
+
 // ---- Tabs ----
+const SECTIONS = ['remind', 'form', 'list', 'team', 'clients', 'gear'];
+function updateEdges(t) {
+  const i = SECTIONS.indexOf(t);
+  $('edgeNext').classList.toggle('show', i >= 0 && i < SECTIONS.length - 1);
+  $('edgePrev').classList.toggle('show', i > 0);
+}
+$('edgeNext').onclick = () => { const i = SECTIONS.indexOf(document.querySelector('.tab.on')?.dataset.tab); if (i < SECTIONS.length - 1) showTab(SECTIONS[i + 1], 'next'); };
+$('edgePrev').onclick = () => { const i = SECTIONS.indexOf(document.querySelector('.tab.on')?.dataset.tab); if (i > 0) showTab(SECTIONS[i - 1], 'prev'); };
 function showTab(t, dir) {
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   ['remind', 'form', 'list', 'team', 'clients', 'gear'].forEach(k => {
@@ -299,12 +352,13 @@ function showTab(t, dir) {
     if (k === t && !was) {
       el.classList.remove('enter-next', 'enter-prev', 'enter-fade');
       void el.offsetWidth; // restart the animation
-      el.classList.add(dir === 'next' ? 'enter-next' : dir === 'prev' ? 'enter-prev' : 'enter-fade');
+      el.classList.add(dir === 'next' ? 'enter-prev' : dir === 'prev' ? 'enter-next' : 'enter-fade');
     }
   });
   if (t === 'clients') renderClients();
   if (t === 'gear') renderGear();
   if (t === 'team') renderTeam();
+  updateEdges(t);
   window.scrollTo({ top: 0 });
 }
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => showTab(b.dataset.tab));
@@ -461,7 +515,7 @@ async function saveNote(b) {
     }
   }
   downloadFile(`booking-${b.id}.txt`, 'text/plain;charset=utf-8', text);
-  alert('اتحفظ ملف نص. افتحه من الملفات وشاركه مع تطبيق النوت.');
+  appToast('اتحفظ ملف نص. افتحه من الملفات وشاركه مع تطبيق النوت.');
 }
 function downloadFile(name, type, content) {
   const blob = new Blob([content], { type });
@@ -485,9 +539,9 @@ function calc() {
     `المتبقي بعد العربون: <b>${money(total - num('deposit'))}</b>`;
 }
 function formStaffWa(s) {
-  if (!s || !s.phone) { alert('اكتب رقم العامل الأول'); return null; }
+  if (!s || !s.phone) { appToast('اكتب رقم العامل الأول'); return null; }
   const date = $('date').value;
-  if (!date) { alert('اختار تاريخ المناسبة الأول'); return null; }
+  if (!date) { appToast('اختار تاريخ المناسبة الأول'); return null; }
   const time = parseTime($('time').value) || $('time').value;
   const venue = $('venue').value.trim();
   const map = $('mapLink').value.trim();
@@ -543,12 +597,12 @@ $('dateBtn').onclick = () => {
 $('calGrid').addEventListener('click', e => {
   const cell = e.target.closest('.day');
   if (!cell) return;
-  if (cell.classList.contains('past')) { alert('التاريخ ده عدى، اختار تاريخ جاي'); return; }
+  if (cell.classList.contains('past')) { appToast('التاريخ ده عدى، اختار تاريخ جاي'); return; }
   $('date').value = cell.dataset.d;
   $('calBox').style.display = 'none';
   renderCal();
   const cnt = bookings.filter(b => b.date === cell.dataset.d && String(b.id) !== String(editingId)).length;
-  if (cnt) alert(`تنبيه: في ${cnt} حجز تاني في اليوم ده`);
+  if (cnt) appToast(`تنبيه: في ${cnt} حجز تاني في اليوم ده`);
 });
 $('prevMonth').onclick = () => { viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1); renderCal(); };
 $('nextMonth').onclick = () => { viewMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1); renderCal(); };
@@ -860,17 +914,17 @@ $('teamGrid').addEventListener('click', e => {
 $('rosterAdd').onclick = () => {
   if (!people) { people = loadPeople(); }
   const name = $('rosterName').value.trim(), phone = $('rosterPhone').value.trim();
-  if (!name) { alert('اكتب اسم العامل'); return; }
+  if (!name) { appToast('اكتب اسم العامل'); return; }
   const k = phoneKey(phone);
-  if (k && people.some(p => phoneKey(p.phone) === k)) { alert('الرقم ده موجود في القايمة قبل كده'); return; }
+  if (k && people.some(p => phoneKey(p.phone) === k)) { appToast('الرقم ده موجود في القايمة قبل كده'); return; }
   people.push({ id: 'p' + Date.now(), name, phone });
   savePeople();
   $('rosterName').value = ''; $('rosterPhone').value = '';
   renderTeam();
 };
-$('rosterList').addEventListener('click', e => {
+$('rosterList').addEventListener('click', async e => {
   const id = e.target.dataset.dp;
-  if (!id || !confirm('تشيل العامل ده من القايمة؟ (هيفضل ظاهر في الحجوزات القديمة)')) return;
+  if (!id || !(await appConfirm('تشيل العامل ده من القايمة؟ (هيفضل ظاهر في الحجوزات القديمة)'))) return;
   people = people.filter(p => p.id !== id);
   savePeople(); renderTeam();
 });
@@ -908,8 +962,8 @@ function chooseEvent(evs) {
 $('noteAdd').onclick = async () => {
   const text = $('noteText').value.trim();
   const date = $('noteDate').value;
-  if (!text) { alert('اكتب الملاحظة'); return; }
-  if (!date) { alert('اختار التاريخ'); return; }
+  if (!text) { appToast('اكتب الملاحظة'); return; }
+  if (!date) { appToast('اختار التاريخ'); return; }
   const evs = eventsOn(date);
   let eventId = null;
   if (evs.length === 1) eventId = String(evs[0].id);
@@ -949,33 +1003,33 @@ function notesSection(b) {
       ? mine.map(n => `<div class="note-row"><div><b>${esc(n.text)}</b><small>📅 ${esc(n.date)}</small></div><button type="button" class="danger small" data-nd="${esc(n.id)}">✕</button></div>`).join('')
       : '<p style="color:#888">مفيش ملاحظات للمناسبة دي</p>') : ''}`;
 }
-document.addEventListener('click', e => {
+document.addEventListener('click', async e => {
   const id = e.target.dataset.nd;
   if (!id) return;
-  if (!confirm('تمسح الملاحظة دي؟')) return;
+  if (!(await appConfirm('تمسح الملاحظة دي؟'))) return;
   notes = notes.filter(n => n.id !== id);
   saveNotes();
   render();
 });
 $('cancelEdit').onclick = () => { resetForm(); showTab('list'); };
 
-$('bookingForm').addEventListener('submit', e => {
+$('bookingForm').addEventListener('submit', async e => {
   e.preventDefault();
   try {
     if (!$('date').value) {
       $('calBox').style.display = 'block';
       renderCal();
-      alert('التاريخ إجباري، اختار تاريخ المناسبة من التقويم');
+      appToast('التاريخ إجباري، اختار تاريخ المناسبة من التقويم');
       return;
     }
-    if ($('date').value < todayISO() && !confirm('التاريخ ده عدى! متأكد إنه صح؟')) return;
+    if ($('date').value < todayISO() && !(await appConfirm('التاريخ ده عدى! متأكد إنه صح؟'))) return;
     if (!$('venue').value.trim()) {
-      alert('مكان المناسبة إجباري، اكتب اسم القاعة أو العنوان');
+      appToast('مكان المناسبة إجباري، اكتب اسم القاعة أو العنوان');
       $('venue').focus();
       return;
     }
     const time = parseTime($('time').value);
-    if (time === null) { alert('الساعة مش واضحة، اكتبها زي 18:30 أو 6:30 م'); return; }
+    if (time === null) { appToast('الساعة مش واضحة، اكتبها زي 18:30 أو 6:30 م'); return; }
 
     const old = editingId ? bookings.find(x => String(x.id) === String(editingId)) : null;
     const dep = num('deposit');
@@ -1007,14 +1061,14 @@ $('bookingForm').addEventListener('submit', e => {
     const saved = persist();
     resetForm();
     render();
-    alert(saved ? 'تم الحفظ ✅' : 'تم الحفظ في الصفحة دي بس، لكن المتصفح مش مسموح له يحفظ على الجهاز. افتح الصفحة من GitHub Pages أو من كروم عادي.');
+    appToast(saved ? 'تم الحفظ ✅' : 'تم الحفظ في الصفحة دي بس، لكن المتصفح مش مسموح له يحفظ على الجهاز. افتح الصفحة من GitHub Pages أو من كروم عادي.');
     showTab('list');
   } catch (err) {
-    alert('حصلت مشكلة وماتحفظش: ' + (err && err.message ? err.message : err));
+    appToast('حصلت مشكلة وماتحفظش: ' + (err && err.message ? err.message : err));
   }
 });
 
-document.addEventListener('click', e => {
+document.addEventListener('click', async e => {
   const t = e.target;
 
   // Open / close any section (cards, details, payments, staff)
@@ -1031,8 +1085,8 @@ document.addEventListener('click', e => {
     const b = bookings.find(x => String(x.id) === id);
     const amount = Number($('payAmt-' + id).value) || 0;
     if (!b) return;
-    if (amount <= 0) { alert('اكتب مبلغ الدفعة الأول'); return; }
-    if (amount > b.remaining && !confirm(`المبلغ أكبر من اللي متبقي (${money(b.remaining)}). تسجله برضه؟`)) return;
+    if (amount <= 0) { appToast('اكتب مبلغ الدفعة الأول'); return; }
+    if (amount > b.remaining && !(await appConfirm(`المبلغ أكبر من اللي متبقي (${money(b.remaining)}). تسجله برضه؟`))) return;
     b.payments.push({
       date: $('payDate-' + id).value || todayISO(),
       amount: amount,
@@ -1041,12 +1095,12 @@ document.addEventListener('click', e => {
     openSet.add('pay:' + id);
     persist();
     render();
-    alert(`تم تسجيل الدفعة ✅ — اتبقي: ${money(normalize(b).remaining)}`);
+    appToast(`تم تسجيل الدفعة ✅ — اتبقي: ${money(normalize(b).remaining)}`);
   }
   if (t.dataset.delpay) {
     const [id, idx] = t.dataset.delpay.split(':');
     const b = bookings.find(x => String(x.id) === id);
-    if (b && confirm('تمسح الدفعة دي؟')) {
+    if (b && await appConfirm('تمسح الدفعة دي؟')) {
       b.payments.splice(Number(idx), 1);
       openSet.add('pay:' + id);
       persist();
@@ -1062,7 +1116,7 @@ document.addEventListener('click', e => {
     if (b) saveNote(b);
   }
   if (t.dataset.edit) startEdit(t.dataset.edit);
-  if (t.dataset.del && confirm('تحذف الحجز ده؟')) {
+  if (t.dataset.del && await appConfirm('تحذف الحجز ده؟')) {
     bookings = bookings.filter(x => String(x.id) !== t.dataset.del);
     persist();
     if (String(editingId) === t.dataset.del) resetForm();
@@ -1086,8 +1140,8 @@ $('importFile').addEventListener('change', e => {
       incoming.forEach(b => { if (!ids.has(String(b.id))) bookings.push(b); });
       persist();
       render();
-      alert('تم الاستيراد ✅');
-    } catch (err) { alert('الملف مش صالح'); }
+      appToast('تم الاستيراد ✅');
+    } catch (err) { appToast('الملف مش صالح'); }
   };
   reader.readAsText(f);
 });
@@ -1095,7 +1149,7 @@ $('importFile').addEventListener('change', e => {
 // ---- Start ----
 bookings = loadBookings();
 if (!storageOk) {
-  alert('المتصفح ده مش بيسمح بالحفظ على الجهاز، فالحجوزات هتتمسح لما تقفل الصفحة. افتح الصفحة من GitHub Pages أو من كروم عادي.');
+  appToast('المتصفح ده مش بيسمح بالحفظ على الجهاز، فالحجوزات هتتمسح لما تقفل الصفحة. افتح الصفحة من GitHub Pages أو من كروم عادي.');
 }
 
 // ---- Equipment checklist ----
@@ -1134,9 +1188,9 @@ $('gearList').onchange = e => {
   const g = gear.find(x => x.id === id);
   if (g) { g.done = e.target.checked; saveGear(); renderGear(); }
 };
-$('gearList').onclick = e => {
+$('gearList').onclick = async e => {
   const id = e.target.dataset.gdel;
-  if (!id || !confirm('تشيل البند ده؟')) return;
+  if (!id || !(await appConfirm('تشيل البند ده؟'))) return;
   gear = gear.filter(x => x.id !== id);
   saveGear(); renderGear();
 };
@@ -1147,8 +1201,8 @@ $('gearAdd').onclick = () => {
   $('gearNew').value = '';
   saveGear(); renderGear();
 };
-$('gearReset').onclick = () => {
-  if (!confirm('تفضي كل العلامات عشان تبدأ حدث جديد؟')) return;
+$('gearReset').onclick = async () => {
+  if (!(await appConfirm('تفضي كل العلامات عشان تبدأ حدث جديد؟'))) return;
   gear.forEach(g => g.done = false);
   saveGear(); renderGear();
 };
@@ -1185,8 +1239,8 @@ $('gearReset').onclick = () => {
     const dx = t.clientX - sx, dy = t.clientY - sy;
     const quick = Date.now() - st <= 600;
     const cur = ORDER.findIndex(k => $('view-' + k).classList.contains('on'));
-    // RTL layout: swiping right-to-left moves to the next section
-    const dir = dx < 0 ? 'next' : 'prev';
+    // swipe left->right moves to the next section, right->left goes back
+    const dir = dx > 0 ? 'next' : 'prev';
     const next = dir === 'next' ? cur + 1 : cur - 1;
     const commit = quick && horiz && Math.abs(dx) >= 70 && next >= 0 && next < ORDER.length;
     if (commit) {
@@ -1200,6 +1254,7 @@ $('gearReset').onclick = () => {
 })();
 resetForm();
 render();
+updateEdges('remind');
 </script>
 <script>
 // Offline support once installed (needs https, e.g. GitHub Pages)
