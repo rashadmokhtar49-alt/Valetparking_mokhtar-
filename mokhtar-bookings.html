@@ -50,6 +50,16 @@ body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var
 .sup-form{margin-top:10px;padding:10px;background:#0e0e0e;border:1px solid var(--line);border-radius:10px}
 .sup-form input,.sup-form select{margin-top:6px}
 .mv-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start;margin-top:8px}
+.col{display:flex;flex-direction:column;gap:8px;min-width:0}
+.col .panel{margin:0;padding:10px;min-width:0}
+.col h2{font-size:15px}
+.col input,.col select{width:100%;min-width:0;box-sizing:border-box;font-size:13px}
+.col .btns{flex-wrap:wrap}
+.col input+input{margin-top:8px}
+.row2{display:flex;gap:8px;margin:8px 0}
+.row2 button{flex:1}
+.ghost.on{background:var(--gold);color:#000;border-color:var(--gold)}
 .tabs{display:flex;gap:4px;margin-top:12px;justify-content:safe center;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:0 2px 4px}
 .tabs::-webkit-scrollbar{display:none}
 .tabs .tab{flex:0 0 auto;white-space:nowrap;padding:7px 6px;font-size:12px}
@@ -293,31 +303,26 @@ a{color:var(--gold)}
 
 <div id="pageSupply" style="display:none">
   <div class="panel" id="supSummary"></div>
-  <div class="panel">
-    <h2>➕ مورد جديد</h2>
+  <div class="row2">
+    <button type="button" id="supNewToggle" class="ghost">➕ مورد جديد</button>
+    <button type="button" id="supListToggle" class="ghost">🏪 الموردين</button>
+  </div>
+  <div class="panel" id="supNewBox" style="display:none">
     <input id="supName" placeholder="اسم المورد">
     <input id="supPhone" type="tel" placeholder="الرقم (اختياري)" style="margin-top:8px;direction:ltr">
     <input id="supNotes" placeholder="ملاحظات (اختياري)" style="margin-top:8px">
     <button type="button" id="supAdd" style="width:100%;margin-top:10px">حفظ المورد</button>
   </div>
-  <div class="panel">
-    <h2>🏪 الموردين</h2>
-    <div id="supList"></div>
+  <div class="panel" id="supListBox" style="display:none"><div id="supList"></div></div>
+  <div class="row2">
+    <button type="button" id="clNewToggle" class="ghost" style="width:100%">➕ عميل جديد</button>
   </div>
-  <div class="panel">
-    <h2>🚗 جولف اتسلم للعملاء</h2>
+  <div class="panel" id="clNewBox" style="display:none">
     <input id="clName" placeholder="اسم العميل">
     <input id="clPhone" type="tel" placeholder="رقم العميل (اختياري)" style="margin-top:8px;direction:ltr">
-    <select id="clSup" style="margin-top:8px"></select>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <input id="clCount" type="number" min="1" inputmode="numeric" placeholder="عدد الجولف">
-      <input id="clPrice" type="number" min="0" inputmode="numeric" placeholder="سعر الجولف للعميل">
-    </div>
-    <input id="clDate" type="date" style="margin-top:8px">
-    <input id="clNote" placeholder="ملاحظات (اختياري)" style="margin-top:8px">
-    <button type="button" id="clAdd" style="width:100%;margin-top:10px">حفظ التسليم</button>
-    <div id="clList" style="margin-top:12px"></div>
+    <button type="button" id="clSave" style="width:100%;margin-top:10px">حفظ العميل</button>
   </div>
+  <div id="clList"></div>
 </div>
 
 <script>
@@ -1094,81 +1099,86 @@ document.querySelectorAll('.pg').forEach(b => b.onclick = () => {
   if (sup) renderSupply();
 });
 
-// ---- Suppliers & golf carts ----
-const loadList = (k) => { try { const v = JSON.parse(localStorage.getItem(k) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+// ---- Suppliers & golf ----
+const loadList = k => { try { const v = JSON.parse(localStorage.getItem(k) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
 let sups = loadList('mokhtar_suppliers');
 let supMoves = loadList('mokhtar_supply_moves');
-let golfDeliv = loadList('mokhtar_golf_clients');
-let supMode = {};   // supplier id -> open form ('receive' | 'pay' | 'details')
-let clOpen = {};    // delivery id -> 'pay' | 'list'
+let golfClients = loadList('mokhtar_golf_clients2');
+let supMode = {}, supOpen = {}, clMode = {}, clEditDeliv = {};
+let showSupList = false;
 const newId = p => p + Date.now() + Math.random().toString(36).slice(2, 6);
 function saveSupply() {
   try {
     localStorage.setItem('mokhtar_suppliers', JSON.stringify(sups));
     localStorage.setItem('mokhtar_supply_moves', JSON.stringify(supMoves));
-    localStorage.setItem('mokhtar_golf_clients', JSON.stringify(golfDeliv));
+    localStorage.setItem('mokhtar_golf_clients2', JSON.stringify(golfClients));
   } catch (e) {}
 }
+const allDeliveries = () => golfClients.flatMap(c => (c.deliveries || []).map(d => ({ ...d, client: c.name })));
 const supStats = id => {
   const rec = supMoves.filter(m => m.supplierId === id && m.type === 'receive');
   const pay = supMoves.filter(m => m.supplierId === id && m.type === 'pay');
   const count = rec.reduce((s, m) => s + m.count, 0);
   const cost = rec.reduce((s, m) => s + m.count * m.price, 0);
   const paid = pay.reduce((s, m) => s + m.amount, 0);
-  const delivered = golfDeliv.filter(d => d.supplierId === id).reduce((s, d) => s + d.count, 0);
+  const delivered = allDeliveries().filter(d => d.supplierId === id).reduce((s, d) => s + d.count, 0);
   return { count, cost, paid, owed: cost - paid, inHand: count - delivered };
 };
-const delivStats = d => {
-  const total = d.count * d.price;
-  const paid = (d.payments || []).reduce((s, p) => s + p.amount, 0);
-  return { total, paid, remaining: total - paid };
+const clientStats = c => {
+  const dl = c.deliveries || [];
+  const carts = dl.reduce((s, d) => s + d.count, 0);
+  const total = dl.reduce((s, d) => s + d.count * d.price, 0);
+  const paid = (c.payments || []).reduce((s, p) => s + p.amount, 0);
+  return { carts, total, paid, remaining: total - paid };
 };
 const supName = id => (sups.find(x => x.id === id) || {}).name || 'مورد اتشال';
 const val = id => ($(id) ? $(id).value.trim() : '');
-const todayOr = d => d || todayISO();
+const dateOr = d => d ? esc(d) : '<span style="color:#888">—</span>';
+const supOptions = sel => sups.length
+  ? sups.map(s => `<option value="${esc(s.id)}"${s.id === sel ? ' selected' : ''}>${esc(s.name)}</option>`).join('')
+  : '<option value="">ضيف مورد الأول</option>';
 
 function renderSupply() {
-  const totalOwed = sups.reduce((s, x) => s + supStats(x.id).owed, 0);
-  const totalCarts = sups.reduce((s, x) => s + supStats(x.id).inHand, 0);
-  const clientsOwe = golfDeliv.reduce((s, d) => s + delivStats(d).remaining, 0);
+  const owedSup = sups.reduce((s, x) => s + supStats(x.id).owed, 0);
+  const owedCl = golfClients.reduce((s, c) => s + clientStats(c).remaining, 0);
+  const inHand = sups.reduce((s, x) => s + supStats(x.id).inHand, 0);
   $('supSummary').innerHTML = `<h2>📊 ملخص الجولف</h2>
     <div class="bsum">
-      <div><span>الباقي عليّا للموردين</span><b style="color:var(--gold)">${money(totalOwed)}</b></div>
-      <div><span>الباقي على العملاء</span><b style="color:var(--gold)">${money(clientsOwe)}</b></div>
-      <div><span>جولف عندي في الشغل</span><b>${totalCarts}</b></div>
+      <div><span>الباقي عليّا للموردين</span><b style="color:var(--gold)">${money(owedSup)}</b></div>
+      <div><span>الباقي على العملاء</span><b style="color:var(--gold)">${money(owedCl)}</b></div>
+      <div><span>جولف عندي في الشغل</span><b>${inHand}</b></div>
     </div>`;
+  $('supListBox').style.display = showSupList ? '' : 'none';
+  $('supListToggle').classList.toggle('on', showSupList);
+  $('supList').innerHTML = sups.length ? sups.map(renderSupCard).join('') : '<div class="empty">مفيش موردين لسه</div>';
+  $('clList').innerHTML = golfClients.length ? golfClients.map(renderClient).join('') : '<div class="empty">ضيف عميل من الزرار فوق</div>';
+}
 
-  $('supList').innerHTML = sups.length ? sups.map(s => {
-    const st = supStats(s.id);
-    const mode = supMode[s.id];
-    const delivs = golfDeliv.filter(d => d.supplierId === s.id);
+function renderSupCard(s) {
+  const st = supStats(s.id), open = !!supOpen[s.id], mode = supMode[s.id];
+  let body = '';
+  if (open) {
     const moves = supMoves.filter(m => m.supplierId === s.id).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    const delivs = allDeliveries().filter(d => d.supplierId === s.id);
     const forms = mode === 'receive' ? `<div class="sup-form">
-        <label>عدد الجولف اللي استلمته</label>
-        <input id="r-count-${s.id}" type="number" min="1" inputmode="numeric">
-        <label>سعر الجولف عندهم</label>
-        <input id="r-price-${s.id}" type="number" min="0" inputmode="numeric">
-        <input id="r-date-${s.id}" type="date" value="${todayISO()}">
-        <input id="r-note-${s.id}" placeholder="ملاحظة (اختياري)">
-        <button type="button" data-act="move-save" data-id="${s.id}" data-mode="receive" style="width:100%;margin-top:8px">حفظ الاستلام</button>
-      </div>` : mode === 'pay' ? `<div class="sup-form">
-        <label>المبلغ اللي دفعته له</label>
-        <input id="p-amt-${s.id}" type="number" min="1" inputmode="numeric">
-        <input id="p-date-${s.id}" type="date" value="${todayISO()}">
-        <input id="p-note-${s.id}" placeholder="ملاحظة (اختياري)">
-        <button type="button" data-act="move-save" data-id="${s.id}" data-mode="pay" style="width:100%;margin-top:8px">حفظ الدفعة</button>
-      </div>` : mode === 'details' ? `<div class="sup-form">
-        <b>الحركات</b>
-        ${moves.length ? moves.map(m => `<div class="mv-row"><span>${m.type === 'receive'
-          ? `📥 ${esc(m.date)} · استلام ${m.count} جولف × ${money(m.price)} = <b>${money(m.count * m.price)}</b>`
-          : `💸 ${esc(m.date)} · دفعة <b>${money(m.amount)}</b>`}${m.note ? `<br><small style="color:var(--muted)">${esc(m.note)}</small>` : ''}</span>
-          <button type="button" class="danger small" data-act="move-del" data-mid="${m.id}">✕</button></div>`).join('') : '<p style="color:#888">مفيش حركات لسه</p>'}
-        <b style="display:block;margin-top:10px">التسليم للعملاء</b>
-        ${delivs.length ? delivs.map(d => `<div class="mv-row"><span>🚗 ${esc(d.client)} · ${d.count} جولف · ${esc(d.date)}</span><b>${money(delivStats(d).total)}</b></div>`).join('') : '<p style="color:#888">مفيش تسليم للعملاء</p>'}
-      </div>` : '';
-    return `<div class="booking">
-      <div class="bhead"><div><b>${esc(s.name)}</b>${s.phone ? ` <span class="tag">📞 ${esc(s.phone)}</span>` : ''}
-        ${s.notes ? `<div class="bmini">📝 ${esc(s.notes)}</div>` : ''}</div></div>
+        <label>عدد الجولف اللي استلمته</label><input id="r-count-${s.id}" type="number" min="1" inputmode="numeric">
+        <label>سعر الجولف عندهم</label><input id="r-price-${s.id}" type="number" min="0" inputmode="numeric">
+        <label>تاريخ الاستلام</label><input id="r-date-${s.id}" type="date">
+        <input id="r-note-${s.id}" placeholder="ملاحظة (اختياري)" style="margin-top:8px">
+        <button type="button" data-act="move-save" data-id="${s.id}" data-mode="receive" style="width:100%;margin-top:8px">حفظ الاستلام</button></div>`
+      : mode === 'pay' ? `<div class="sup-form">
+        <label>المبلغ اللي دفعته له</label><input id="p-amt-${s.id}" type="number" min="1" inputmode="numeric">
+        <label>تاريخ الدفع</label><input id="p-date-${s.id}" type="date">
+        <input id="p-note-${s.id}" placeholder="ملاحظة (اختياري)" style="margin-top:8px">
+        <button type="button" data-act="move-save" data-id="${s.id}" data-mode="pay" style="width:100%;margin-top:8px">حفظ الدفعة</button></div>`
+      : mode === 'edit' ? `<div class="sup-form">
+        <input id="se-name-${s.id}" value="${esc(s.name)}" placeholder="اسم المورد">
+        <input id="se-phone-${s.id}" type="tel" value="${esc(s.phone || '')}" placeholder="الرقم" style="margin-top:8px;direction:ltr">
+        <input id="se-notes-${s.id}" value="${esc(s.notes || '')}" placeholder="ملاحظات" style="margin-top:8px">
+        <button type="button" data-act="sup-edit-save" data-id="${s.id}" style="width:100%;margin-top:8px">حفظ التعديل</button></div>`
+      : '';
+    body = `${s.phone ? `<div class="bmini">📞 ${esc(s.phone)}</div>` : ''}
+      ${s.notes ? `<div class="bmini">📝 ${esc(s.notes)}</div>` : ''}
       <div class="bsum">
         <div><span>استلمنا</span><b>${st.count} جولف</b></div>
         <div><span>اتدفع له</span><b>${money(st.paid)}</b></div>
@@ -1176,117 +1186,191 @@ function renderSupply() {
         <div><span>عندي في الشغل</span><b>${st.inHand} جولف</b></div>
       </div>
       <div class="btns">
-        <button class="ghost small" data-act="sup-mode" data-id="${s.id}" data-mode="receive">📥 استلام جولف</button>
-        <button class="ghost small" data-act="sup-mode" data-id="${s.id}" data-mode="pay">💸 دفعة له</button>
-        <button class="ghost small" data-act="sup-mode" data-id="${s.id}" data-mode="details">👁️ التفاصيل</button>
+        <button class="ghost small" data-act="sup-mode" data-id="${s.id}" data-mode="receive">📥 استلام</button>
+        <button class="ghost small" data-act="sup-mode" data-id="${s.id}" data-mode="pay">💸 دفعة</button>
+        <button class="ghost small" data-act="sup-mode" data-id="${s.id}" data-mode="edit">✏️ تعديل</button>
         <button class="danger small" data-act="sup-del" data-id="${s.id}">🗑️</button>
       </div>
       ${forms}
-    </div>`;
-  }).join('') : '<div class="empty">ضيف مورد من الفورم فوق</div>';
-
-  $('clSup').innerHTML = sups.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
-  if (!$('clDate').value) $('clDate').value = todayISO();
-
-  $('clList').innerHTML = golfDeliv.length ? [...golfDeliv].sort((a, b) => String(b.date).localeCompare(String(a.date))).map(d => {
-    const st = delivStats(d);
-    const o = clOpen[d.id];
-    return `<div class="booking">
-      <div class="bhead"><div><b>${esc(d.client)}</b> <span class="tag">${d.count} جولف</span>
-        <div class="bmini">📅 ${esc(d.date)} · من: ${esc(supName(d.supplierId))}${d.phone ? ' · 📞 ' + esc(d.phone) : ''}</div></div></div>
-      <div class="bsum">
-        <div><span>سعر الجولف</span><b>${money(d.price)}</b></div>
-        <div><span>الحساب</span><b>${money(st.total)}</b></div>
-        <div><span>اتدفع</span><b>${money(st.paid)}</b></div>
-        <div><span>اتبقي</span><b style="color:var(--gold)">${money(st.remaining)}</b></div>
-      </div>
-      ${d.note ? `<div class="bmini" style="margin-top:6px">📝 ${esc(d.note)}</div>` : ''}
-      <div class="btns">
-        <button class="ghost small" data-act="cl-pay-open" data-id="${d.id}">💵 دفعة من العميل</button>
-        <button class="ghost small" data-act="cl-pay-list" data-id="${d.id}">👁️ الدفعات</button>
-        <button class="danger small" data-act="cl-del" data-id="${d.id}">🗑️</button>
-      </div>
-      ${o === 'pay' ? `<div class="sup-form"><input id="cp-amt-${d.id}" type="number" min="1" inputmode="numeric" placeholder="المبلغ اللي دفعه العميل">
-        <button type="button" data-act="cl-pay-save" data-id="${d.id}" style="width:100%;margin-top:8px">حفظ الدفعة</button></div>` : ''}
-      ${o === 'list' ? `<div class="sup-form">${(d.payments || []).length ? d.payments.map(p => `<div class="mv-row"><span>💵 ${esc(p.date)}</span><span><b>${money(p.amount)}</b> <button type="button" class="danger small" data-act="cl-pay-del" data-id="${d.id}" data-pid="${p.id}">✕</button></span></div>`).join('') : '<p style="color:#888">مفيش دفعات لسه</p>'}</div>` : ''}
-    </div>`;
-  }).join('') : '<div class="empty">مفيش جولف متسلم للعملاء لسه</div>';
+      <div class="sup-form"><b>الحركات</b>
+        ${moves.length ? moves.map(m => `<div class="mv-row"><span>${m.type === 'receive'
+          ? `📥 ${dateOr(m.date)} · ${m.count} جولف × ${money(m.price)} = <b>${money(m.count * m.price)}</b>`
+          : `💸 ${dateOr(m.date)} · دفعة <b>${money(m.amount)}</b>`}${m.note ? `<br><small style="color:var(--muted)">${esc(m.note)}</small>` : ''}</span>
+          <button type="button" class="danger small" data-act="move-del" data-mid="${m.id}">✕</button></div>`).join('') : '<p style="color:#888">مفيش حركات لسه</p>'}
+        <b style="display:block;margin-top:10px">التسليم للعملاء</b>
+        ${delivs.length ? delivs.map(d => `<div class="mv-row"><span>🚗 ${esc(d.client)} · ${d.count} جولف · ${dateOr(d.date)}</span><b>${money(d.count * d.price)}</b></div>`).join('') : '<p style="color:#888">مفيش تسليم للعملاء</p>'}
+      </div>`;
+  }
+  return `<div class="booking">
+    <div class="bhead" data-act="sup-toggle" data-id="${s.id}" style="cursor:pointer"><div><b>${esc(s.name)}</b> <span class="tag">الباقي ${money(st.owed)}</span></div><span style="color:var(--gold)">${open ? '▲' : '▼'}</span></div>
+    ${body}
+  </div>`;
 }
 
+function renderClient(c) {
+  const st = clientStats(c), mode = clMode[c.id];
+  const dl = c.deliveries || [], pays = c.payments || [];
+  let form = '';
+  if (mode === 'edit') {
+    form = `<div class="sup-form">
+      <input id="ce-name-${c.id}" value="${esc(c.name)}" placeholder="اسم العميل">
+      <input id="ce-phone-${c.id}" type="tel" value="${esc(c.phone || '')}" placeholder="رقم العميل" style="margin-top:8px;direction:ltr">
+      <button type="button" data-act="cl-edit-save" data-id="${c.id}" style="width:100%;margin-top:8px">حفظ التعديل</button></div>`;
+  } else if (mode === 'deliv') {
+    const e = dl.find(d => d.id === clEditDeliv[c.id]);
+    form = `<div class="sup-form"><b>${e ? 'تعديل التسليم' : 'تسليم جولف جديد'}</b>
+      <label>تاريخ التسليم</label><input id="dv-date-${c.id}" type="date" value="${e ? esc(e.date) : ''}">
+      <label>المورد</label><select id="dv-sup-${c.id}">${supOptions(e ? e.supplierId : '')}</select>
+      <input id="dv-count-${c.id}" type="number" min="1" inputmode="numeric" placeholder="عدد الجولف" value="${e ? e.count : ''}" style="margin-top:8px">
+      <input id="dv-price-${c.id}" type="number" min="0" inputmode="numeric" placeholder="سعر الجولف للعميل" value="${e ? e.price : ''}" style="margin-top:8px">
+      <input id="dv-note-${c.id}" placeholder="ملاحظة (اختياري)" value="${e ? esc(e.note || '') : ''}" style="margin-top:8px">
+      <button type="button" data-act="dv-save" data-id="${c.id}" style="width:100%;margin-top:8px">حفظ</button></div>`;
+  } else if (mode === 'pay') {
+    form = `<div class="sup-form">
+      <label>المبلغ اللي دفعه العميل</label><input id="cp-amt-${c.id}" type="number" min="1" inputmode="numeric">
+      <label>تاريخ الدفع</label><input id="cp-date-${c.id}" type="date">
+      <button type="button" data-act="cl-pay-save" data-id="${c.id}" style="width:100%;margin-top:8px">حفظ الدفعة</button></div>`;
+  }
+  const details = mode === 'details' ? `<div class="sup-form"><b>التسليمات</b>
+      ${dl.length ? dl.map(d => `<div class="mv-row"><span>🚗 ${dateOr(d.date)} · ${d.count} × ${money(d.price)} · ${esc(supName(d.supplierId))}${d.note ? `<br><small style="color:var(--muted)">${esc(d.note)}</small>` : ''}</span>
+        <span><b>${money(d.count * d.price)}</b> <button type="button" class="ghost small" data-act="dv-edit" data-id="${c.id}" data-did="${d.id}">✏️</button>
+        <button type="button" class="danger small" data-act="dv-del" data-id="${c.id}" data-did="${d.id}">✕</button></span></div>`).join('') : '<p style="color:#888">مفيش تسليمات</p>'}
+      <b style="display:block;margin-top:10px">الدفعات</b>
+      ${pays.length ? pays.map(p => `<div class="mv-row"><span>💵 ${dateOr(p.date)}</span>
+        <span><b>${money(p.amount)}</b> <button type="button" class="danger small" data-act="cl-pay-del" data-id="${c.id}" data-pid="${p.id}">✕</button></span></div>`).join('') : '<p style="color:#888">مفيش دفعات لسه</p>'}
+    </div>` : '';
+  return `<div class="booking">
+    <div class="bhead"><div><b>${esc(c.name)}</b> <span class="tag">${st.carts} جولف</span>
+      ${c.phone ? `<div class="bmini">📞 ${esc(c.phone)}</div>` : ''}</div></div>
+    <div class="bsum">
+      <div><span>الحساب</span><b>${money(st.total)}</b></div>
+      <div><span>اتدفع</span><b>${money(st.paid)}</b></div>
+      <div><span>اتبقي</span><b style="color:var(--gold)">${money(st.remaining)}</b></div>
+    </div>
+    <div class="btns">
+      <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="deliv">➕ تسليم جولف</button>
+      <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="pay">💵 دفعة</button>
+      <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="details">👁️ التفاصيل</button>
+      <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="edit">✏️</button>
+      <button class="danger small" data-act="cl-del" data-id="${c.id}">🗑️</button>
+    </div>
+    ${form}${details}
+  </div>`;
+}
+
+$('supNewToggle').onclick = () => { const b = $('supNewBox'); b.style.display = b.style.display === 'none' ? '' : 'none'; };
+$('clNewToggle').onclick = () => { const b = $('clNewBox'); b.style.display = b.style.display === 'none' ? '' : 'none'; };
+$('supListToggle').onclick = () => { showSupList = !showSupList; renderSupply(); };
 $('supAdd').onclick = () => {
   const name = val('supName');
   if (!name) { appToast('اكتب اسم المورد'); return; }
   sups.push({ id: newId('s'), name, phone: val('supPhone'), notes: val('supNotes') });
   ['supName', 'supPhone', 'supNotes'].forEach(i => $(i).value = '');
+  $('supNewBox').style.display = 'none';
   saveSupply(); renderSupply();
 };
-$('clAdd').onclick = () => {
-  const client = val('clName');
-  const supplierId = $('clSup').value;
-  const count = Number(val('clCount')) || 0;
-  const price = Number(val('clPrice')) || 0;
-  if (!client) { appToast('اكتب اسم العميل'); return; }
-  if (!supplierId) { appToast('ضيف مورد الأول'); return; }
-  if (count <= 0) { appToast('اكتب عدد الجولف'); return; }
-  golfDeliv.push({ id: newId('d'), client, phone: val('clPhone'), supplierId, count, price, date: todayOr($('clDate').value), note: val('clNote'), payments: [] });
-  ['clName', 'clPhone', 'clCount', 'clPrice', 'clNote'].forEach(i => $(i).value = '');
+$('clSave').onclick = () => {
+  const name = val('clName');
+  if (!name) { appToast('اكتب اسم العميل'); return; }
+  golfClients.push({ id: newId('c'), name, phone: val('clPhone'), deliveries: [], payments: [] });
+  ['clName', 'clPhone'].forEach(i => $(i).value = '');
+  $('clNewBox').style.display = 'none';
   saveSupply(); renderSupply();
 };
 
 $('pageSupply').addEventListener('click', async e => {
   const el = e.target.closest('[data-act]');
   if (!el) return;
-  const act = el.dataset.act, id = el.dataset.id;
-  if (act === 'sup-mode') {
-    const m = el.dataset.mode;
-    supMode[id] = supMode[id] === m ? null : m;
-    renderSupply();
+  const act = el.dataset.act, id = el.dataset.id, did = el.dataset.did;
+
+  if (act === 'sup-toggle') {
+    supOpen[id] = !supOpen[id];
+  } else if (act === 'sup-mode') {
+    supMode[id] = supMode[id] === el.dataset.mode ? null : el.dataset.mode;
   } else if (act === 'move-save') {
     if (el.dataset.mode === 'receive') {
       const count = Number(val('r-count-' + id)) || 0;
       const price = Number(val('r-price-' + id)) || 0;
+      const date = val('r-date-' + id);
       if (count <= 0) { appToast('اكتب عدد الجولف'); return; }
-      supMoves.push({ id: newId('m'), type: 'receive', supplierId: id, count, price, date: todayOr(val('r-date-' + id)), note: val('r-note-' + id) });
+      if (!date) { appToast('اختار تاريخ الاستلام'); return; }
+      supMoves.push({ id: newId('m'), type: 'receive', supplierId: id, count, price, date, note: val('r-note-' + id) });
     } else {
       const amount = Number(val('p-amt-' + id)) || 0;
+      const date = val('p-date-' + id);
       if (amount <= 0) { appToast('اكتب مبلغ الدفعة'); return; }
-      supMoves.push({ id: newId('m'), type: 'pay', supplierId: id, amount, date: todayOr(val('p-date-' + id)), note: val('p-note-' + id) });
+      if (!date) { appToast('اختار تاريخ الدفع'); return; }
+      supMoves.push({ id: newId('m'), type: 'pay', supplierId: id, amount, date, note: val('p-note-' + id) });
     }
     supMode[id] = null;
-    saveSupply(); renderSupply();
   } else if (act === 'move-del') {
     if (!(await appConfirm('تمسح الحركة دي؟'))) return;
     supMoves = supMoves.filter(m => m.id !== el.dataset.mid);
-    saveSupply(); renderSupply();
+  } else if (act === 'sup-edit-save') {
+    const sp = sups.find(x => x.id === id);
+    const name = val('se-name-' + id);
+    if (!name) { appToast('اكتب اسم المورد'); return; }
+    if (sp) { sp.name = name; sp.phone = val('se-phone-' + id); sp.notes = val('se-notes-' + id); }
+    supMode[id] = null;
   } else if (act === 'sup-del') {
-    if (supMoves.some(m => m.supplierId === id) || golfDeliv.some(d => d.supplierId === id)) { appToast('المورد ده ليه حركات، امسحها الأول'); return; }
+    if (supMoves.some(m => m.supplierId === id) || allDeliveries().some(d => d.supplierId === id)) { appToast('المورد ده ليه حركات، امسحها الأول'); return; }
     if (!(await appConfirm('تمسح المورد ده؟'))) return;
-    sups = sups.filter(s => s.id !== id);
-    saveSupply(); renderSupply();
-  } else if (act === 'cl-pay-open') {
-    clOpen[id] = clOpen[id] === 'pay' ? null : 'pay';
-    renderSupply();
-  } else if (act === 'cl-pay-list') {
-    clOpen[id] = clOpen[id] === 'list' ? null : 'list';
-    renderSupply();
+    sups = sups.filter(x => x.id !== id);
+  } else if (act === 'cl-mode') {
+    const m = el.dataset.mode;
+    clMode[id] = clMode[id] === m ? null : m;
+    clEditDeliv[id] = null;
+  } else if (act === 'dv-edit') {
+    clEditDeliv[id] = did;
+    clMode[id] = 'deliv';
+  } else if (act === 'dv-save') {
+    const c = golfClients.find(x => x.id === id);
+    if (!c) return;
+    const date = val('dv-date-' + id);
+    const supplierId = $('dv-sup-' + id).value;
+    const count = Number(val('dv-count-' + id)) || 0;
+    const price = Number(val('dv-price-' + id)) || 0;
+    if (!date) { appToast('اختار تاريخ التسليم'); return; }
+    if (!supplierId) { appToast('ضيف مورد واختاره'); return; }
+    if (count <= 0) { appToast('اكتب عدد الجولف'); return; }
+    const editing = clEditDeliv[id];
+    const rec = { id: editing || newId('d'), supplierId, count, price, date, note: val('dv-note-' + id) };
+    c.deliveries = editing
+      ? (c.deliveries || []).map(d => d.id === editing ? rec : d)
+      : [...(c.deliveries || []), rec];
+    clMode[id] = null;
+    clEditDeliv[id] = null;
+  } else if (act === 'dv-del') {
+    if (!(await appConfirm('تمسح التسليم ده؟'))) return;
+    const c = golfClients.find(x => x.id === id);
+    if (c) c.deliveries = (c.deliveries || []).filter(d => d.id !== did);
   } else if (act === 'cl-pay-save') {
+    const c = golfClients.find(x => x.id === id);
     const amount = Number(val('cp-amt-' + id)) || 0;
+    const date = val('cp-date-' + id);
+    if (!c) return;
     if (amount <= 0) { appToast('اكتب المبلغ'); return; }
-    const d = golfDeliv.find(x => x.id === id);
-    if (!d) return;
-    d.payments = [...(d.payments || []), { id: newId('p'), amount, date: todayISO() }];
-    clOpen[id] = null;
-    saveSupply(); renderSupply();
+    if (!date) { appToast('اختار تاريخ الدفع'); return; }
+    c.payments = [...(c.payments || []), { id: newId('p'), amount, date }];
+    clMode[id] = null;
   } else if (act === 'cl-pay-del') {
     if (!(await appConfirm('تمسح الدفعة دي؟'))) return;
-    const d = golfDeliv.find(x => x.id === id);
-    if (d) d.payments = (d.payments || []).filter(p => p.id !== el.dataset.pid);
-    saveSupply(); renderSupply();
+    const c = golfClients.find(x => x.id === id);
+    if (c) c.payments = (c.payments || []).filter(p => p.id !== el.dataset.pid);
+  } else if (act === 'cl-edit-save') {
+    const c = golfClients.find(x => x.id === id);
+    const name = val('ce-name-' + id);
+    if (!name) { appToast('اكتب اسم العميل'); return; }
+    if (c) { c.name = name; c.phone = val('ce-phone-' + id); }
+    clMode[id] = null;
   } else if (act === 'cl-del') {
-    if (!(await appConfirm('تمسح التسليم ده؟'))) return;
-    golfDeliv = golfDeliv.filter(d => d.id !== id);
-    saveSupply(); renderSupply();
+    if (!(await appConfirm('تمسح العميل ده وكل تسليماته؟'))) return;
+    golfClients = golfClients.filter(c => c.id !== id);
+  } else {
+    return;
   }
+  saveSupply();
+  renderSupply();
 });
 $('cancelEdit').onclick = () => { resetForm(); showTab('list'); };
 
