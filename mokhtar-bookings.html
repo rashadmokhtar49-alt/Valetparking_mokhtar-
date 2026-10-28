@@ -9,11 +9,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Mokhtar Valet">
 <link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{--gold:#c9a227;--bg:#0b0b0b;--card:#151515;--line:#2a2a2a;--text:#f2f2f2;--muted:#8f8f8f;--red:#e5484d;--green:#25a244}
 *{box-sizing:border-box}
-body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
+body{margin:0;font-family:Cairo,Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
 .top{background:#000;border-bottom:1px solid var(--gold);padding:16px 12px 12px;text-align:center}
 .brand{margin:0;font-size:20px;letter-spacing:1px;color:var(--gold);font-weight:bold;direction:ltr}
 .gear-row{display:flex;align-items:center;gap:8px;background:#0e0e0e;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
@@ -132,9 +135,73 @@ a{color:var(--gold)}
 .dayinfo{margin-top:10px;font-size:14px}
 .foot{text-align:center;color:var(--muted);font-size:12px;padding:18px 0 28px;letter-spacing:.5px}
 @media (max-width:420px){.row{grid-template-columns:1fr}.staffrow{grid-template-columns:1fr auto}.staffrow>div{grid-column:span 1}}
+/* ---- Polish ---- */
+button{transition:transform .12s ease,opacity .12s ease}
+button:active{transform:scale(.97)}
+.panel{box-shadow:0 2px 14px rgba(0,0,0,.35)}
+main{padding-bottom:120px}
+.sub-brand{color:var(--muted);font-size:12px;margin-top:4px}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:0;padding:6px 4px calc(6px + env(safe-area-inset-bottom));background:rgba(0,0,0,.94);border-top:1px solid var(--gold);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:visible}
+.tabs .tab{flex:none;background:transparent;border:0;border-radius:10px;padding:6px 0;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap}
+.tabs .tab .ic{font-size:18px;line-height:1}
+.tabs .tab.on{background:transparent;color:var(--gold)}
+.fab{position:fixed;left:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:41;width:56px;height:56px;border-radius:50%;padding:0;font-size:30px;line-height:1;box-shadow:0 8px 22px rgba(201,162,39,.35)}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;background:#1a1a1a;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:bold}
+.chip.on{background:var(--gold);color:#000;border-color:var(--gold)}
+.tag.green{background:var(--green);color:#fff;font-weight:bold}
+.btnlink{display:inline-block;padding:7px 10px;border-radius:10px;font-size:12px;font-weight:bold;text-decoration:none;background:#222;color:var(--text);border:1px solid var(--line)}
+.app-toast-action{pointer-events:auto;display:flex;align-items:center;gap:10px}
+.app-toast-action button{padding:6px 12px;font-size:13px}
+.dash{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.dash div{background:#0e0e0e;border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
+.dash span{display:block;font-size:11px;color:var(--muted)}
+.dash b{font-size:14px;color:var(--gold);word-break:break-word}
+#receipt{display:none}
+#splash{position:fixed;inset:0;background:#000;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:opacity .5s ease}
+#splash.hide{opacity:0;pointer-events:none}
+#splash b{font-size:22px;color:var(--gold);letter-spacing:1px;direction:ltr}
+#splash span{color:var(--muted);font-size:13px}
+@media print{
+  body *{visibility:hidden}
+  #receipt,#receipt *{visibility:visible}
+  #receipt{display:block;position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;padding:24px;font-size:14px}
+  #receipt h2{color:#000;text-align:center}
+  #receipt .r-row{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #ddd;padding:7px 0}
+}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpis div{background:linear-gradient(180deg,#181818,#0e0e0e);border:1px solid var(--line);border-radius:12px;padding:12px 6px;text-align:center}
+.kpis span{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+.kpis b{font-size:15px;color:var(--gold);word-break:break-word}
+.sheet{margin-top:10px;padding:12px;background:#0e0e0e;border:1px solid var(--gold);border-radius:12px}
+.sheet-t{font-weight:800;color:var(--gold);margin-bottom:2px}
+.dfield{display:flex;gap:8px;align-items:center}
+.dfield input{flex:1;min-width:0}
+.dfield .chip{flex:none}
+.stepper{display:grid;grid-template-columns:54px 1fr 54px;gap:6px}
+.stepper button{font-size:22px;padding:0;height:46px}
+.stepper input{text-align:center;font-size:17px;font-weight:bold}
+.picker{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.pick{background:#1a1a1a;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:92px}
+.pick small{color:var(--muted);font-size:11px;font-weight:normal}
+.pick.on{background:var(--gold);color:#000;border-color:var(--gold)}
+.pick.on small{color:#000}
+.dhint{font-size:12px;color:var(--muted);margin-top:8px;min-height:16px;line-height:1.7}
+.dhint.ok{color:#7ee08f}
+.dhint.warn{color:#ffb4b4}
+.bar{height:6px;background:#222;border-radius:6px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#e7c65a)}
+.srcs{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.btnrow{display:flex;gap:8px;margin-top:10px}
+.btnrow button{flex:1}
+.fillbtn{margin-top:6px}
+.sec-h{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px}
+.sec-h h2{margin:0}
 </style>
 </head>
 <body>
+<div id="splash"><b>VALET PARKING MOKHTAR</b><span>نظام الحجوزات والفاليه</span></div>
 
 <nav class="pagebar">
   <button type="button" class="pg on" data-pg="ops">🏠 التشغيل</button>
@@ -143,20 +210,15 @@ a{color:var(--gold)}
 <div id="pageOps">
 <header class="top">
   <h1 class="brand">Valet Parking Mokhtar</h1>
-  <nav class="tabs">
-    <button class="tab on" data-tab="remind">🔔 تذكير</button>
-    <button class="tab" data-tab="form">➕ حجز</button>
-    <button class="tab" data-tab="list">📋 حجوزات</button>
-    <button class="tab" data-tab="team">👷 عمال</button>
-    <button class="tab" data-tab="clients">👥 عملاء</button>
-    <button class="tab" data-tab="gear">🧰 تجهيز</button>
-  </nav>
+  <div class="sub-brand">نظام الحجوزات والفاليه</div>
 </header>
 
 <main>
 
   <!-- Reminders -->
   <div class="view on" id="view-remind">
+    <div id="backupAlert"></div>
+    <div class="dash" id="dash"></div>
     <div class="panel">
       <h2>📝 الملاحظات</h2>
       <input id="noteText" placeholder="اكتب الملاحظة">
@@ -282,14 +344,20 @@ a{color:var(--gold)}
     <div class="panel">
       <h2 id="listTitle">📋 كل الحجوزات</h2>
       <input id="bookingSearch" placeholder="🔍 ابحث باسم العميل أو الرقم أو المكان أو التاريخ" style="margin-bottom:10px">
+      <div class="chips" id="listChips">
+        <button type="button" class="chip on" data-f="all">الكل</button>
+        <button type="button" class="chip" data-f="today">النهارده</button>
+        <button type="button" class="chip" data-f="week">الأسبوع ده</button>
+        <button type="button" class="chip" data-f="unpaid">عليه فلوس</button>
+      </div>
       <button class="ghost small" id="toggleArchive" style="width:100%;margin-bottom:12px">🗄️ الأرشيف</button>
       <div id="bookingList"></div>
     </div>
     <div class="panel">
       <h2>💾 نسخة احتياطية</h2>
       <div class="btns" style="margin-top:0">
-        <button type="button" class="ghost" id="exportBtn">تصدير</button>
-        <button type="button" class="ghost" id="importBtn">استيراد</button>
+        <button type="button" class="ghost" id="exportBtn">📤 تصدير نسخة كاملة</button>
+        <button type="button" class="ghost" id="importBtn">📥 استيراد نسخة</button>
         <input type="file" id="importFile" accept="application/json" style="display:none">
       </div>
       <div class="hint">احفظ نسخة قبل ما تغير الموبايل أو تمسح بيانات المتصفح.</div>
@@ -297,6 +365,16 @@ a{color:var(--gold)}
   </div>
 
 </main>
+
+<nav class="tabs">
+  <button class="tab on" data-tab="remind"><span class="ic">🔔</span>تذكير</button>
+  <button class="tab" data-tab="form"><span class="ic">➕</span>حجز</button>
+  <button class="tab" data-tab="list"><span class="ic">📋</span>حجوزات</button>
+  <button class="tab" data-tab="team"><span class="ic">👷</span>عمال</button>
+  <button class="tab" data-tab="clients"><span class="ic">👥</span>عملاء</button>
+  <button class="tab" data-tab="gear"><span class="ic">🧰</span>تجهيز</button>
+</nav>
+<button type="button" class="fab" id="fab" aria-label="حجز جديد">+</button>
 
 <div class="foot">Designed by rashad</div>
 </div>
@@ -308,22 +386,32 @@ a{color:var(--gold)}
     <button type="button" id="supListToggle" class="ghost">🏪 الموردين</button>
   </div>
   <div class="panel" id="supNewBox" style="display:none">
-    <input id="supName" placeholder="اسم المورد">
-    <input id="supPhone" type="tel" placeholder="الرقم (اختياري)" style="margin-top:8px;direction:ltr">
-    <input id="supNotes" placeholder="ملاحظات (اختياري)" style="margin-top:8px">
-    <button type="button" id="supAdd" style="width:100%;margin-top:10px">حفظ المورد</button>
+    <div class="sheet-t">➕ مورد جديد</div>
+    <label>اسم المورد</label>
+    <input id="supName" placeholder="مثال: محمد الجولف">
+    <div class="row">
+      <div><label>الرقم</label><input id="supPhone" type="tel" placeholder="01xxxxxxxxx" style="direction:ltr"></div>
+      <div><label>ملاحظات</label><input id="supNotes" placeholder="اختياري"></div>
+    </div>
+    <div class="btnrow"><button type="button" id="supAdd">حفظ المورد</button></div>
   </div>
   <div class="panel" id="supListBox" style="display:none"><div id="supList"></div></div>
   <div class="row2">
-    <button type="button" id="clNewToggle" class="ghost" style="width:100%">➕ عميل جديد</button>
+    <button type="button" id="clNewToggle" class="ghost">➕ عميل جديد</button>
   </div>
   <div class="panel" id="clNewBox" style="display:none">
+    <div class="sheet-t">➕ عميل جديد</div>
+    <label>اسم العميل</label>
     <input id="clName" placeholder="اسم العميل">
-    <input id="clPhone" type="tel" placeholder="رقم العميل (اختياري)" style="margin-top:8px;direction:ltr">
-    <button type="button" id="clSave" style="width:100%;margin-top:10px">حفظ العميل</button>
+    <label>رقم العميل</label>
+    <input id="clPhone" type="tel" placeholder="اختياري" style="direction:ltr">
+    <div class="btnrow"><button type="button" id="clSave">حفظ العميل</button></div>
   </div>
+  <input id="clSearch" placeholder="🔍 ابحث باسم العميل أو الرقم" style="margin-bottom:10px">
   <div id="clList"></div>
 </div>
+
+<div id="receipt"></div>
 
 <script>
 const KEY = 'mokhtar_bookings';
@@ -387,12 +475,14 @@ function showTab(t, dir) {
       el.classList.add(dir === 'next' ? 'enter-prev' : dir === 'prev' ? 'enter-next' : 'enter-fade');
     }
   });
+  $('fab').style.display = t === 'form' ? 'none' : '';
   if (t === 'clients') renderClients();
   if (t === 'gear') renderGear();
   if (t === 'team') renderTeam();
   window.scrollTo({ top: 0 });
 }
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+$('fab').onclick = () => { if (editingId) resetForm(); showTab('form'); };
 
 // ---- Storage ----
 function persist() {
@@ -491,6 +581,10 @@ function waPhone(phone) {
 }
 const waUrl = (phone, msg) => `https://wa.me/${waPhone(phone)}?text=${encodeURIComponent(msg)}`;
 
+function thanksMsg(b) {
+  const where = b.venue ? ` في ${b.venue}` : '';
+  return `أهلاً ${b.client} 🌟\n\nشكراً جزيلاً لثقتكم في Mokhtar Valet Parking، وتشرفنا إن مناسبة ${b.type} يوم ${b.date}${where} كانت جزء من يومكم.\n\nيسعدنا دايماً نكون في خدمتكم في مناسباتكم الجاية، ولو عندكم أي ملاحظة أو تقييم للخدمة، رأيكم يفرق معانا جداً.\n\nمع خالص التحية والتقدير،\nفريق Mokhtar Valet Parking 🤍`;
+}
 function clientWa(b) {
   const where = b.venue ? ` في ${b.venue}` : '';
   return waUrl(b.phone, `مرحباً ${b.client}، تذكير بحجزكم مع مختار فاليه لمناسبة ${b.type} يوم ${b.date} الساعة ${colloquial(b.time)}${where}. لو عندكم أي طلبات خاصة برجاء إبلاغنا. شكراً لثقتكم 🌟`);
@@ -630,6 +724,7 @@ $('calGrid').addEventListener('click', e => {
   if (!cell) return;
   if (cell.classList.contains('past')) { appToast('التاريخ ده عدى، اختار تاريخ جاي'); return; }
   $('date').value = cell.dataset.d;
+  saveDraft();
   $('calBox').style.display = 'none';
   renderCal();
   const cnt = bookings.filter(b => b.date === cell.dataset.d && String(b.id) !== String(editingId)).length;
@@ -722,6 +817,11 @@ function staffSection(b) {
 }
 
 // ---- Cards ----
+function statusTag(b) {
+  if (b.remaining <= 0) return '<span class="tag green">خلص الحساب ✅</span>';
+  if (b.paidTotal > 0) return `<span class="tag">اتبقي ${money(b.remaining)}</span>`;
+  return '<span class="tag red">لسه مدفعش</span>';
+}
 function card(b) {
   const d = daysUntil(b.date);
   const when = d < 0 ? 'تمت' : d === 0 ? 'النهارده' : `بعد ${d} يوم`;
@@ -731,7 +831,7 @@ function card(b) {
   return `<div class="booking">
     <div class="bhead">
       <div>
-        <b>${esc(b.client)}</b> <span class="tag ${soon ? 'gold' : ''}">${when}</span>
+        <b>${esc(b.client)}</b> <span class="tag ${soon ? 'gold' : ''}">${when}</span> ${statusTag(b)}
         <div class="bmini">📅 ${esc(b.date)} · 📍 ${esc(b.venue) || '-'}</div>
       </div>
     </div>
@@ -757,7 +857,10 @@ function card(b) {
       ${staffSection(b)}
       ${notesSection(b)}
       <div class="btns">
+        ${b.phone ? `<a class="btnlink" href="tel:${esc(b.phone)}">📞 اتصال</a>` : ''}
         <button class="wa small" data-wa="${b.id}">واتساب العميل</button>
+        <button class="wa small" data-thanks="${b.id}">💬 رسالة شكر</button>
+        <button class="ghost small" data-receipt="${b.id}">🧾 إيصال</button>
         <button class="ghost small" data-note="${b.id}">📤 شارك للنوت</button>
         <button class="ghost small" data-edit="${b.id}">✏️ تعديل</button>
         <button class="danger small" data-del="${b.id}">حذف</button>
@@ -784,8 +887,35 @@ function reminderCard(b) {
 }
 
 let showArchive = false; // true = showing finished bookings
+let listFilter = 'all';
+function renderDash() {
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+  const todayCount = bookings.filter(b => b.date === todayISO()).length;
+  const owed = bookings.filter(b => daysUntil(b.date) >= 0).reduce((s, b) => s + Math.max(0, b.remaining), 0);
+  let collected = 0;
+  bookings.forEach(b => {
+    if ((b.depositDate || '').startsWith(monthKey)) collected += b.deposit;
+    b.payments.forEach(p => { if ((p.date || '').startsWith(monthKey)) collected += p.amount; });
+  });
+  $('dash').innerHTML = `<div><span>حجوزات النهارده</span><b>${todayCount}</b></div>
+    <div><span>اتحصل الشهر ده</span><b>${money(collected)}</b></div>
+    <div><span>متبقي على الجاي</span><b>${money(owed)}</b></div>`;
+}
+function renderBackupAlert() {
+  const last = Number(localStorage.getItem('mokhtar_last_backup') || 0);
+  const stale = !last || (Date.now() - last) > 7 * 86400000;
+  $('backupAlert').innerHTML = (bookings.length && stale)
+    ? `<div class="alert">💾 ${last ? 'مفيش نسخة احتياطية من أكتر من أسبوع' : 'لسه متعملتش نسخة احتياطية'}.
+       <button type="button" class="ghost small" id="goBackup" style="margin-top:6px">📤 اعمل نسخة دلوقتي</button></div>`
+    : '';
+  const g = $('goBackup');
+  if (g) g.onclick = () => $('exportBtn').click();
+}
 function render() {
   renderNotes();
+  renderDash();
+  renderBackupAlert();
   bookings = bookings.map(normalize);
   const list = [...bookings].sort((a, b) => a.date.localeCompare(b.date));
   const rem = list.filter(b => { const d = daysUntil(b.date); return d >= 0 && d <= 7; });
@@ -795,7 +925,10 @@ function render() {
   // Finished events (before today) go to the archive; upcoming ones stay in the list
   const past = list.filter(b => daysUntil(b.date) < 0).reverse();
   const upcoming = list.filter(b => daysUntil(b.date) >= 0);
-  const base = showArchive ? past : upcoming;
+  let base = showArchive ? past : upcoming;
+  if (!showArchive && listFilter === 'today') base = base.filter(b => b.date === todayISO());
+  if (!showArchive && listFilter === 'week') base = base.filter(b => { const d = daysUntil(b.date); return d >= 0 && d <= 7; });
+  if (!showArchive && listFilter === 'unpaid') base = base.filter(b => b.remaining > 0);
   const q = ($('bookingSearch')?.value || '').trim().toLowerCase();
   const shown = q ? base.filter(b => [b.client, b.phone, b.venue, b.type, b.date]
     .some(v => String(v || '').toLowerCase().includes(q))) : base;
@@ -878,6 +1011,11 @@ $('exportClients').onclick = () => downloadFile('mokhtar-clients.csv', 'text/csv
 // ---- Events ----
 document.querySelectorAll('#bookingForm input').forEach(i => i.addEventListener('input', calc));
 $('bookingSearch').addEventListener('input', render);
+document.querySelectorAll('#listChips .chip').forEach(c => c.onclick = () => {
+  listFilter = c.dataset.f;
+  document.querySelectorAll('#listChips .chip').forEach(x => x.classList.toggle('on', x === c));
+  render();
+});
 $('toggleArchive').onclick = () => { showArchive = !showArchive; render(); };
 // ---- Helpers for staff people ----
 const phoneKey = p => { const d = String(p || '').replace(/\D/g, ''); return d.length >= 10 ? d.slice(-10) : d; };
@@ -1122,7 +1260,7 @@ const supStats = id => {
   const cost = rec.reduce((s, m) => s + m.count * m.price, 0);
   const paid = pay.reduce((s, m) => s + m.amount, 0);
   const delivered = allDeliveries().filter(d => d.supplierId === id).reduce((s, d) => s + d.count, 0);
-  return { count, cost, paid, owed: cost - paid, inHand: count - delivered };
+  return { count, cost, paid, owed: cost - paid, inHand: count - delivered, delivered: delivered };
 };
 const clientStats = c => {
   const dl = c.deliveries || [];
@@ -1134,24 +1272,68 @@ const clientStats = c => {
 const supName = id => (sups.find(x => x.id === id) || {}).name || 'مورد اتشال';
 const val = id => ($(id) ? $(id).value.trim() : '');
 const dateOr = d => d ? esc(d) : '<span style="color:#888">—</span>';
-const supOptions = sel => sups.length
-  ? sups.map(s => `<option value="${esc(s.id)}"${s.id === sel ? ' selected' : ''}>${esc(s.name)}</option>`).join('')
-  : '<option value="">ضيف مورد الأول</option>';
+const pctOf = (a, b) => b > 0 ? Math.min(100, Math.round(a / b * 100)) : 0;
+
+// small form pieces
+const dateField = (id, value = '') => `<div class="dfield"><input id="${id}" type="date" value="${esc(value)}"><button type="button" class="chip" data-act="today" data-target="${id}">النهارده</button></div>`;
+const stepper = (id, value, cid = '') => `<div class="stepper"><button type="button" data-act="step" data-f="${id}" data-d="-1" data-cid="${cid}">−</button><input id="${id}" type="number" min="0" inputmode="numeric" value="${value ?? ''}" placeholder="0"><button type="button" data-act="step" data-f="${id}" data-d="1" data-cid="${cid}">+</button></div>`;
+const defSup = selId => (selId && sups.some(s => s.id === selId)) ? selId
+  : ([...sups].sort((a, b) => supStats(b.id).inHand - supStats(a.id).inHand)[0] || {}).id || '';
+const supPicker = (cid, sel) => sups.length
+  ? `<div class="picker" id="dv-picker-${cid}">${sups.map(s => {
+      const avail = supStats(s.id).inHand;
+      return `<button type="button" class="pick${s.id === sel ? ' on' : ''}" data-act="pick-sup" data-cid="${cid}" data-sid="${s.id}">${esc(s.name)}<small>متاح ${avail}</small></button>`;
+    }).join('')}</div><input type="hidden" id="dv-sup-${cid}" value="${sel}">`
+  : '<div class="hint">ضيف مورد الأول من فوق</div>';
+const dvAvail = (cid, sid) => {
+  const c = golfClients.find(x => x.id === cid);
+  const e = c && clEditDeliv[cid] ? (c.deliveries || []).find(d => d.id === clEditDeliv[cid]) : null;
+  return supStats(sid).inHand + (e && e.supplierId === sid ? e.count : 0);
+};
+function dvHintHtml(cid, sid, count, price) {
+  if (!sid) return { cls: 'dhint', html: '' };
+  const avail = dvAvail(cid, sid);
+  const over = count > avail;
+  return {
+    cls: 'dhint' + (over ? ' warn' : count ? ' ok' : ''),
+    html: `متاح عند ${esc(supName(sid))}: <b>${avail}</b> جولف${over ? ' · ⚠️ أكتر من المتاح' : ''}` +
+      (count && price ? ` · إجمالي العميل: <b>${money(count * price)}</b>` : '')
+  };
+}
+function updateDvHint(cid) {
+  const el = $('dv-hint-' + cid), sid = $('dv-sup-' + cid) && $('dv-sup-' + cid).value;
+  if (!el || !sid) return;
+  const h = dvHintHtml(cid, sid, Number(val('dv-count-' + cid)) || 0, Number(val('dv-price-' + cid)) || 0);
+  el.className = h.cls; el.innerHTML = h.html;
+}
+function updateRecvPrev(sid) {
+  const el = $('r-prev-' + sid);
+  if (!el) return;
+  const c = Number(val('r-count-' + sid)) || 0, p = Number(val('r-price-' + sid)) || 0;
+  el.innerHTML = c && p ? `إجمالي الاستلام: <b>${money(c * p)}</b>` : '';
+}
 
 function renderSupply() {
   const owedSup = sups.reduce((s, x) => s + supStats(x.id).owed, 0);
   const owedCl = golfClients.reduce((s, c) => s + clientStats(c).remaining, 0);
   const inHand = sups.reduce((s, x) => s + supStats(x.id).inHand, 0);
-  $('supSummary').innerHTML = `<h2>📊 ملخص الجولف</h2>
-    <div class="bsum">
-      <div><span>الباقي عليّا للموردين</span><b style="color:var(--gold)">${money(owedSup)}</b></div>
-      <div><span>الباقي على العملاء</span><b style="color:var(--gold)">${money(owedCl)}</b></div>
-      <div><span>جولف عندي في الشغل</span><b>${inHand}</b></div>
+  $('supSummary').innerHTML = `<div class="sec-h"><h2>📊 ملخص الجولف</h2></div>
+    <div class="kpis">
+      <div><span>عليّا للموردين</span><b>${money(owedSup)}</b></div>
+      <div><span>ليّا عند العملاء</span><b>${money(owedCl)}</b></div>
+      <div><span>جولف في الشغل</span><b>${inHand}</b></div>
     </div>`;
   $('supListBox').style.display = showSupList ? '' : 'none';
   $('supListToggle').classList.toggle('on', showSupList);
+  $('supListToggle').textContent = `🏪 الموردين (${sups.length})`;
   $('supList').innerHTML = sups.length ? sups.map(renderSupCard).join('') : '<div class="empty">مفيش موردين لسه</div>';
-  $('clList').innerHTML = golfClients.length ? golfClients.map(renderClient).join('') : '<div class="empty">ضيف عميل من الزرار فوق</div>';
+  renderClientList();
+}
+function renderClientList() {
+  const q = ($('clSearch') ? $('clSearch').value : '').trim().toLowerCase();
+  const list = golfClients.filter(c => !q || [c.name, c.phone].some(v => String(v || '').toLowerCase().includes(q)));
+  $('clList').innerHTML = !golfClients.length ? '<div class="empty">ضيف عميل من الزرار فوق</div>'
+    : list.length ? list.map(renderClient).join('') : '<div class="empty">مفيش نتايج للبحث</div>';
 }
 
 function renderSupCard(s) {
@@ -1160,23 +1342,43 @@ function renderSupCard(s) {
   if (open) {
     const moves = supMoves.filter(m => m.supplierId === s.id).sort((a, b) => String(a.date).localeCompare(String(b.date)));
     const delivs = allDeliveries().filter(d => d.supplierId === s.id);
-    const forms = mode === 'receive' ? `<div class="sup-form">
-        <label>عدد الجولف اللي استلمته</label><input id="r-count-${s.id}" type="number" min="1" inputmode="numeric">
-        <label>سعر الجولف عندهم</label><input id="r-price-${s.id}" type="number" min="0" inputmode="numeric">
-        <label>تاريخ الاستلام</label><input id="r-date-${s.id}" type="date">
+    let forms = '';
+    if (mode === 'receive') forms = `<div class="sheet">
+        <div class="sheet-t">📥 استلام جولف من ${esc(s.name)}</div>
+        <label>عدد الجولف</label>${stepper(`r-count-${s.id}`, '')}
+        <label>سعر الجولف عندهم</label>
+        <input id="r-price-${s.id}" type="number" min="0" inputmode="numeric" placeholder="0">
+        <div id="r-prev-${s.id}" class="dhint"></div>
+        <label>تاريخ الاستلام</label>${dateField(`r-date-${s.id}`)}
         <input id="r-note-${s.id}" placeholder="ملاحظة (اختياري)" style="margin-top:8px">
-        <button type="button" data-act="move-save" data-id="${s.id}" data-mode="receive" style="width:100%;margin-top:8px">حفظ الاستلام</button></div>`
-      : mode === 'pay' ? `<div class="sup-form">
-        <label>المبلغ اللي دفعته له</label><input id="p-amt-${s.id}" type="number" min="1" inputmode="numeric">
-        <label>تاريخ الدفع</label><input id="p-date-${s.id}" type="date">
+        <div class="btnrow">
+          <button type="button" class="ghost" data-act="sup-mode" data-id="${s.id}" data-mode="receive">إلغاء</button>
+          <button type="button" data-act="move-save" data-id="${s.id}" data-mode="receive">حفظ الاستلام</button>
+        </div></div>`;
+    else if (mode === 'pay') forms = `<div class="sheet">
+        <div class="sheet-t">💸 دفعة للمورد</div>
+        <div class="dhint">الباقي عليّا: <b style="color:var(--gold)">${money(st.owed)}</b></div>
+        <label>المبلغ</label>
+        <input id="p-amt-${s.id}" type="number" min="1" inputmode="numeric" placeholder="0">
+        ${st.owed > 0 ? `<button type="button" class="chip fillbtn" data-act="fill" data-target="p-amt-${s.id}" data-v="${st.owed}">سدّد كل الباقي</button>` : ''}
+        <label>تاريخ الدفع</label>${dateField(`p-date-${s.id}`)}
         <input id="p-note-${s.id}" placeholder="ملاحظة (اختياري)" style="margin-top:8px">
-        <button type="button" data-act="move-save" data-id="${s.id}" data-mode="pay" style="width:100%;margin-top:8px">حفظ الدفعة</button></div>`
-      : mode === 'edit' ? `<div class="sup-form">
-        <input id="se-name-${s.id}" value="${esc(s.name)}" placeholder="اسم المورد">
-        <input id="se-phone-${s.id}" type="tel" value="${esc(s.phone || '')}" placeholder="الرقم" style="margin-top:8px;direction:ltr">
-        <input id="se-notes-${s.id}" value="${esc(s.notes || '')}" placeholder="ملاحظات" style="margin-top:8px">
-        <button type="button" data-act="sup-edit-save" data-id="${s.id}" style="width:100%;margin-top:8px">حفظ التعديل</button></div>`
-      : '';
+        <div class="btnrow">
+          <button type="button" class="ghost" data-act="sup-mode" data-id="${s.id}" data-mode="pay">إلغاء</button>
+          <button type="button" data-act="move-save" data-id="${s.id}" data-mode="pay">حفظ الدفعة</button>
+        </div></div>`;
+    else if (mode === 'edit') forms = `<div class="sheet">
+        <div class="sheet-t">✏️ تعديل بيانات المورد</div>
+        <label>الاسم</label><input id="se-name-${s.id}" value="${esc(s.name)}">
+        <div class="row" style="margin-top:0">
+          <div><label>الرقم</label><input id="se-phone-${s.id}" type="tel" value="${esc(s.phone || '')}" style="direction:ltr"></div>
+          <div><label>ملاحظات</label><input id="se-notes-${s.id}" value="${esc(s.notes || '')}"></div>
+        </div>
+        <div class="btnrow">
+          <button type="button" class="ghost" data-act="sup-mode" data-id="${s.id}" data-mode="edit">إلغاء</button>
+          <button type="button" data-act="sup-edit-save" data-id="${s.id}">حفظ التعديل</button>
+        </div></div>`;
+    const delivered = st.delivered;
     body = `${s.phone ? `<div class="bmini">📞 ${esc(s.phone)}</div>` : ''}
       ${s.notes ? `<div class="bmini">📝 ${esc(s.notes)}</div>` : ''}
       <div class="bsum">
@@ -1185,6 +1387,8 @@ function renderSupCard(s) {
         <div><span>الباقي عليّا</span><b style="color:var(--gold)">${money(st.owed)}</b></div>
         <div><span>عندي في الشغل</span><b>${st.inHand} جولف</b></div>
       </div>
+      <div class="bar"><i style="width:${pctOf(delivered, st.count)}%"></i></div>
+      <div class="bmini">اتسلم للعملاء ${delivered} من ${st.count}</div>
       <div class="btns">
         <button class="ghost small" data-act="sup-mode" data-id="${s.id}" data-mode="receive">📥 استلام</button>
         <button class="ghost small" data-act="sup-mode" data-id="${s.id}" data-mode="pay">💸 دفعة</button>
@@ -1202,7 +1406,10 @@ function renderSupCard(s) {
       </div>`;
   }
   return `<div class="booking">
-    <div class="bhead" data-act="sup-toggle" data-id="${s.id}" style="cursor:pointer"><div><b>${esc(s.name)}</b> <span class="tag">الباقي ${money(st.owed)}</span></div><span style="color:var(--gold)">${open ? '▲' : '▼'}</span></div>
+    <div class="bhead" data-act="sup-toggle" data-id="${s.id}" style="cursor:pointer">
+      <div><b>${esc(s.name)}</b> <span class="tag ${st.owed > 0 ? '' : 'green'}">${st.owed > 0 ? 'الباقي ' + money(st.owed) : 'مفيش باقي ✅'}</span></div>
+      <span style="color:var(--gold)">${open ? '▲' : '▼'}</span>
+    </div>
     ${body}
   </div>`;
 }
@@ -1210,26 +1417,49 @@ function renderSupCard(s) {
 function renderClient(c) {
   const st = clientStats(c), mode = clMode[c.id];
   const dl = c.deliveries || [], pays = c.payments || [];
+  const lastPrice = dl.length ? dl[dl.length - 1].price : '';
+  const srcs = [...new Set(dl.map(d => d.supplierId))].filter(id => sups.some(s => s.id === id));
   let form = '';
   if (mode === 'edit') {
-    form = `<div class="sup-form">
-      <input id="ce-name-${c.id}" value="${esc(c.name)}" placeholder="اسم العميل">
-      <input id="ce-phone-${c.id}" type="tel" value="${esc(c.phone || '')}" placeholder="رقم العميل" style="margin-top:8px;direction:ltr">
-      <button type="button" data-act="cl-edit-save" data-id="${c.id}" style="width:100%;margin-top:8px">حفظ التعديل</button></div>`;
+    form = `<div class="sheet">
+      <div class="sheet-t">✏️ تعديل العميل</div>
+      <label>الاسم</label><input id="ce-name-${c.id}" value="${esc(c.name)}">
+      <label>الرقم</label><input id="ce-phone-${c.id}" type="tel" value="${esc(c.phone || '')}" style="direction:ltr">
+      <div class="btnrow">
+        <button type="button" class="ghost" data-act="cl-mode" data-id="${c.id}" data-mode="edit">إلغاء</button>
+        <button type="button" data-act="cl-edit-save" data-id="${c.id}">حفظ التعديل</button>
+      </div></div>`;
   } else if (mode === 'deliv') {
     const e = dl.find(d => d.id === clEditDeliv[c.id]);
-    form = `<div class="sup-form"><b>${e ? 'تعديل التسليم' : 'تسليم جولف جديد'}</b>
-      <label>تاريخ التسليم</label><input id="dv-date-${c.id}" type="date" value="${e ? esc(e.date) : ''}">
-      <label>المورد</label><select id="dv-sup-${c.id}">${supOptions(e ? e.supplierId : '')}</select>
-      <input id="dv-count-${c.id}" type="number" min="1" inputmode="numeric" placeholder="عدد الجولف" value="${e ? e.count : ''}" style="margin-top:8px">
-      <input id="dv-price-${c.id}" type="number" min="0" inputmode="numeric" placeholder="سعر الجولف للعميل" value="${e ? e.price : ''}" style="margin-top:8px">
-      <input id="dv-note-${c.id}" placeholder="ملاحظة (اختياري)" value="${e ? esc(e.note || '') : ''}" style="margin-top:8px">
-      <button type="button" data-act="dv-save" data-id="${c.id}" style="width:100%;margin-top:8px">حفظ</button></div>`;
+    const sel = defSup(e ? e.supplierId : '');
+    const count = e ? e.count : '';
+    const price = e ? e.price : lastPrice;
+    const h = dvHintHtml(c.id, sel, Number(count) || 0, Number(price) || 0);
+    form = `<div class="sheet">
+      <div class="sheet-t">${e ? '✏️ تعديل تسليم' : '🚗 تسليم جولف جديد'}</div>
+      <label>تاريخ التسليم</label>${dateField(`dv-date-${c.id}`, e ? e.date : '')}
+      <label>من المورد</label>${supPicker(c.id, sel)}
+      <label>عدد الجولف</label>${stepper(`dv-count-${c.id}`, count, c.id)}
+      <label>سعر الجولف للعميل ${!e && lastPrice !== '' ? '<span class="hint">(آخر سعر)</span>' : ''}</label>
+      <input id="dv-price-${c.id}" type="number" min="0" inputmode="numeric" value="${price}" placeholder="0">
+      <div id="dv-hint-${c.id}" class="${h.cls}">${h.html}</div>
+      <input id="dv-note-${c.id}" placeholder="ملاحظة (اختياري)" value="${esc(e ? e.note || '' : '')}" style="margin-top:8px">
+      <div class="btnrow">
+        <button type="button" class="ghost" data-act="cl-mode" data-id="${c.id}" data-mode="deliv">إلغاء</button>
+        <button type="button" data-act="dv-save" data-id="${c.id}">حفظ التسليم</button>
+      </div></div>`;
   } else if (mode === 'pay') {
-    form = `<div class="sup-form">
-      <label>المبلغ اللي دفعه العميل</label><input id="cp-amt-${c.id}" type="number" min="1" inputmode="numeric">
-      <label>تاريخ الدفع</label><input id="cp-date-${c.id}" type="date">
-      <button type="button" data-act="cl-pay-save" data-id="${c.id}" style="width:100%;margin-top:8px">حفظ الدفعة</button></div>`;
+    form = `<div class="sheet">
+      <div class="sheet-t">💵 دفعة من العميل</div>
+      <div class="dhint">المتبقي حالياً: <b style="color:var(--gold)">${money(st.remaining)}</b></div>
+      <label>المبلغ</label>
+      <input id="cp-amt-${c.id}" type="number" min="1" inputmode="numeric" placeholder="0">
+      ${st.remaining > 0 ? `<button type="button" class="chip fillbtn" data-act="fill" data-target="cp-amt-${c.id}" data-v="${st.remaining}">كل المتبقي</button>` : ''}
+      <label>تاريخ الدفع</label>${dateField(`cp-date-${c.id}`)}
+      <div class="btnrow">
+        <button type="button" class="ghost" data-act="cl-mode" data-id="${c.id}" data-mode="pay">إلغاء</button>
+        <button type="button" data-act="cl-pay-save" data-id="${c.id}">حفظ الدفعة</button>
+      </div></div>`;
   }
   const details = mode === 'details' ? `<div class="sup-form"><b>التسليمات</b>
       ${dl.length ? dl.map(d => `<div class="mv-row"><span>🚗 ${dateOr(d.date)} · ${d.count} × ${money(d.price)} · ${esc(supName(d.supplierId))}${d.note ? `<br><small style="color:var(--muted)">${esc(d.note)}</small>` : ''}</span>
@@ -1239,16 +1469,19 @@ function renderClient(c) {
       ${pays.length ? pays.map(p => `<div class="mv-row"><span>💵 ${dateOr(p.date)}</span>
         <span><b>${money(p.amount)}</b> <button type="button" class="danger small" data-act="cl-pay-del" data-id="${c.id}" data-pid="${p.id}">✕</button></span></div>`).join('') : '<p style="color:#888">مفيش دفعات لسه</p>'}
     </div>` : '';
+  const status = st.total > 0 && st.remaining <= 0 ? '<span class="tag green">خلص ✅</span>' : '';
   return `<div class="booking">
-    <div class="bhead"><div><b>${esc(c.name)}</b> <span class="tag">${st.carts} جولف</span>
-      ${c.phone ? `<div class="bmini">📞 ${esc(c.phone)}</div>` : ''}</div></div>
+    <div class="bhead"><div><b>${esc(c.name)}</b> <span class="tag">${st.carts} جولف</span> ${status}
+      ${c.phone ? `<div class="bmini">📞 ${esc(c.phone)}</div>` : ''}
+      ${srcs.length ? `<div class="srcs">${srcs.map(id => `<span class="tag">📦 ${esc(supName(id))}</span>`).join('')}</div>` : ''}
+    </div></div>
     <div class="bsum">
       <div><span>الحساب</span><b>${money(st.total)}</b></div>
       <div><span>اتدفع</span><b>${money(st.paid)}</b></div>
       <div><span>اتبقي</span><b style="color:var(--gold)">${money(st.remaining)}</b></div>
     </div>
     <div class="btns">
-      <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="deliv">➕ تسليم جولف</button>
+      <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="deliv">➕ تسليم</button>
       <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="pay">💵 دفعة</button>
       <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="details">👁️ التفاصيل</button>
       <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="edit">✏️</button>
@@ -1263,25 +1496,55 @@ $('clNewToggle').onclick = () => { const b = $('clNewBox'); b.style.display = b.
 $('supListToggle').onclick = () => { showSupList = !showSupList; renderSupply(); };
 $('supAdd').onclick = () => {
   const name = val('supName');
-  if (!name) { appToast('اكتب اسم المورد'); return; }
+  if (!name) { appToast('اكتب اسم المورد'); $('supName').focus(); return; }
   sups.push({ id: newId('s'), name, phone: val('supPhone'), notes: val('supNotes') });
   ['supName', 'supPhone', 'supNotes'].forEach(i => $(i).value = '');
   $('supNewBox').style.display = 'none';
   saveSupply(); renderSupply();
+  appToast('اتضاف المورد ✅');
 };
 $('clSave').onclick = () => {
   const name = val('clName');
-  if (!name) { appToast('اكتب اسم العميل'); return; }
+  if (!name) { appToast('اكتب اسم العميل'); $('clName').focus(); return; }
   golfClients.push({ id: newId('c'), name, phone: val('clPhone'), deliveries: [], payments: [] });
   ['clName', 'clPhone'].forEach(i => $(i).value = '');
   $('clNewBox').style.display = 'none';
   saveSupply(); renderSupply();
+  appToast('اتضاف العميل ✅');
 };
+
+// live hints while typing (no re-render, so typed values stay)
+$('pageSupply').addEventListener('input', e => {
+  const id = e.target.id || '';
+  const d = /^dv-(count|price|sup)-(.+)$/.exec(id);
+  if (d) updateDvHint(d[2]);
+  const r = /^r-(count|price)-(.+)$/.exec(id);
+  if (r) updateRecvPrev(r[2]);
+  if (id === 'clSearch') renderClientList();
+});
 
 $('pageSupply').addEventListener('click', async e => {
   const el = e.target.closest('[data-act]');
   if (!el) return;
   const act = el.dataset.act, id = el.dataset.id, did = el.dataset.did;
+
+  // quick helpers: no re-render, so nothing typed is lost
+  if (act === 'pick-sup') {
+    $('dv-sup-' + el.dataset.cid).value = el.dataset.sid;
+    document.querySelectorAll(`#dv-picker-${el.dataset.cid} .pick`).forEach(x => x.classList.toggle('on', x === el));
+    updateDvHint(el.dataset.cid);
+    return;
+  }
+  if (act === 'step') {
+    const inp = $(el.dataset.f);
+    if (!inp) return;
+    inp.value = Math.max(0, (Number(inp.value) || 0) + Number(el.dataset.d));
+    if (el.dataset.cid) updateDvHint(el.dataset.cid);
+    if (el.dataset.f.startsWith('r-count-')) updateRecvPrev(el.dataset.f.slice(8));
+    return;
+  }
+  if (act === 'today') { $(el.dataset.target).value = todayISO(); return; }
+  if (act === 'fill') { $(el.dataset.target).value = el.dataset.v; $(el.dataset.target).focus(); return; }
 
   if (act === 'sup-toggle') {
     supOpen[id] = !supOpen[id];
@@ -1303,6 +1566,7 @@ $('pageSupply').addEventListener('click', async e => {
       supMoves.push({ id: newId('m'), type: 'pay', supplierId: id, amount, date, note: val('p-note-' + id) });
     }
     supMode[id] = null;
+    appToast('اتسجل ✅');
   } else if (act === 'move-del') {
     if (!(await appConfirm('تمسح الحركة دي؟'))) return;
     supMoves = supMoves.filter(m => m.id !== el.dataset.mid);
@@ -1327,12 +1591,14 @@ $('pageSupply').addEventListener('click', async e => {
     const c = golfClients.find(x => x.id === id);
     if (!c) return;
     const date = val('dv-date-' + id);
-    const supplierId = $('dv-sup-' + id).value;
+    const supplierId = val('dv-sup-' + id);
     const count = Number(val('dv-count-' + id)) || 0;
     const price = Number(val('dv-price-' + id)) || 0;
     if (!date) { appToast('اختار تاريخ التسليم'); return; }
-    if (!supplierId) { appToast('ضيف مورد واختاره'); return; }
+    if (!supplierId) { appToast('اختار المورد'); return; }
     if (count <= 0) { appToast('اكتب عدد الجولف'); return; }
+    const avail = dvAvail(id, supplierId);
+    if (count > avail && !(await appConfirm(`المتاح عندك من ${supName(supplierId)} ${avail} جولف بس.\nتسجل ${count} برضه؟`))) return;
     const editing = clEditDeliv[id];
     const rec = { id: editing || newId('d'), supplierId, count, price, date, note: val('dv-note-' + id) };
     c.deliveries = editing
@@ -1340,6 +1606,7 @@ $('pageSupply').addEventListener('click', async e => {
       : [...(c.deliveries || []), rec];
     clMode[id] = null;
     clEditDeliv[id] = null;
+    appToast('اتحفظ التسليم ✅');
   } else if (act === 'dv-del') {
     if (!(await appConfirm('تمسح التسليم ده؟'))) return;
     const c = golfClients.find(x => x.id === id);
@@ -1353,6 +1620,7 @@ $('pageSupply').addEventListener('click', async e => {
     if (!date) { appToast('اختار تاريخ الدفع'); return; }
     c.payments = [...(c.payments || []), { id: newId('p'), amount, date }];
     clMode[id] = null;
+    appToast('اتسجلت الدفعة ✅');
   } else if (act === 'cl-pay-del') {
     if (!(await appConfirm('تمسح الدفعة دي؟'))) return;
     const c = golfClients.find(x => x.id === id);
@@ -1420,6 +1688,7 @@ $('bookingForm').addEventListener('submit', async e => {
       bookings.push({ ...data, id: Date.now() });
     }
     const saved = persist();
+    if (saved) clearDraft();
     resetForm();
     render();
     appToast(saved ? 'تم الحفظ ✅' : 'تم الحفظ في الصفحة دي بس، لكن المتصفح مش مسموح له يحفظ على الجهاز. افتح الصفحة من GitHub Pages أو من كروم عادي.');
@@ -1477,38 +1746,127 @@ document.addEventListener('click', async e => {
     if (b) saveNote(b);
   }
   if (t.dataset.edit) startEdit(t.dataset.edit);
-  if (t.dataset.del && await appConfirm('تحذف الحجز ده؟')) {
-    bookings = bookings.filter(x => String(x.id) !== t.dataset.del);
-    persist();
-    if (String(editingId) === t.dataset.del) resetForm();
-    render();
+  if (t.dataset.thanks) {
+    const b = bookings.find(x => String(x.id) === t.dataset.thanks);
+    if (b) window.open(waUrl(b.phone, thanksMsg(b)), '_blank');
+  }
+  if (t.dataset.receipt) {
+    const b = bookings.find(x => String(x.id) === t.dataset.receipt);
+    if (b) printReceipt(b);
+  }
+  if (t.dataset.del) {
+    const idx = bookings.findIndex(x => String(x.id) === t.dataset.del);
+    if (idx > -1) {
+      const removed = bookings[idx];
+      bookings.splice(idx, 1);
+      persist();
+      if (String(editingId) === String(removed.id)) resetForm();
+      render();
+      appUndo('اتمسح الحجز', () => { bookings.push(removed); persist(); render(); });
+    }
   }
 });
 
-// ---- Backup ----
+// ---- Undo toast ----
+function appUndo(msg, onUndo) {
+  const t = document.createElement('div');
+  t.className = 'app-toast app-toast-action';
+  t.innerHTML = `<span>${esc(msg)}</span><button type="button" class="ghost">تراجع</button>`;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  const close = () => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); };
+  t.querySelector('button').onclick = () => { onUndo(); close(); };
+  setTimeout(close, 5000);
+}
+
+// ---- Booking form draft (survives closing the app) ----
+const DRAFT_KEY = 'mokhtar_draft';
+const FORM_IDS = ['client', 'phone', 'type', 'time', 'venue', 'mapLink', 'guests', 'carts', 'cartPrice', 'valetCount', 'valetTotal', 'deposit', 'uniform', 'date'];
+function saveDraft() {
+  if (editingId) return;
+  const d = {};
+  FORM_IDS.forEach(i => { if ($(i)) d[i] = $(i).value; });
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch (e) {}
+}
+function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
+function restoreDraft() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch (e) {}
+  if (!d || !Object.values(d).some(v => v)) return;
+  FORM_IDS.forEach(i => { if ($(i) && d[i] !== undefined) $(i).value = d[i]; });
+  $('time').dispatchEvent(new Event('input'));
+  calc(); renderCal();
+  appToast('رجعتلك الحجز اللي كنت بتكتبه');
+}
+document.querySelectorAll('#bookingForm input, #bookingForm textarea').forEach(i => i.addEventListener('input', saveDraft));
+document.querySelectorAll('#bookingForm select').forEach(i => i.addEventListener('change', saveDraft));
+
+// ---- Print a client receipt ----
+function printReceipt(b) {
+  $('receipt').innerHTML = `<h2>Valet Parking Mokhtar</h2>
+    <div class="r-row"><span>العميل</span><b>${esc(b.client)}</b></div>
+    <div class="r-row"><span>المناسبة</span><span>${esc(b.type)}</span></div>
+    <div class="r-row"><span>التاريخ</span><span>${esc(b.date)} · ${esc(colloquial(b.time))}</span></div>
+    <div class="r-row"><span>المكان</span><span>${esc(b.venue) || '-'}</span></div>
+    <div class="r-row"><span>الجولف كار (${b.carts} × ${money(b.cartPrice)})</span><span>${money(b.cartsTotal)}</span></div>
+    <div class="r-row"><span>الفاليه (${b.valetCount} فرد)</span><span>${money(b.valetTotal)}</span></div>
+    <div class="r-row"><b>الإجمالي</b><b>${money(b.total)}</b></div>
+    <div class="r-row"><span>اتدفع</span><span>${money(b.paidTotal)}</span></div>
+    <div class="r-row"><b>المتبقي</b><b>${money(b.remaining)}</b></div>
+    <p style="margin-top:20px;text-align:center">شكراً لثقتكم 🌟</p>`;
+  window.print();
+}
+
+// ---- Backup: full (bookings + staff + notes + gear + suppliers) ----
+function mergeBookings(list) {
+  const ids = new Set(bookings.map(b => String(b.id)));
+  list.forEach(b => { if (!ids.has(String(b.id))) bookings.push(b); });
+}
+function buildBackup() {
+  return {
+    app: 'mokhtar', version: 2, savedAt: new Date().toISOString(),
+    bookings, people: people || loadPeople(), notes, gear, sups, supMoves, golfClients
+  };
+}
 $('exportBtn').onclick = () => {
-  downloadFile('bookings-backup.json', 'application/json', JSON.stringify(bookings, null, 2));
+  downloadFile(`mokhtar-backup-${todayISO()}.json`, 'application/json', JSON.stringify(buildBackup(), null, 2));
+  try { localStorage.setItem('mokhtar_last_backup', String(Date.now())); } catch (e) {}
+  renderBackupAlert();
 };
 $('importBtn').onclick = () => $('importFile').click();
 $('importFile').addEventListener('change', e => {
   const f = e.target.files[0];
   if (!f) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
-      const incoming = JSON.parse(reader.result).map(normalize);
-      const ids = new Set(bookings.map(b => String(b.id)));
-      incoming.forEach(b => { if (!ids.has(String(b.id))) bookings.push(b); });
+      const data = JSON.parse(reader.result);
+      if (Array.isArray(data)) {
+        mergeBookings(data.map(normalize)); // old backup: bookings only
+      } else {
+        if (!(await appConfirm('الحجوزات هتتدمج، والعمال والملاحظات والتجهيزات والموردين هتتبدل بالنسخة دي. متأكد؟'))) return;
+        mergeBookings((data.bookings || []).map(normalize));
+        if (Array.isArray(data.people)) { people = data.people; savePeople(); }
+        if (Array.isArray(data.notes)) { notes = data.notes; saveNotes(); }
+        if (Array.isArray(data.gear)) { gear = data.gear; saveGear(); }
+        if (Array.isArray(data.sups)) sups = data.sups;
+        if (Array.isArray(data.supMoves)) supMoves = data.supMoves;
+        if (Array.isArray(data.golfClients)) golfClients = data.golfClients;
+        saveSupply();
+      }
       persist();
-      render();
+      render(); renderGear(); renderSupply();
       appToast('تم الاستيراد ✅');
     } catch (err) { appToast('الملف مش صالح'); }
+    e.target.value = '';
   };
   reader.readAsText(f);
 });
 
 // ---- Start ----
 bookings = loadBookings();
+setTimeout(() => $('splash') && $('splash').classList.add('hide'), 900);
+setTimeout(() => $('splash') && $('splash').remove(), 1500);
 if (!storageOk) {
   appToast('المتصفح ده مش بيسمح بالحفظ على الجهاز، فالحجوزات هتتمسح لما تقفل الصفحة. افتح الصفحة من GitHub Pages أو من كروم عادي.');
 }
@@ -1614,6 +1972,7 @@ $('gearReset').onclick = async () => {
   }, { passive: true });
 })();
 resetForm();
+restoreDraft();
 render();
 </script>
 <script>
