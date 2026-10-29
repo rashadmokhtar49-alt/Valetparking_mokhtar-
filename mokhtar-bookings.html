@@ -1429,12 +1429,12 @@ function askNewSupplier() {
 function renderSupply() {
   const owedSup = sups.reduce((s, x) => s + supStats(x.id).owed, 0);
   const owedCl = golfClients.reduce((s, c) => s + clientStats(c).remaining, 0);
-  const profit = golfClients.reduce((s, c) => s + clientStats(c).profit, 0);
+  const netBal = owedCl - owedSup; // what clients owe me minus what I owe suppliers
   $('supSummary').innerHTML = `<div class="sec-h"><h2>📊 ملخص الجولف</h2></div>
     <div class="kpis">
       <div><span>عليّا للموردين</span><b>${money(owedSup)}</b></div>
       <div><span>ليّا عند العملاء</span><b>${money(owedCl)}</b></div>
-      <div><span>صافي ربحي الكلي</span><b>${money(profit)}</b></div>
+      <div><span>صافي الباقي (ليّا − عليّا)</span><b style="color:${netBal < 0 ? 'var(--warn-text)' : 'var(--gold)'}">${money(netBal)}</b></div>
     </div>`;
   $('supListBox').style.display = showSupList ? '' : 'none';
   $('supListToggle').classList.toggle('on', showSupList);
