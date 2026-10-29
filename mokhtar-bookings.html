@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Valet Parking Mokhtar</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Mokhtar Valet">
 <link rel="icon" href="icon-192.png">
@@ -14,43 +15,44 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-:root{--gold:#c9a227;--bg:#0b0b0b;--card:#151515;--line:#2a2a2a;--text:#f2f2f2;--muted:#8f8f8f;--red:#e5484d;--green:#25a244}
+:root{color-scheme:light dark;--gold:#c9a227;--bg:#0b0b0b;--card:#151515;--card2:#111;--input:#0e0e0e;--chip:#1a1a1a;--header:#000;--line:var(--line);--line2:#1f1f1f;--text:#f2f2f2;--muted:#8f8f8f;--red:#e5484d;--green:#25a244;--ok:#7ee08f;--warn-text:#ffb4b4;--alert-bg:#16140a;--info-bg:#0d2a3a;--info-text:#9fd8f5;--info-border:#2a7fa8;--nav-bg:rgba(0,0,0,.94);--shadow:rgba(0,0,0,.5)}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--gold:#9c7a12;--bg:#f4f3ef;--card:#ffffff;--card2:#fbfaf7;--input:#f5f4f0;--chip:#ebe9e3;--header:#ffffff;--line:#dcd9d0;--line2:#e8e5dc;--text:#1b1b1b;--muted:#6b6b6b;--ok:#1f7a3a;--warn-text:#b42318;--alert-bg:#fff8e1;--info-bg:#e6f3fa;--info-text:#0b5a7a;--info-border:#7fb8d6;--nav-bg:rgba(255,255,255,.95);--shadow:rgba(0,0,0,.12)}}
 *{box-sizing:border-box}
 body{margin:0;font-family:Cairo,Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
-.top{background:#000;border-bottom:1px solid var(--gold);padding:16px 12px 12px;text-align:center}
+.top{background:var(--header);border-bottom:1px solid var(--gold);padding:16px 12px 12px;text-align:center}
 .brand{margin:0;font-size:20px;letter-spacing:1px;color:var(--gold);font-weight:bold;direction:ltr}
-.gear-row{display:flex;align-items:center;gap:8px;background:#0e0e0e;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.gear-row{display:flex;align-items:center;gap:8px;background:var(--input);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
 .gear-row label{flex:1;display:flex;align-items:center;gap:10px;cursor:pointer;font-size:16px}
 .gear-row input[type=checkbox]{width:22px;height:22px;flex:none;accent-color:#c9a227;margin:0}
 .gear-row.done span{text-decoration:line-through;opacity:.45}
-.palm-alert{background:#0d2a3a;border:1px solid #2a7fa8;color:#9fd8f5;border-radius:10px;padding:12px;margin-bottom:10px;font-weight:bold}
-.sugg-box{background:#101010;border:1px solid var(--gold);border-radius:10px;margin-top:6px;overflow:hidden}
+.palm-alert{background:var(--info-bg);border:1px solid var(--info-border);color:var(--info-text);border-radius:10px;padding:12px;margin-bottom:10px;font-weight:bold}
+.sugg-box{background:var(--input);border:1px solid var(--gold);border-radius:10px;margin-top:6px;overflow:hidden}
 .sugg-box .sugg-t{color:var(--muted);font-size:12px;padding:8px 10px 0}
-.sugg-box button{display:block;width:100%;text-align:right;background:#161616;color:var(--text);border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px;font-weight:normal}
+.sugg-box button{display:block;width:100%;text-align:right;background:var(--input);color:var(--text);border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px;font-weight:normal}
 .sugg-box button small{color:var(--muted);margin-right:8px;direction:ltr;display:inline-block}
 .tm-head,.tm-row{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--line)}
 .tm-head{font-size:12px;color:var(--muted)}
 .tm-head span{flex:0 0 52px;text-align:center}
 .tm-head span small{display:block;font-size:11px}
 .tm-row b{flex:1;min-width:80px;font-size:14px}
-.sq{width:44px;height:44px;flex:0 0 44px;border-radius:10px;background:#1a1a1a;border:1px solid var(--line);color:#c9a227;font-size:18px;padding:0}
+.sq{width:44px;height:44px;flex:0 0 44px;border-radius:10px;background:var(--chip);border:1px solid var(--line);color:#c9a227;font-size:18px;padding:0}
 .sq.on{background:var(--gold);color:#000;border-color:var(--gold)}
 .note-dt{color:var(--gold);font-weight:bold;margin:10px 0 6px}
-.note-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0e0e0e;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.note-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--input);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
 .note-row small{display:block;color:var(--muted);margin-top:4px}
-.app-toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,20px);background:#151515;color:var(--text);border:1px solid var(--gold);border-radius:12px;padding:12px 16px;max-width:88vw;text-align:center;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transition:opacity .25s ease,transform .25s ease;z-index:200;pointer-events:none}
+.app-toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,20px);background:var(--card);color:var(--text);border:1px solid var(--gold);border-radius:12px;padding:12px 16px;max-width:88vw;text-align:center;font-size:14px;box-shadow:0 8px 24px var(--shadow);opacity:0;transition:opacity .25s ease,transform .25s ease;z-index:200;pointer-events:none}
 .app-toast.show{opacity:1;transform:translate(-50%,0)}
-.app-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:150;padding:16px;animation:fadeIn .2s ease}
-.app-modal{background:#151515;border:1px solid var(--gold);border-radius:16px;padding:20px 18px 16px;width:100%;max-width:340px;box-shadow:0 12px 32px rgba(0,0,0,.6);animation:popIn .22s cubic-bezier(.2,.8,.2,1)}
+.app-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:150;padding:16px;animation:fadeIn .2s ease}
+.app-modal{background:var(--card);border:1px solid var(--gold);border-radius:16px;padding:20px 18px 16px;width:100%;max-width:340px;box-shadow:0 12px 32px var(--shadow);animation:popIn .22s cubic-bezier(.2,.8,.2,1)}
 .app-modal-msg{font-size:16px;line-height:1.7;margin-bottom:18px;text-align:center}
 .app-modal-btns{display:flex;gap:10px}
 .app-modal-btns button{flex:1}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes popIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
-.pagebar{position:sticky;top:0;z-index:30;display:flex;gap:6px;background:#000;padding:8px;border-bottom:1px solid var(--gold)}
-.pg{flex:1;background:#1a1a1a;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:9px 6px;font-weight:bold;font-size:13px}
+.pagebar{position:sticky;top:0;z-index:30;display:flex;gap:6px;background:var(--header);padding:8px;border-bottom:1px solid var(--gold)}
+.pg{flex:1;background:var(--chip);color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:9px 6px;font-weight:bold;font-size:13px}
 .pg.on{background:var(--gold);color:#000;border-color:var(--gold)}
-.sup-form{margin-top:10px;padding:10px;background:#0e0e0e;border:1px solid var(--line);border-radius:10px}
+.sup-form{margin-top:10px;padding:10px;background:var(--input);border:1px solid var(--line);border-radius:10px}
 .sup-form input,.sup-form select{margin-top:6px}
 .mv-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start;margin-top:8px}
@@ -73,7 +75,7 @@ body{margin:0;font-family:Cairo,Tahoma,Arial,sans-serif;background:var(--bg);col
 @keyframes vNext{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
 @keyframes vPrev{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:none}}
 @keyframes vFade{from{opacity:0}to{opacity:1}}
-.tab{background:#1a1a1a;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:14px;cursor:pointer;font-weight:bold;font-family:inherit}
+.tab{background:var(--chip);color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:14px;cursor:pointer;font-weight:bold;font-family:inherit}
 .tab.on{background:var(--gold);color:#000;border-color:var(--gold)}
 main{max-width:640px;margin:auto;padding:14px}
 .view{display:none}
@@ -82,24 +84,24 @@ main{max-width:640px;margin:auto;padding:14px}
 h2{font-size:16px;color:var(--gold);margin:0 0 12px}
 h3.sec-t{font-size:13px;color:var(--gold);margin:18px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
 label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
-input,select,textarea{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0e0e0e;color:var(--text);font-size:15px;font-family:inherit}
+input,select,textarea{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--input);color:var(--text);font-size:15px;font-family:inherit}
 textarea{min-height:70px;resize:vertical}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 button{background:var(--gold);color:#000;border:0;border-radius:10px;padding:11px 14px;font-size:14px;font-weight:bold;cursor:pointer;font-family:inherit;text-align:center}
-button.ghost{background:#222;color:var(--text);border:1px solid var(--line)}
+button.ghost{background:var(--chip);color:var(--text);border:1px solid var(--line)}
 button.danger{background:var(--red);color:#fff}
 button.wa{background:var(--green);color:#fff}
 button.small{padding:7px 10px;font-size:12px}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .hint{font-size:12px;color:var(--muted);margin-top:4px}
-.total{background:#0e0e0e;border:1px solid var(--gold);border-radius:10px;padding:12px;margin-top:12px;line-height:2;font-size:14px}
+.total{background:var(--input);border:1px solid var(--gold);border-radius:10px;padding:12px;margin-top:12px;line-height:2;font-size:14px}
 .total b{color:var(--gold)}
-.ok{color:#7ee08f}
-.warn{color:#ffb4b4}
-.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;background:#242424;margin:2px 2px 2px 0}
+.ok{color:var(--ok)}
+.warn{color:var(--warn-text)}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;background:var(--chip);margin:2px 2px 2px 0}
 .tag.gold{background:var(--gold);color:#000;font-weight:bold}
 .tag.red{background:var(--red);color:#fff;font-weight:bold}
-.booking{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#111}
+.booking{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--card2)}
 .bhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .bmini{color:var(--muted);font-size:13px;margin-top:4px}
 .bsub{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.8}
@@ -108,24 +110,24 @@ button.small{padding:7px 10px;font-size:12px}
 .nums label{font-size:11px;margin:0 0 4px}
 .nums input{padding:8px 6px;font-size:14px;text-align:center}
 .bsum{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
-.bsum div{background:#0e0e0e;border:1px solid var(--line);border-radius:10px;padding:7px 9px}
+.bsum div{background:var(--input);border:1px solid var(--line);border-radius:10px;padding:7px 9px}
 .bsum span{display:block;font-size:11px;color:var(--muted)}
 .bsum b{font-size:14px;word-break:break-word}
 .bdetails{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);line-height:1.9;font-size:14px}
-.sub{background:#0e0e0e;border-radius:10px;padding:12px;margin-top:8px;line-height:1.9}
-.payrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1f1f1f;font-size:14px}
+.sub{background:var(--input);border-radius:10px;padding:12px;margin-top:8px;line-height:1.9}
+.payrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line2);font-size:14px}
 .staffrow{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-top:6px}
 .staffrow input{padding:9px;font-size:14px}
 .staffrow>div{display:flex;gap:4px}
 .staffline{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
 .staffline a{background:var(--green);color:#fff;border-radius:8px;padding:7px 10px;font-size:12px;text-decoration:none;font-weight:bold}
-.alert{border-right:3px solid var(--gold);background:#16140a;padding:12px;border-radius:10px;margin-bottom:10px}
+.alert{border-right:3px solid var(--gold);background:var(--alert-bg);padding:12px;border-radius:10px;margin-bottom:10px}
 .empty{color:var(--muted);font-size:14px;text-align:center;padding:20px 0}
 a{color:var(--gold)}
 .calhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:bold}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
 .wd{font-size:11px;color:var(--muted);padding:4px 0}
-.day{padding:8px 0;border-radius:8px;background:#0e0e0e;font-size:14px;cursor:pointer;min-height:44px}
+.day{padding:8px 0;border-radius:8px;background:var(--input);font-size:14px;cursor:pointer;min-height:44px}
 .day small{display:block;font-size:10px;color:var(--red);font-weight:bold}
 .day.busy{border:1px solid #6b5514}
 .day.tod{outline:1px dashed var(--gold)}
@@ -138,28 +140,28 @@ a{color:var(--gold)}
 /* ---- Polish ---- */
 button{transition:transform .12s ease,opacity .12s ease}
 button:active{transform:scale(.97)}
-.panel{box-shadow:0 2px 14px rgba(0,0,0,.35)}
+.panel{box-shadow:0 2px 14px var(--shadow)}
 main{padding-bottom:120px}
 .sub-brand{color:var(--muted);font-size:12px;margin-top:4px}
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:0;padding:6px 4px calc(6px + env(safe-area-inset-bottom));background:rgba(0,0,0,.94);border-top:1px solid var(--gold);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:visible}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:0;padding:6px 4px calc(6px + env(safe-area-inset-bottom));background:var(--nav-bg);border-top:1px solid var(--gold);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:visible}
 .tabs .tab{flex:none;background:transparent;border:0;border-radius:10px;padding:6px 0;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap}
 .tabs .tab .ic{font-size:18px;line-height:1}
 .tabs .tab.on{background:transparent;color:var(--gold)}
 .fab{position:fixed;left:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:41;width:56px;height:56px;border-radius:50%;padding:0;font-size:30px;line-height:1;box-shadow:0 8px 22px rgba(201,162,39,.35)}
 .chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;background:#1a1a1a;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:bold}
+.chip{flex:none;background:var(--chip);color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:bold}
 .chip.on{background:var(--gold);color:#000;border-color:var(--gold)}
 .tag.green{background:var(--green);color:#fff;font-weight:bold}
-.btnlink{display:inline-block;padding:7px 10px;border-radius:10px;font-size:12px;font-weight:bold;text-decoration:none;background:#222;color:var(--text);border:1px solid var(--line)}
+.btnlink{display:inline-block;padding:7px 10px;border-radius:10px;font-size:12px;font-weight:bold;text-decoration:none;background:var(--chip);color:var(--text);border:1px solid var(--line)}
 .app-toast-action{pointer-events:auto;display:flex;align-items:center;gap:10px}
 .app-toast-action button{padding:6px 12px;font-size:13px}
 .dash{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
-.dash div{background:#0e0e0e;border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
+.dash div{background:var(--input);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
 .dash span{display:block;font-size:11px;color:var(--muted)}
 .dash b{font-size:14px;color:var(--gold);word-break:break-word}
 #receipt{display:none}
-#splash{position:fixed;inset:0;background:#000;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:opacity .5s ease}
+#splash{position:fixed;inset:0;background:var(--header);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:opacity .5s ease}
 #splash.hide{opacity:0;pointer-events:none}
 #splash b{font-size:22px;color:var(--gold);letter-spacing:1px;direction:ltr}
 #splash span{color:var(--muted);font-size:13px}
@@ -171,10 +173,10 @@ main{padding-bottom:120px}
   #receipt .r-row{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #ddd;padding:7px 0}
 }
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.kpis div{background:linear-gradient(180deg,#181818,#0e0e0e);border:1px solid var(--line);border-radius:12px;padding:12px 6px;text-align:center}
+.kpis div{background:linear-gradient(180deg,var(--card),var(--input));border:1px solid var(--line);border-radius:12px;padding:12px 6px;text-align:center}
 .kpis span{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
 .kpis b{font-size:15px;color:var(--gold);word-break:break-word}
-.sheet{margin-top:10px;padding:12px;background:#0e0e0e;border:1px solid var(--gold);border-radius:12px}
+.sheet{margin-top:10px;padding:12px;background:var(--input);border:1px solid var(--gold);border-radius:12px}
 .sheet-t{font-weight:800;color:var(--gold);margin-bottom:2px}
 .dfield{display:flex;gap:8px;align-items:center}
 .dfield input{flex:1;min-width:0}
@@ -183,14 +185,14 @@ main{padding-bottom:120px}
 .stepper button{font-size:22px;padding:0;height:46px}
 .stepper input{text-align:center;font-size:17px;font-weight:bold}
 .picker{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.pick{background:#1a1a1a;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:92px}
+.pick{background:var(--chip);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:92px}
 .pick small{color:var(--muted);font-size:11px;font-weight:normal}
 .pick.on{background:var(--gold);color:#000;border-color:var(--gold)}
 .pick.on small{color:#000}
 .dhint{font-size:12px;color:var(--muted);margin-top:8px;min-height:16px;line-height:1.7}
-.dhint.ok{color:#7ee08f}
-.dhint.warn{color:#ffb4b4}
-.bar{height:6px;background:#222;border-radius:6px;overflow:hidden;margin-top:8px}
+.dhint.ok{color:var(--ok)}
+.dhint.warn{color:var(--warn-text)}
+.bar{height:6px;background:var(--chip);border-radius:6px;overflow:hidden;margin-top:8px}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#e7c65a)}
 .srcs{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .btnrow{display:flex;gap:8px;margin-top:10px}
@@ -198,20 +200,104 @@ main{padding-bottom:120px}
 .fillbtn{margin-top:6px}
 .sec-h{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px}
 .sec-h h2{margin:0}
+
+/* ---- Clearer client details ---- */
+.booking{margin-bottom:14px;padding:14px}
+.booking .btns{margin-top:12px;gap:8px}
+.sec-box{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.sec-box>.sec-title{font-size:13px;font-weight:800;color:var(--gold);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.drow{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--input);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.drow .d-main{min-width:0;flex:1}
+.drow .d-main b{display:block;font-size:14px}
+.drow .d-main small{display:block;color:var(--muted);font-size:12px;margin-top:3px;line-height:1.6}
+.drow .d-side{text-align:left;display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+.drow .d-side b{font-size:14px;color:var(--gold)}
+.drow .d-acts{display:flex;gap:6px}
+.empty-note{color:var(--muted);font-size:13px;padding:6px 0}
+.bsum{gap:8px}
+.bsum div{padding:9px 10px}
+.bsum b{font-size:15px}
+/* ---- No text selection / Google search popup on taps ---- */
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea,select,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+a{-webkit-touch-callout:none}
+/* ---- Password lock ---- */
+#lock{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;align-items:center;justify-content:center;padding:20px}
+#lock.shake .lock-box{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.lock-box{width:100%;max-width:300px;text-align:center}
+.lock-ico{font-size:36px}
+.lock-t{font-size:18px;font-weight:800;color:var(--gold);margin-top:6px;direction:ltr}
+.lock-sub{color:var(--muted);font-size:13px;margin:4px 0 18px}
+.dots{display:flex;justify-content:center;gap:14px;margin-bottom:12px}
+.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--gold);display:block}
+.dots i.on{background:var(--gold)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:10px}
+.keys button{height:64px;border-radius:50%;font-size:22px;padding:0;background:var(--chip);color:var(--text);border:1px solid var(--line)}
+.keys button.zero{grid-column:2}
+.lock-msg{color:var(--warn-text);font-size:13px;min-height:20px;margin-top:12px}
+#lockBtn{position:absolute;left:12px;top:12px;padding:6px 10px;font-size:12px}
+/* ---- Settings ---- */
+#lockBtn{left:12px}
+#settingsBtn{position:absolute;right:12px;top:12px;padding:6px 10px;font-size:13px}
+#settingsPage{position:fixed;inset:0;background:var(--bg);z-index:350;overflow-y:auto;display:none;padding:14px 14px 40px}
+#settingsPage .set-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+#settingsPage .set-top h2{margin:0;font-size:18px}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line2)}
+.set-row small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.set-row button{flex:none}
+
+/* ==== Layout redesign ==== */
+.topwrap{position:sticky;top:0;z-index:30;background:var(--header);border-bottom:1px solid var(--line);box-shadow:0 4px 18px var(--shadow)}
+.appbar{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;padding:12px 12px 10px}
+.brand-box{text-align:center;min-width:0}
+.brand{font-size:17px;letter-spacing:.4px;margin:0;color:var(--gold);font-weight:800;direction:ltr;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub-brand{color:var(--muted);font-size:11px;margin-top:2px}
+.icon-btn{width:44px;height:44px;border-radius:14px;background:var(--chip);border:1px solid var(--line);color:var(--text);font-size:18px;padding:0;display:flex;align-items:center;justify-content:center}
+#lockBtn,#settingsBtn{position:static;padding:0;font-size:18px}
+.pagebar{position:static;background:transparent;border:0;padding:4px 12px 12px;gap:8px}
+.pg{border-radius:14px;padding:10px 6px;font-size:13px;border:1px solid var(--line)}
+main{padding:16px 14px 130px}
+.panel{border-radius:16px;padding:16px}
+.tabs{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));border-radius:24px;border:1px solid var(--line);background:var(--card);box-shadow:0 12px 30px var(--shadow);padding:6px;gap:2px}
+.tabs .tab{border-radius:18px;padding:8px 0;font-size:11px;color:var(--muted);font-weight:700;transition:background .2s ease,color .2s ease}
+.tabs .tab .ic{font-size:19px}
+.tabs .tab.on{background:var(--gold);color:#000}
+.fab{left:auto;right:18px;bottom:calc(96px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:20px;box-shadow:0 12px 26px rgba(201,162,39,.4)}
+.app-toast{bottom:100px}
 </style>
 </head>
 <body>
+<div id="lock"><div class="lock-box">
+  <div class="lock-ico">🔒</div>
+  <div class="lock-t">Valet Parking Mokhtar</div>
+  <div class="lock-sub">اكتب الباسورد</div>
+  <div class="dots" id="lockDots"><i></i><i></i><i></i><i></i></div>
+  <div class="keys">
+    <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button>
+    <button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button>
+    <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
+    <button type="button" class="zero" data-key="0">0</button><button type="button" data-key="back">⌫</button>
+  </div>
+  <div class="lock-msg" id="lockMsg"></div>
+</div></div>
 <div id="splash"><b>VALET PARKING MOKHTAR</b><span>نظام الحجوزات والفاليه</span></div>
 
-<nav class="pagebar">
-  <button type="button" class="pg on" data-pg="ops">🏠 التشغيل</button>
-  <button type="button" class="pg" data-pg="supply">🏪 الموردين والجولف</button>
-</nav>
+<div class="topwrap">
+  <header class="appbar">
+    <button type="button" class="icon-btn" id="lockBtn" aria-label="قفل">🔒</button>
+    <div class="brand-box">
+      <h1 class="brand">Valet Parking Mokhtar</h1>
+      <div class="sub-brand">مختار فاليه · القاهرة</div>
+    </div>
+    <button type="button" class="icon-btn" id="settingsBtn" aria-label="إعدادات">⚙️</button>
+  </header>
+  <nav class="pagebar">
+    <button type="button" class="pg on" data-pg="ops">🏠 التشغيل</button>
+    <button type="button" class="pg" data-pg="supply">🏪 الموردين والجولف</button>
+  </nav>
+</div>
 <div id="pageOps">
-<header class="top">
-  <h1 class="brand">Valet Parking Mokhtar</h1>
-  <div class="sub-brand">نظام الحجوزات والفاليه</div>
-</header>
 
 <main>
 
@@ -257,7 +343,7 @@ main{padding-bottom:120px}
 
         <label>التاريخ <span style="color:var(--red)">* (إجباري)</span></label>
         <button type="button" class="ghost" id="dateBtn" style="width:100%;text-align:right">📅 اختار التاريخ</button>
-        <div id="calBox" style="display:none;background:#0e0e0e;border-radius:10px;padding:10px;margin-top:6px">
+        <div id="calBox" style="display:none;background:var(--input);border-radius:10px;padding:10px;margin-top:6px">
           <div class="calhead">
             <button type="button" class="ghost small" id="prevMonth">›</button>
             <span id="calTitle"></span>
@@ -329,7 +415,7 @@ main{padding-bottom:120px}
   <div class="view" id="view-gear">
     <div class="panel">
       <h2>🧰 التجهيزات</h2>
-      <div id="gearCount" style="color:#888;margin-bottom:10px"></div>
+      <div id="gearCount" style="color:var(--muted);margin-bottom:10px"></div>
       <div id="gearList"></div>
       <div style="display:flex;gap:8px;margin-top:12px">
         <input id="gearNew" placeholder="➕ اكتب بند جديد" style="flex:1">
@@ -411,6 +497,7 @@ main{padding-bottom:120px}
   <div id="clList"></div>
 </div>
 
+<div id="settingsPage"></div>
 <div id="receipt"></div>
 
 <script>
@@ -476,13 +563,26 @@ function showTab(t, dir) {
     }
   });
   $('fab').style.display = t === 'form' ? 'none' : '';
+  $('fab').textContent = FAB_ICON[t] || '+';
+  $('fab').setAttribute('aria-label', FAB_LABEL[t] || 'إضافة');
   if (t === 'clients') renderClients();
   if (t === 'gear') renderGear();
   if (t === 'team') renderTeam();
   window.scrollTo({ top: 0 });
 }
 document.querySelectorAll('.tab').forEach(b => b.onclick = () => showTab(b.dataset.tab));
-$('fab').onclick = () => { if (editingId) resetForm(); showTab('form'); };
+// The + button adds the thing that fits the page you are on
+const FAB_ICON = { remind: '📝', list: '+', clients: '+', team: '👷', gear: '🧰' };
+const FAB_LABEL = { remind: 'ضيف ملاحظة', list: 'حجز جديد', clients: 'حجز جديد', team: 'ضيف عامل', gear: 'ضيف بند' };
+$('fab').onclick = () => {
+  const cur = document.querySelector('.tab.on')?.dataset.tab || 'list';
+  const focusOn = el => { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => el.focus(), 250); };
+  if (cur === 'remind') return focusOn($('noteText'));
+  if (cur === 'team') return focusOn($('rosterName'));
+  if (cur === 'gear') return focusOn($('gearNew'));
+  if (editingId) resetForm();
+  showTab('form');
+};
 
 // ---- Storage ----
 function persist() {
@@ -1052,8 +1152,8 @@ function renderTeam() {
   if (!$('teamDate').value) $('teamDate').value = todayISO();
   const evs = dayEvents();
   let html = '';
-  if (!evs.length) html = '<p style="color:#888">مفيش مناسبات في اليوم ده</p>';
-  else if (!people.length) html = '<p style="color:#888">ضيف عمال من القايمة تحت الأول</p>';
+  if (!evs.length) html = '<p style="color:var(--muted)">مفيش مناسبات في اليوم ده</p>';
+  else if (!people.length) html = '<p style="color:var(--muted)">ضيف عمال من القايمة تحت الأول</p>';
   else {
     html = `<div class="tm-head"><span style="flex:1;text-align:right">العامل</span>${evs.map(e =>
       `<span>${esc(e.venue || '-')}<small>${esc(colloquial(e.time))}</small></span>`).join('')}</div>`;
@@ -1064,8 +1164,8 @@ function renderTeam() {
   }
   $('teamGrid').innerHTML = html;
   $('rosterList').innerHTML = people.length
-    ? `<div style="color:#888;font-size:13px;margin-bottom:6px">عدد العمال: ${people.length}</div>` + people.map((p, i) => `<div class="staffrow" style="grid-template-columns:auto 1fr 1fr auto auto"><b style="color:var(--gold);align-self:center">${i + 1}</b><span>${esc(p.name)}</span><span style="direction:ltr">${esc(p.phone)}</span><button type="button" class="ghost small" data-ep="${esc(p.id)}">✏️</button><button type="button" class="danger small" data-dp="${esc(p.id)}">✕</button></div>`).join('')
-    : '<p style="color:#888">مفيش عمال لسه</p>';
+    ? `<div style="color:var(--muted);font-size:13px;margin-bottom:6px">عدد العمال: ${people.length}</div>` + people.map((p, i) => `<div class="staffrow" style="grid-template-columns:auto 1fr 1fr auto auto"><b style="color:var(--gold);align-self:center">${i + 1}</b><span>${esc(p.name)}</span><span style="direction:ltr">${esc(p.phone)}</span><button type="button" class="ghost small" data-ep="${esc(p.id)}">✏️</button><button type="button" class="danger small" data-dp="${esc(p.id)}">✕</button></div>`).join('')
+    : '<p style="color:var(--muted)">مفيش عمال لسه</p>';
 }
 $('teamDate').onchange = renderTeam;
 $('teamGrid').addEventListener('click', e => {
@@ -1114,8 +1214,8 @@ function evLabel(b) { return `${b.venue || '-'} · ${colloquial(b.time)} · ${b.
 function chooseEvent(evs) {
   return new Promise(resolve => {
     const ov = document.createElement('div');
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:99;padding:16px';
-    ov.innerHTML = `<div style="background:#151515;border:1px solid var(--gold);border-radius:14px;padding:16px;width:100%;max-width:340px">
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:99;padding:16px';
+    ov.innerHTML = `<div style="background:var(--card);border:1px solid var(--gold);border-radius:14px;padding:16px;width:100%;max-width:340px">
       <h2 style="margin-bottom:6px">📝 الملاحظة دي لأنهي مناسبة؟</h2>
       <div style="color:var(--muted);font-size:13px;margin-bottom:12px">في أكتر من مناسبة في اليوم ده</div>
       ${evs.map((b, i) => `<button type="button" class="ghost" data-i="${i}" style="width:100%;margin-bottom:8px">${esc(evLabel(b))}</button>`).join('')}
@@ -1159,7 +1259,7 @@ function noteWhere(n) {
 function renderNotes() {
   if (!$('noteList')) return;
   if (!$('noteDate').value) $('noteDate').value = todayISO();
-  if (!notes.length) { $('noteList').innerHTML = '<p style="color:#888">مفيش ملاحظات لسه</p>'; return; }
+  if (!notes.length) { $('noteList').innerHTML = '<p style="color:var(--muted)">مفيش ملاحظات لسه</p>'; return; }
   const sorted = [...notes].sort((a, b) => a.date.localeCompare(b.date));
   let html = '', lastDate = null;
   sorted.forEach(n => {
@@ -1175,7 +1275,7 @@ function notesSection(b) {
   return `<div class="btns"><button class="ghost small" data-k="${k}">📝 ملاحظات المناسبة (${mine.length})</button></div>
     ${isOpen(k) ? (mine.length
       ? mine.map(n => `<div class="note-row"><div><b>${esc(n.text)}</b><small>📅 ${esc(n.date)}</small></div><button type="button" class="danger small" data-nd="${esc(n.id)}">✕</button></div>`).join('')
-      : '<p style="color:#888">مفيش ملاحظات للمناسبة دي</p>') : ''}`;
+      : '<p style="color:var(--muted)">مفيش ملاحظات للمناسبة دي</p>') : ''}`;
 }
 document.addEventListener('click', async e => {
   const id = e.target.dataset.nd;
@@ -1237,12 +1337,12 @@ document.querySelectorAll('.pg').forEach(b => b.onclick = () => {
   if (sup) renderSupply();
 });
 
-// ---- Suppliers & golf ----
+// ---- Suppliers & golf (client-first: each delivery is entered once) ----
 const loadList = k => { try { const v = JSON.parse(localStorage.getItem(k) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
 let sups = loadList('mokhtar_suppliers');
-let supMoves = loadList('mokhtar_supply_moves');
-let golfClients = loadList('mokhtar_golf_clients2');
-let supMode = {}, supOpen = {}, clMode = {}, clEditDeliv = {};
+let supMoves = loadList('mokhtar_supply_moves');       // supplier payments (+ legacy receipts)
+let golfClients = loadList('mokhtar_golf_clients2');   // clients, each with deliveries & payments
+let supMode = {}, supOpen = {}, clMode = {}, clEditDeliv = {}, formCache = {};
 let showSupList = false;
 const newId = p => p + Date.now() + Math.random().toString(36).slice(2, 6);
 function saveSupply() {
@@ -1253,75 +1353,99 @@ function saveSupply() {
   } catch (e) {}
 }
 const allDeliveries = () => golfClients.flatMap(c => (c.deliveries || []).map(d => ({ ...d, client: c.name })));
+const legacyCost = id => supMoves.filter(m => m.supplierId === id && m.type === 'receive').reduce((s, m) => s + m.count * m.price, 0);
 const supStats = id => {
-  const rec = supMoves.filter(m => m.supplierId === id && m.type === 'receive');
-  const pay = supMoves.filter(m => m.supplierId === id && m.type === 'pay');
-  const count = rec.reduce((s, m) => s + m.count, 0);
-  const cost = rec.reduce((s, m) => s + m.count * m.price, 0);
-  const paid = pay.reduce((s, m) => s + m.amount, 0);
-  const delivered = allDeliveries().filter(d => d.supplierId === id).reduce((s, d) => s + d.count, 0);
-  return { count, cost, paid, owed: cost - paid, inHand: count - delivered, delivered: delivered };
+  const dl = allDeliveries().filter(d => d.supplierId === id);
+  const count = dl.reduce((s, d) => s + d.count, 0);
+  const cost = dl.reduce((s, d) => s + d.count * (Number(d.supplierCost) || 0), 0) + legacyCost(id);
+  const paid = supMoves.filter(m => m.supplierId === id && m.type === 'pay').reduce((s, m) => s + m.amount, 0);
+  return { count, cost, paid, owed: cost - paid };
 };
 const clientStats = c => {
   const dl = c.deliveries || [];
   const carts = dl.reduce((s, d) => s + d.count, 0);
   const total = dl.reduce((s, d) => s + d.count * d.price, 0);
+  const cost = dl.reduce((s, d) => s + d.count * (Number(d.supplierCost) || 0), 0);
   const paid = (c.payments || []).reduce((s, p) => s + p.amount, 0);
-  return { carts, total, paid, remaining: total - paid };
+  return { carts, total, cost, profit: total - cost, paid, remaining: total - paid };
 };
 const supName = id => (sups.find(x => x.id === id) || {}).name || 'مورد اتشال';
 const val = id => ($(id) ? $(id).value.trim() : '');
 const dateOr = d => d ? esc(d) : '<span style="color:#888">—</span>';
 const pctOf = (a, b) => b > 0 ? Math.min(100, Math.round(a / b * 100)) : 0;
+const lastCost = sid => {
+  const d = allDeliveries().filter(x => x.supplierId === sid && x.supplierCost !== undefined && x.supplierCost !== '').slice(-1)[0];
+  return d ? d.supplierCost : '';
+};
 
 // small form pieces
 const dateField = (id, value = '') => `<div class="dfield"><input id="${id}" type="date" value="${esc(value)}"><button type="button" class="chip" data-act="today" data-target="${id}">النهارده</button></div>`;
 const stepper = (id, value, cid = '') => `<div class="stepper"><button type="button" data-act="step" data-f="${id}" data-d="-1" data-cid="${cid}">−</button><input id="${id}" type="number" min="0" inputmode="numeric" value="${value ?? ''}" placeholder="0"><button type="button" data-act="step" data-f="${id}" data-d="1" data-cid="${cid}">+</button></div>`;
-const defSup = selId => (selId && sups.some(s => s.id === selId)) ? selId
-  : ([...sups].sort((a, b) => supStats(b.id).inHand - supStats(a.id).inHand)[0] || {}).id || '';
-const supPicker = (cid, sel) => sups.length
-  ? `<div class="picker" id="dv-picker-${cid}">${sups.map(s => {
-      const avail = supStats(s.id).inHand;
-      return `<button type="button" class="pick${s.id === sel ? ' on' : ''}" data-act="pick-sup" data-cid="${cid}" data-sid="${s.id}">${esc(s.name)}<small>متاح ${avail}</small></button>`;
-    }).join('')}</div><input type="hidden" id="dv-sup-${cid}" value="${sel}">`
-  : '<div class="hint">ضيف مورد الأول من فوق</div>';
-const dvAvail = (cid, sid) => {
-  const c = golfClients.find(x => x.id === cid);
-  const e = c && clEditDeliv[cid] ? (c.deliveries || []).find(d => d.id === clEditDeliv[cid]) : null;
-  return supStats(sid).inHand + (e && e.supplierId === sid ? e.count : 0);
+const defSup = (c, selId) => {
+  if (selId && sups.some(s => s.id === selId)) return selId;
+  const last = (c.deliveries || []).slice(-1)[0];
+  if (last && sups.some(s => s.id === last.supplierId)) return last.supplierId;
+  return sups[0] ? sups[0].id : '';
 };
-function dvHintHtml(cid, sid, count, price) {
-  if (!sid) return { cls: 'dhint', html: '' };
-  const avail = dvAvail(cid, sid);
-  const over = count > avail;
+const supPicker = (cid, sel) => `<div class="picker" id="dv-picker-${cid}">${sups.map(s =>
+    `<button type="button" class="pick${s.id === sel ? ' on' : ''}" data-act="pick-sup" data-cid="${cid}" data-sid="${s.id}">${esc(s.name)}</button>`).join('')}
+    <button type="button" class="pick pick-new" data-act="new-sup" data-id="${cid}">➕ مورد جديد</button></div>
+  <input type="hidden" id="dv-sup-${cid}" value="${sel}">`;
+function dvHintHtml(count, price, cost) {
+  if (!count) return { cls: 'dhint', html: 'اكتب العدد والأسعار وهيتحسب الحساب لوحده' };
+  const total = count * price, c = count * cost;
   return {
-    cls: 'dhint' + (over ? ' warn' : count ? ' ok' : ''),
-    html: `متاح عند ${esc(supName(sid))}: <b>${avail}</b> جولف${over ? ' · ⚠️ أكتر من المتاح' : ''}` +
-      (count && price ? ` · إجمالي العميل: <b>${money(count * price)}</b>` : '')
+    cls: 'dhint ok',
+    html: `الحساب للعميل: <b>${money(total)}</b> · تكلفة المورد: <b>${money(c)}</b> · ربحك: <b style="color:var(--gold)">${money(total - c)}</b>`
   };
 }
 function updateDvHint(cid) {
-  const el = $('dv-hint-' + cid), sid = $('dv-sup-' + cid) && $('dv-sup-' + cid).value;
-  if (!el || !sid) return;
-  const h = dvHintHtml(cid, sid, Number(val('dv-count-' + cid)) || 0, Number(val('dv-price-' + cid)) || 0);
+  const el = $('dv-hint-' + cid);
+  if (!el) return;
+  const h = dvHintHtml(Number(val('dv-count-' + cid)) || 0, Number(val('dv-price-' + cid)) || 0, Number(val('dv-cost-' + cid)) || 0);
   el.className = h.cls; el.innerHTML = h.html;
 }
-function updateRecvPrev(sid) {
-  const el = $('r-prev-' + sid);
-  if (!el) return;
-  const c = Number(val('r-count-' + sid)) || 0, p = Number(val('r-price-' + sid)) || 0;
-  el.innerHTML = c && p ? `إجمالي الاستلام: <b>${money(c * p)}</b>` : '';
+function snapForm(cid) {
+  if (!$('dv-date-' + cid)) return;
+  formCache[cid] = { date: val('dv-date-' + cid), sup: val('dv-sup-' + cid), count: val('dv-count-' + cid),
+    price: val('dv-price-' + cid), cost: val('dv-cost-' + cid), note: val('dv-note-' + cid) };
+}
+function askNewSupplier() {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'app-modal-bg';
+    ov.innerHTML = `<div class="app-modal">
+      <div class="app-modal-msg" style="margin-bottom:12px">➕ مورد جديد</div>
+      <input id="nsName" placeholder="اسم المورد" style="margin-bottom:8px">
+      <input id="nsPhone" type="tel" placeholder="الرقم (اختياري)" style="direction:ltr;margin-bottom:14px">
+      <div class="app-modal-btns">
+        <button type="button" class="ghost" data-v="0">إلغاء</button>
+        <button type="button" data-v="1">حفظ</button>
+      </div></div>`;
+    ov.addEventListener('click', e => {
+      const v = e.target.closest('button')?.dataset.v;
+      if (v === undefined) return;
+      if (v === '0') { ov.remove(); resolve(null); return; }
+      const name = ov.querySelector('#nsName').value.trim();
+      if (!name) { appToast('اكتب اسم المورد'); return; }
+      const phone = ov.querySelector('#nsPhone').value.trim();
+      ov.remove();
+      resolve({ name, phone });
+    });
+    document.body.appendChild(ov);
+    setTimeout(() => ov.querySelector('#nsName').focus(), 50);
+  });
 }
 
 function renderSupply() {
   const owedSup = sups.reduce((s, x) => s + supStats(x.id).owed, 0);
   const owedCl = golfClients.reduce((s, c) => s + clientStats(c).remaining, 0);
-  const inHand = sups.reduce((s, x) => s + supStats(x.id).inHand, 0);
+  const profit = golfClients.reduce((s, c) => s + clientStats(c).profit, 0);
   $('supSummary').innerHTML = `<div class="sec-h"><h2>📊 ملخص الجولف</h2></div>
     <div class="kpis">
       <div><span>عليّا للموردين</span><b>${money(owedSup)}</b></div>
       <div><span>ليّا عند العملاء</span><b>${money(owedCl)}</b></div>
-      <div><span>جولف في الشغل</span><b>${inHand}</b></div>
+      <div><span>ربحي الكلي</span><b>${money(profit)}</b></div>
     </div>`;
   $('supListBox').style.display = showSupList ? '' : 'none';
   $('supListToggle').classList.toggle('on', showSupList);
@@ -1340,23 +1464,11 @@ function renderSupCard(s) {
   const st = supStats(s.id), open = !!supOpen[s.id], mode = supMode[s.id];
   let body = '';
   if (open) {
-    const moves = supMoves.filter(m => m.supplierId === s.id).sort((a, b) => String(a.date).localeCompare(String(b.date)));
     const delivs = allDeliveries().filter(d => d.supplierId === s.id);
+    const pays = supMoves.filter(m => m.supplierId === s.id && m.type === 'pay').sort((a, b) => String(a.date).localeCompare(String(b.date)));
     let forms = '';
-    if (mode === 'receive') forms = `<div class="sheet">
-        <div class="sheet-t">📥 استلام جولف من ${esc(s.name)}</div>
-        <label>عدد الجولف</label>${stepper(`r-count-${s.id}`, '')}
-        <label>سعر الجولف عندهم</label>
-        <input id="r-price-${s.id}" type="number" min="0" inputmode="numeric" placeholder="0">
-        <div id="r-prev-${s.id}" class="dhint"></div>
-        <label>تاريخ الاستلام</label>${dateField(`r-date-${s.id}`)}
-        <input id="r-note-${s.id}" placeholder="ملاحظة (اختياري)" style="margin-top:8px">
-        <div class="btnrow">
-          <button type="button" class="ghost" data-act="sup-mode" data-id="${s.id}" data-mode="receive">إلغاء</button>
-          <button type="button" data-act="move-save" data-id="${s.id}" data-mode="receive">حفظ الاستلام</button>
-        </div></div>`;
-    else if (mode === 'pay') forms = `<div class="sheet">
-        <div class="sheet-t">💸 دفعة للمورد</div>
+    if (mode === 'pay') forms = `<div class="sheet">
+        <div class="sheet-t">💸 دفعة لـ ${esc(s.name)}</div>
         <div class="dhint">الباقي عليّا: <b style="color:var(--gold)">${money(st.owed)}</b></div>
         <label>المبلغ</label>
         <input id="p-amt-${s.id}" type="number" min="1" inputmode="numeric" placeholder="0">
@@ -1378,31 +1490,31 @@ function renderSupCard(s) {
           <button type="button" class="ghost" data-act="sup-mode" data-id="${s.id}" data-mode="edit">إلغاء</button>
           <button type="button" data-act="sup-edit-save" data-id="${s.id}">حفظ التعديل</button>
         </div></div>`;
-    const delivered = st.delivered;
     body = `${s.phone ? `<div class="bmini">📞 ${esc(s.phone)}</div>` : ''}
       ${s.notes ? `<div class="bmini">📝 ${esc(s.notes)}</div>` : ''}
       <div class="bsum">
-        <div><span>استلمنا</span><b>${st.count} جولف</b></div>
+        <div><span>جولف اتسلم</span><b>${st.count}</b></div>
+        <div><span>تكلفة الجولف</span><b>${money(st.cost)}</b></div>
         <div><span>اتدفع له</span><b>${money(st.paid)}</b></div>
         <div><span>الباقي عليّا</span><b style="color:var(--gold)">${money(st.owed)}</b></div>
-        <div><span>عندي في الشغل</span><b>${st.inHand} جولف</b></div>
       </div>
-      <div class="bar"><i style="width:${pctOf(delivered, st.count)}%"></i></div>
-      <div class="bmini">اتسلم للعملاء ${delivered} من ${st.count}</div>
       <div class="btns">
-        <button class="ghost small" data-act="sup-mode" data-id="${s.id}" data-mode="receive">📥 استلام</button>
         <button class="ghost small" data-act="sup-mode" data-id="${s.id}" data-mode="pay">💸 دفعة</button>
         <button class="ghost small" data-act="sup-mode" data-id="${s.id}" data-mode="edit">✏️ تعديل</button>
         <button class="danger small" data-act="sup-del" data-id="${s.id}">🗑️</button>
       </div>
       ${forms}
-      <div class="sup-form"><b>الحركات</b>
-        ${moves.length ? moves.map(m => `<div class="mv-row"><span>${m.type === 'receive'
-          ? `📥 ${dateOr(m.date)} · ${m.count} جولف × ${money(m.price)} = <b>${money(m.count * m.price)}</b>`
-          : `💸 ${dateOr(m.date)} · دفعة <b>${money(m.amount)}</b>`}${m.note ? `<br><small style="color:var(--muted)">${esc(m.note)}</small>` : ''}</span>
-          <button type="button" class="danger small" data-act="move-del" data-mid="${m.id}">✕</button></div>`).join('') : '<p style="color:#888">مفيش حركات لسه</p>'}
-        <b style="display:block;margin-top:10px">التسليم للعملاء</b>
-        ${delivs.length ? delivs.map(d => `<div class="mv-row"><span>🚗 ${esc(d.client)} · ${d.count} جولف · ${dateOr(d.date)}</span><b>${money(d.count * d.price)}</b></div>`).join('') : '<p style="color:#888">مفيش تسليم للعملاء</p>'}
+      <div class="sec-box">
+        <div class="sec-title">🚗 الجولف اللي اتسلم (${delivs.length})</div>
+        ${delivs.length ? delivs.map(d => `<div class="drow"><div class="d-main"><b>${esc(d.client)}</b>
+          <small>${dateOr(d.date)} · ${d.count} جولف × ${money(d.supplierCost || 0)}</small></div>
+          <div class="d-side"><b>${money(d.count * (Number(d.supplierCost) || 0))}</b></div></div>`).join('') : '<div class="empty-note">مفيش تسليمات</div>'}
+      </div>
+      <div class="sec-box">
+        <div class="sec-title">💸 الدفعات ليه (${pays.length})</div>
+        ${pays.length ? pays.map(m => `<div class="drow"><div class="d-main"><b>${money(m.amount)}</b>
+          <small>📅 ${dateOr(m.date)}${m.note ? ' · ' + esc(m.note) : ''}</small></div>
+          <div class="d-side"><div class="d-acts"><button type="button" class="danger small" data-act="move-del" data-mid="${m.id}">✕</button></div></div></div>`).join('') : '<div class="empty-note">مفيش دفعات لسه</div>'}
       </div>`;
   }
   return `<div class="booking">
@@ -1417,7 +1529,6 @@ function renderSupCard(s) {
 function renderClient(c) {
   const st = clientStats(c), mode = clMode[c.id];
   const dl = c.deliveries || [], pays = c.payments || [];
-  const lastPrice = dl.length ? dl[dl.length - 1].price : '';
   const srcs = [...new Set(dl.map(d => d.supplierId))].filter(id => sups.some(s => s.id === id));
   let form = '';
   if (mode === 'edit') {
@@ -1431,19 +1542,26 @@ function renderClient(c) {
       </div></div>`;
   } else if (mode === 'deliv') {
     const e = dl.find(d => d.id === clEditDeliv[c.id]);
-    const sel = defSup(e ? e.supplierId : '');
-    const count = e ? e.count : '';
-    const price = e ? e.price : lastPrice;
-    const h = dvHintHtml(c.id, sel, Number(count) || 0, Number(price) || 0);
+    const fc = e ? {} : (formCache[c.id] || {});
+    const lastPrice = dl.length ? dl[dl.length - 1].price : '';
+    const sel = defSup(c, e ? e.supplierId : fc.sup);
+    const date = e ? e.date : (fc.date ?? '');
+    const count = e ? e.count : (fc.count ?? '');
+    const price = e ? e.price : (fc.price ?? lastPrice);
+    const cost = e ? (e.supplierCost ?? '') : (fc.cost ?? lastCost(sel));
+    const note = e ? (e.note || '') : (fc.note || '');
+    const h = dvHintHtml(Number(count) || 0, Number(price) || 0, Number(cost) || 0);
     form = `<div class="sheet">
-      <div class="sheet-t">${e ? '✏️ تعديل تسليم' : '🚗 تسليم جولف جديد'}</div>
-      <label>تاريخ التسليم</label>${dateField(`dv-date-${c.id}`, e ? e.date : '')}
-      <label>من المورد</label>${supPicker(c.id, sel)}
+      <div class="sheet-t">${e ? '✏️ تعديل التسليم' : '🚗 تسليم جولف للعميل'}</div>
+      <label>تاريخ التسليم</label>${dateField(`dv-date-${c.id}`, date)}
+      <label>المورد</label>${sups.length ? supPicker(c.id, sel) : '<div class="hint">مفيش موردين، ضيف مورد من الزرار اللي فوق</div>' + `<input type="hidden" id="dv-sup-${c.id}" value="">` + `<button type="button" class="pick pick-new" data-act="new-sup" data-id="${c.id}">➕ مورد جديد</button>`}
       <label>عدد الجولف</label>${stepper(`dv-count-${c.id}`, count, c.id)}
-      <label>سعر الجولف للعميل ${!e && lastPrice !== '' ? '<span class="hint">(آخر سعر)</span>' : ''}</label>
-      <input id="dv-price-${c.id}" type="number" min="0" inputmode="numeric" value="${price}" placeholder="0">
+      <div class="row" style="margin-top:0">
+        <div><label>سعر العميل</label><input id="dv-price-${c.id}" type="number" min="0" inputmode="numeric" value="${price}" placeholder="0"></div>
+        <div><label>تكلفة المورد</label><input id="dv-cost-${c.id}" type="number" min="0" inputmode="numeric" value="${cost}" placeholder="0"></div>
+      </div>
       <div id="dv-hint-${c.id}" class="${h.cls}">${h.html}</div>
-      <input id="dv-note-${c.id}" placeholder="ملاحظة (اختياري)" value="${esc(e ? e.note || '' : '')}" style="margin-top:8px">
+      <input id="dv-note-${c.id}" placeholder="ملاحظة (اختياري)" value="${esc(note)}" style="margin-top:8px">
       <div class="btnrow">
         <button type="button" class="ghost" data-act="cl-mode" data-id="${c.id}" data-mode="deliv">إلغاء</button>
         <button type="button" data-act="dv-save" data-id="${c.id}">حفظ التسليم</button>
@@ -1461,13 +1579,24 @@ function renderClient(c) {
         <button type="button" data-act="cl-pay-save" data-id="${c.id}">حفظ الدفعة</button>
       </div></div>`;
   }
-  const details = mode === 'details' ? `<div class="sup-form"><b>التسليمات</b>
-      ${dl.length ? dl.map(d => `<div class="mv-row"><span>🚗 ${dateOr(d.date)} · ${d.count} × ${money(d.price)} · ${esc(supName(d.supplierId))}${d.note ? `<br><small style="color:var(--muted)">${esc(d.note)}</small>` : ''}</span>
-        <span><b>${money(d.count * d.price)}</b> <button type="button" class="ghost small" data-act="dv-edit" data-id="${c.id}" data-did="${d.id}">✏️</button>
-        <button type="button" class="danger small" data-act="dv-del" data-id="${c.id}" data-did="${d.id}">✕</button></span></div>`).join('') : '<p style="color:#888">مفيش تسليمات</p>'}
-      <b style="display:block;margin-top:10px">الدفعات</b>
-      ${pays.length ? pays.map(p => `<div class="mv-row"><span>💵 ${dateOr(p.date)}</span>
-        <span><b>${money(p.amount)}</b> <button type="button" class="danger small" data-act="cl-pay-del" data-id="${c.id}" data-pid="${p.id}">✕</button></span></div>`).join('') : '<p style="color:#888">مفيش دفعات لسه</p>'}
+  const details = mode === 'details' ? `<div class="sec-box">
+      <div class="sec-title">🚗 التسليمات (${dl.length})</div>
+      ${dl.length ? dl.map(d => {
+        const cost = d.count * (Number(d.supplierCost) || 0), tot = d.count * d.price;
+        return `<div class="drow">
+        <div class="d-main"><b>${dateOr(d.date)} · ${d.count} جولف × ${money(d.price)}</b>
+          <small>من ${esc(supName(d.supplierId))} · تكلفة ${money(cost)} · ربحك <span style="color:var(--gold)">${money(tot - cost)}</span>${d.note ? `<br>📝 ${esc(d.note)}` : ''}</small></div>
+        <div class="d-side"><b>${money(tot)}</b>
+          <div class="d-acts"><button type="button" class="ghost small" data-act="dv-edit" data-id="${c.id}" data-did="${d.id}">✏️</button>
+          <button type="button" class="danger small" data-act="dv-del" data-id="${c.id}" data-did="${d.id}">✕</button></div></div>
+      </div>`; }).join('') : '<div class="empty-note">مفيش تسليمات لسه</div>'}
+      <div class="sec-box" style="margin-top:10px;padding-top:10px">
+      <div class="sec-title">💵 دفعات العميل (${pays.length})</div>
+      ${pays.length ? pays.map(p => `<div class="drow">
+        <div class="d-main"><b>${money(p.amount)}</b><small>📅 ${dateOr(p.date)}</small></div>
+        <div class="d-side"><div class="d-acts"><button type="button" class="danger small" data-act="cl-pay-del" data-id="${c.id}" data-pid="${p.id}">✕</button></div></div>
+      </div>`).join('') : '<div class="empty-note">مفيش دفعات لسه</div>'}
+      </div>
     </div>` : '';
   const status = st.total > 0 && st.remaining <= 0 ? '<span class="tag green">خلص ✅</span>' : '';
   return `<div class="booking">
@@ -1479,6 +1608,7 @@ function renderClient(c) {
       <div><span>الحساب</span><b>${money(st.total)}</b></div>
       <div><span>اتدفع</span><b>${money(st.paid)}</b></div>
       <div><span>اتبقي</span><b style="color:var(--gold)">${money(st.remaining)}</b></div>
+      <div><span>ربحي</span><b>${money(st.profit)}</b></div>
     </div>
     <div class="btns">
       <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="deliv">➕ تسليم</button>
@@ -1516,10 +1646,8 @@ $('clSave').onclick = () => {
 // live hints while typing (no re-render, so typed values stay)
 $('pageSupply').addEventListener('input', e => {
   const id = e.target.id || '';
-  const d = /^dv-(count|price|sup)-(.+)$/.exec(id);
+  const d = /^dv-(count|price|cost)-(.+)$/.exec(id);
   if (d) updateDvHint(d[2]);
-  const r = /^r-(count|price)-(.+)$/.exec(id);
-  if (r) updateRecvPrev(r[2]);
   if (id === 'clSearch') renderClientList();
 });
 
@@ -1530,9 +1658,12 @@ $('pageSupply').addEventListener('click', async e => {
 
   // quick helpers: no re-render, so nothing typed is lost
   if (act === 'pick-sup') {
-    $('dv-sup-' + el.dataset.cid).value = el.dataset.sid;
-    document.querySelectorAll(`#dv-picker-${el.dataset.cid} .pick`).forEach(x => x.classList.toggle('on', x === el));
-    updateDvHint(el.dataset.cid);
+    const cid = el.dataset.cid, sid = el.dataset.sid;
+    $('dv-sup-' + cid).value = sid;
+    document.querySelectorAll(`#dv-picker-${cid} .pick`).forEach(x => x.classList.toggle('on', x === el));
+    const costEl = $('dv-cost-' + cid);
+    if (costEl && costEl.value === '') { const lc = lastCost(sid); if (lc !== '') costEl.value = lc; }
+    updateDvHint(cid);
     return;
   }
   if (act === 'step') {
@@ -1540,7 +1671,6 @@ $('pageSupply').addEventListener('click', async e => {
     if (!inp) return;
     inp.value = Math.max(0, (Number(inp.value) || 0) + Number(el.dataset.d));
     if (el.dataset.cid) updateDvHint(el.dataset.cid);
-    if (el.dataset.f.startsWith('r-count-')) updateRecvPrev(el.dataset.f.slice(8));
     return;
   }
   if (act === 'today') { $(el.dataset.target).value = todayISO(); return; }
@@ -1551,24 +1681,15 @@ $('pageSupply').addEventListener('click', async e => {
   } else if (act === 'sup-mode') {
     supMode[id] = supMode[id] === el.dataset.mode ? null : el.dataset.mode;
   } else if (act === 'move-save') {
-    if (el.dataset.mode === 'receive') {
-      const count = Number(val('r-count-' + id)) || 0;
-      const price = Number(val('r-price-' + id)) || 0;
-      const date = val('r-date-' + id);
-      if (count <= 0) { appToast('اكتب عدد الجولف'); return; }
-      if (!date) { appToast('اختار تاريخ الاستلام'); return; }
-      supMoves.push({ id: newId('m'), type: 'receive', supplierId: id, count, price, date, note: val('r-note-' + id) });
-    } else {
-      const amount = Number(val('p-amt-' + id)) || 0;
-      const date = val('p-date-' + id);
-      if (amount <= 0) { appToast('اكتب مبلغ الدفعة'); return; }
-      if (!date) { appToast('اختار تاريخ الدفع'); return; }
-      supMoves.push({ id: newId('m'), type: 'pay', supplierId: id, amount, date, note: val('p-note-' + id) });
-    }
+    const amount = Number(val('p-amt-' + id)) || 0;
+    const date = val('p-date-' + id);
+    if (amount <= 0) { appToast('اكتب مبلغ الدفعة'); return; }
+    if (!date) { appToast('اختار تاريخ الدفع'); return; }
+    supMoves.push({ id: newId('m'), type: 'pay', supplierId: id, amount, date, note: val('p-note-' + id) });
     supMode[id] = null;
-    appToast('اتسجل ✅');
+    appToast('اتسجلت الدفعة ✅');
   } else if (act === 'move-del') {
-    if (!(await appConfirm('تمسح الحركة دي؟'))) return;
+    if (!(await appConfirm('تمسح الدفعة دي؟'))) return;
     supMoves = supMoves.filter(m => m.id !== el.dataset.mid);
   } else if (act === 'sup-edit-save') {
     const sp = sups.find(x => x.id === id);
@@ -1577,16 +1698,26 @@ $('pageSupply').addEventListener('click', async e => {
     if (sp) { sp.name = name; sp.phone = val('se-phone-' + id); sp.notes = val('se-notes-' + id); }
     supMode[id] = null;
   } else if (act === 'sup-del') {
-    if (supMoves.some(m => m.supplierId === id) || allDeliveries().some(d => d.supplierId === id)) { appToast('المورد ده ليه حركات، امسحها الأول'); return; }
+    if (supMoves.some(m => m.supplierId === id) || allDeliveries().some(d => d.supplierId === id)) { appToast('المورد ده ليه تسليمات أو دفعات، مينفعش تتمسح'); return; }
     if (!(await appConfirm('تمسح المورد ده؟'))) return;
     sups = sups.filter(x => x.id !== id);
+  } else if (act === 'new-sup') {
+    snapForm(id);
+    const r = await askNewSupplier();
+    if (!r) return;
+    const sp = { id: newId('s'), name: r.name, phone: r.phone, notes: '' };
+    sups.push(sp);
+    formCache[id] = { ...(formCache[id] || {}), sup: sp.id };
+    appToast('اتضاف المورد ✅');
   } else if (act === 'cl-mode') {
     const m = el.dataset.mode;
     clMode[id] = clMode[id] === m ? null : m;
     clEditDeliv[id] = null;
+    formCache[id] = null;
   } else if (act === 'dv-edit') {
     clEditDeliv[id] = did;
     clMode[id] = 'deliv';
+    formCache[id] = null;
   } else if (act === 'dv-save') {
     const c = golfClients.find(x => x.id === id);
     if (!c) return;
@@ -1594,18 +1725,19 @@ $('pageSupply').addEventListener('click', async e => {
     const supplierId = val('dv-sup-' + id);
     const count = Number(val('dv-count-' + id)) || 0;
     const price = Number(val('dv-price-' + id)) || 0;
+    const cost = Number(val('dv-cost-' + id)) || 0;
     if (!date) { appToast('اختار تاريخ التسليم'); return; }
     if (!supplierId) { appToast('اختار المورد'); return; }
     if (count <= 0) { appToast('اكتب عدد الجولف'); return; }
-    const avail = dvAvail(id, supplierId);
-    if (count > avail && !(await appConfirm(`المتاح عندك من ${supName(supplierId)} ${avail} جولف بس.\nتسجل ${count} برضه؟`))) return;
+    if (price <= 0) { appToast('اكتب سعر الجولف للعميل'); return; }
     const editing = clEditDeliv[id];
-    const rec = { id: editing || newId('d'), supplierId, count, price, date, note: val('dv-note-' + id) };
+    const rec = { id: editing || newId('d'), supplierId, count, price, supplierCost: cost, date, note: val('dv-note-' + id) };
     c.deliveries = editing
       ? (c.deliveries || []).map(d => d.id === editing ? rec : d)
       : [...(c.deliveries || []), rec];
     clMode[id] = null;
     clEditDeliv[id] = null;
+    formCache[id] = null;
     appToast('اتحفظ التسليم ✅');
   } else if (act === 'dv-del') {
     if (!(await appConfirm('تمسح التسليم ده؟'))) return;
@@ -1640,6 +1772,7 @@ $('pageSupply').addEventListener('click', async e => {
   saveSupply();
   renderSupply();
 });
+
 $('cancelEdit').onclick = () => { resetForm(); showTab('list'); };
 
 $('bookingForm').addEventListener('submit', async e => {
@@ -1863,7 +1996,91 @@ $('importFile').addEventListener('change', e => {
   reader.readAsText(f);
 });
 
+
+// ---- Settings page ----
+function openSettings() {
+  const pg = $('settingsPage');
+  pg.innerHTML = `
+    <div class="set-top"><h2>⚙️ الإعدادات</h2><button type="button" class="ghost small" id="setClose">✕ قفل الصفحة</button></div>
+    <div class="panel">
+      <h2>🔐 الباسورد</h2>
+      <label>الباسورد الحالي</label><input id="pinOld" type="password" inputmode="numeric" maxlength="4">
+      <label>الباسورد الجديد (4 أرقام)</label><input id="pinNew" type="password" inputmode="numeric" maxlength="4">
+      <label>أكّد الباسورد الجديد</label><input id="pinNew2" type="password" inputmode="numeric" maxlength="4">
+      <div class="btnrow"><button type="button" id="pinSave">حفظ الباسورد الجديد</button></div>
+    </div>
+    <div class="panel">
+      <h2>💾 النسخ الاحتياطي</h2>
+      <div class="set-row"><div>تصدير نسخة كاملة<small>الحجوزات والعمال والملاحظات والموردين والعملاء</small></div><button type="button" class="ghost small" id="setExport">تصدير</button></div>
+      <div class="set-row"><div>استيراد نسخة<small>ارجع نسخة اتعملت قبل كده</small></div><button type="button" class="ghost small" id="setImport">استيراد</button></div>
+    </div>
+    <div class="panel">
+      <h2>🧹 تنظيف</h2>
+      <div class="set-row"><div>امسح مسودة الحجز<small>لو فيه حجز اتكتب بالغلط وعايز تبدأ من أول</small></div><button type="button" class="ghost small" id="setDraft">امسح</button></div>
+      <div class="set-row"><div>اقفل التطبيق دلوقتي<small>هيطلب الباسورد تاني</small></div><button type="button" class="ghost small" id="setLock">🔒 قفل</button></div>
+    </div>
+    <div class="panel">
+      <h2>ℹ️ عن التطبيق</h2>
+      <div class="set-row"><div>الثيم<small>بيتبع إعدادات الموبايل (لايت / دارك) تلقائياً</small></div><span style="color:var(--muted)">تلقائي</span></div>
+      <div class="set-row"><div>الحجوزات المحفوظة<small>على الموبايل ده</small></div><b>${bookings.length}</b></div>
+      <div class="set-row"><div>العملاء / الموردين<small>في قسم الموردين والجولف</small></div><b>${golfClients.length} / ${sups.length}</b></div>
+    </div>`;
+  pg.style.display = 'block';
+  window.scrollTo({ top: 0 });
+
+  $('setClose').onclick = () => { pg.style.display = 'none'; };
+  $('setExport').onclick = () => $('exportBtn').click();
+  $('setImport').onclick = () => $('importBtn').click();
+  $('setDraft').onclick = async () => {
+    if (!(await appConfirm('تمسح مسودة الحجز اللي بتكتبه؟'))) return;
+    clearDraft(); appToast('اتمسحت المسودة');
+  };
+  $('setLock').onclick = () => { try { sessionStorage.removeItem('mokhtar_unlocked'); } catch (e) {} pg.style.display = 'none'; showLock(); };
+  $('pinSave').onclick = () => {
+    const oldV = $('pinOld').value.trim(), n1 = $('pinNew').value.trim(), n2 = $('pinNew2').value.trim();
+    if (hashPin(oldV) !== currentPinHash()) { appToast('الباسورد الحالي غلط'); return; }
+    if (!/^\d{4}$/.test(n1)) { appToast('الباسورد الجديد لازم 4 أرقام'); return; }
+    if (n1 !== n2) { appToast('الباسورد الجديد مش متطابق'); return; }
+    try { localStorage.setItem('mokhtar_pin', hashPin(n1)); } catch (e) { appToast('متعرفش تحفظ الباسورد'); return; }
+    ['pinOld', 'pinNew', 'pinNew2'].forEach(i => $(i).value = '');
+    appToast('اتغير الباسورد ✅');
+  };
+}
+$('settingsBtn').onclick = openSettings;
+
 // ---- Start ----
+// ---- Password lock (light protection for this device) ----
+const LOCK_HASH = '2382962197';
+const LOCK_SALT = 'mokhtar-lock:';
+const hashPin = v => { let h = 5381; for (const ch of LOCK_SALT + v) h = (h * 33 + ch.charCodeAt(0)) >>> 0; return String(h); };
+const currentPinHash = () => { try { return localStorage.getItem('mokhtar_pin') || LOCK_HASH; } catch (e) { return LOCK_HASH; } };
+let pinBuf = '';
+const isUnlocked = () => { try { return sessionStorage.getItem('mokhtar_unlocked') === '1'; } catch (e) { return false; } };
+function renderDots() { document.querySelectorAll('#lockDots i').forEach((d, i) => d.classList.toggle('on', i < pinBuf.length)); }
+function showLock() { pinBuf = ''; renderDots(); $('lockMsg').textContent = ''; $('lock').style.display = 'flex'; }
+$('lock').addEventListener('click', e => {
+  const k = e.target.closest('[data-key]');
+  if (!k) return;
+  const v = k.dataset.key;
+  if (v === 'back') pinBuf = pinBuf.slice(0, -1);
+  else if (pinBuf.length < 4) pinBuf += v;
+  $('lockMsg').textContent = '';
+  renderDots();
+  if (pinBuf.length === 4) {
+    if (hashPin(pinBuf) === currentPinHash()) {
+      try { sessionStorage.setItem('mokhtar_unlocked', '1'); } catch (err) {}
+      $('lock').style.display = 'none';
+      pinBuf = ''; renderDots();
+    } else {
+      $('lockMsg').textContent = 'الباسورد غلط، حاول تاني';
+      $('lock').classList.add('shake');
+      setTimeout(() => $('lock').classList.remove('shake'), 450);
+      pinBuf = ''; renderDots();
+    }
+  }
+});
+$('lockBtn').onclick = () => { try { sessionStorage.removeItem('mokhtar_unlocked'); } catch (e) {} showLock(); };
+if (!isUnlocked()) showLock();
 bookings = loadBookings();
 setTimeout(() => $('splash') && $('splash').classList.add('hide'), 900);
 setTimeout(() => $('splash') && $('splash').remove(), 1500);
@@ -1899,7 +2116,7 @@ function renderGear() {
         <label><input type="checkbox" data-gid="${esc(g.id)}" ${g.done ? 'checked' : ''}><span>${esc(g.name)}</span></label>
         <button type="button" class="ghost small" data-gdel="${esc(g.id)}">🗑️</button>
       </div>`).join('')
-    : '<p style="color:#888">مفيش بنود، أضف بند من تحت</p>';
+    : '<p style="color:var(--muted)">مفيش بنود، أضف بند من تحت</p>';
 }
 $('gearList').onchange = e => {
   const id = e.target.dataset.gid;
