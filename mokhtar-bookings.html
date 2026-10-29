@@ -471,7 +471,9 @@ main{padding:16px 14px 130px}
     <button type="button" id="supListToggle" class="ghost">🏪 الموردين</button>
     <button type="button" id="clNewToggle" class="ghost">➕ عميل جديد</button>
   </div>
-  <div class="panel" id="supListBox" style="display:none"><div id="supList"></div></div>
+  <div class="panel" id="supListBox" style="display:none"><div id="supList"></div>
+    <button type="button" class="ghost" id="supArchToggle" style="width:100%;margin-top:12px"></button>
+    <div id="supArchList" style="display:none;margin-top:10px"></div></div>
   <div class="panel" id="clNewBox" style="display:none">
     <label>اسم العميل</label>
     <input id="clName" placeholder="اسم العميل">
@@ -1332,6 +1334,9 @@ let supMoves = loadList('mokhtar_supply_moves');       // supplier payments (+ l
 let golfClients = loadList('mokhtar_golf_clients2');   // clients, each with deliveries & payments
 let supMode = {}, supOpen = {}, clMode = {}, clEditDeliv = {}, formCache = {};
 let clOpenId = null; // only one golf client card open at a time
+let showSupArch = false;
+// a supplier is archived once its account is closed (balance zero) after it has had activity
+const isSupArchived = id => { const st = supStats(id); return (st.count > 0 || st.paid > 0) && st.cost > 0 && st.owed <= 0; };
 let showSupList = false;
 const newId = p => p + Date.now() + Math.random().toString(36).slice(2, 6);
 function saveSupply() {
@@ -1426,6 +1431,31 @@ function askNewSupplier() {
   });
 }
 
+function askPassword(msg) {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'app-modal-bg';
+    ov.innerHTML = `<div class="app-modal">
+      <div class="app-modal-msg" style="margin-bottom:12px">${esc(msg)}</div>
+      <input id="pwCheck" type="password" inputmode="numeric" maxlength="4" placeholder="الباسورد" style="text-align:center;letter-spacing:6px;margin-bottom:14px">
+      <div class="app-modal-btns">
+        <button type="button" class="ghost" data-v="0">إلغاء</button>
+        <button type="button" class="danger" data-v="1">امسح</button>
+      </div></div>`;
+    ov.addEventListener('click', e => {
+      const v = e.target.closest('button')?.dataset.v;
+      if (v === undefined) return;
+      if (v === '0') { ov.remove(); resolve(false); return; }
+      const inp = ov.querySelector('#pwCheck');
+      if (hashPin(inp.value.trim()) !== currentPinHash()) { appToast('الباسورد غلط'); inp.value = ''; inp.focus(); return; }
+      ov.remove();
+      resolve(true);
+    });
+    document.body.appendChild(ov);
+    setTimeout(() => ov.querySelector('#pwCheck').focus(), 50);
+  });
+}
+
 function renderSupply() {
   const owedSup = sups.reduce((s, x) => s + supStats(x.id).owed, 0);
   const owedCl = golfClients.reduce((s, c) => s + clientStats(c).remaining, 0);
@@ -1439,7 +1469,12 @@ function renderSupply() {
   $('supListBox').style.display = showSupList ? '' : 'none';
   $('supListToggle').classList.toggle('on', showSupList);
   $('supListToggle').textContent = `🏪 الموردين (${sups.length})`;
-  $('supList').innerHTML = sups.length ? sups.map(renderSupCard).join('') : '<div class="empty">مفيش موردين لسه</div>';
+  const activeS = sups.filter(x => !isSupArchived(x.id)), archS = sups.filter(x => isSupArchived(x.id));
+  $('supList').innerHTML = activeS.length ? activeS.map(renderSupCard).join('') : '<div class="empty">مفيش موردين نشطين</div>';
+  $('supArchToggle').textContent = `🗄️ الأرشيف (${archS.length})`;
+  $('supArchToggle').style.display = archS.length ? '' : 'none';
+  $('supArchList').style.display = showSupArch ? '' : 'none';
+  $('supArchList').innerHTML = showSupArch ? archS.map(renderSupCard).join('') : '';
   renderClientList();
 }
 function renderClientList() {
@@ -1617,6 +1652,7 @@ function renderClient(c) {
 
 $('clNewToggle').onclick = () => { const b = $('clNewBox'); b.style.display = b.style.display === 'none' ? '' : 'none'; };
 $('supListToggle').onclick = () => { showSupList = !showSupList; renderSupply(); };
+$('supArchToggle').onclick = () => { showSupArch = !showSupArch; renderSupply(); };
 $('clSave').onclick = () => {
   const name = val('clName');
   if (!name) { appToast('اكتب اسم العميل'); $('clName').focus(); return; }
@@ -1684,9 +1720,15 @@ $('pageSupply').addEventListener('click', async e => {
     if (sp) { sp.name = name; sp.phone = val('se-phone-' + id); sp.notes = val('se-notes-' + id); }
     supMode[id] = null;
   } else if (act === 'sup-del') {
-    if (supMoves.some(m => m.supplierId === id) || allDeliveries().some(d => d.supplierId === id)) { appToast('المورد ده ليه تسليمات أو دفعات، مينفعش تتمسح'); return; }
-    if (!(await appConfirm('تمسح المورد ده؟'))) return;
+    const sp = sups.find(x => x.id === id);
+    const nDel = allDeliveries().filter(d => d.supplierId === id).length;
+    const nPay = supMoves.filter(m => m.supplierId === id).length;
+    if (!(await appConfirm(`تمسح المورد "${sp ? sp.name : ''}"؟\nهيتمسح معاه ${nDel} تسليم و${nPay} حركة دفع. ده نهائي.`))) return;
+    if (!(await askPassword('اكتب الباسورد عشان تأكد المسح'))) return;
     sups = sups.filter(x => x.id !== id);
+    supMoves = supMoves.filter(m => m.supplierId !== id);
+    golfClients.forEach(c => { c.deliveries = (c.deliveries || []).filter(d => d.supplierId !== id); });
+    appToast('اتمسح المورد وكل حاجة تخصه');
   } else if (act === 'new-sup') {
     snapForm(id);
     const r = await askNewSupplier();
