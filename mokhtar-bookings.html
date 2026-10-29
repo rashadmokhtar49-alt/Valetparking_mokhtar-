@@ -468,25 +468,11 @@ main{padding:16px 14px 130px}
 <div id="pageSupply" style="display:none">
   <div class="panel" id="supSummary"></div>
   <div class="row2">
-    <button type="button" id="supNewToggle" class="ghost">➕ مورد جديد</button>
     <button type="button" id="supListToggle" class="ghost">🏪 الموردين</button>
-  </div>
-  <div class="panel" id="supNewBox" style="display:none">
-    <div class="sheet-t">➕ مورد جديد</div>
-    <label>اسم المورد</label>
-    <input id="supName" placeholder="مثال: محمد الجولف">
-    <div class="row">
-      <div><label>الرقم</label><input id="supPhone" type="tel" placeholder="01xxxxxxxxx" style="direction:ltr"></div>
-      <div><label>ملاحظات</label><input id="supNotes" placeholder="اختياري"></div>
-    </div>
-    <div class="btnrow"><button type="button" id="supAdd">حفظ المورد</button></div>
-  </div>
-  <div class="panel" id="supListBox" style="display:none"><div id="supList"></div></div>
-  <div class="row2">
     <button type="button" id="clNewToggle" class="ghost">➕ عميل جديد</button>
   </div>
+  <div class="panel" id="supListBox" style="display:none"><div id="supList"></div></div>
   <div class="panel" id="clNewBox" style="display:none">
-    <div class="sheet-t">➕ عميل جديد</div>
     <label>اسم العميل</label>
     <input id="clName" placeholder="اسم العميل">
     <label>رقم العميل</label>
@@ -1069,11 +1055,11 @@ function renderClients() {
     const last = c.events[0];
     return `<div class="booking">
       <div class="bhead" data-ck="${esc(c.key)}" style="cursor:pointer">
-        <div><b>${esc(c.name) || '-'}</b> <span class="tag">${c.events.length} مناسبة</span></div>
+        <div><b>${esc(c.name) || '-'}</b></div>
         <span class="chev">${open ? '▴' : '▾'}</span>
       </div>
-      <div class="bsub">📞 ${esc(c.phone) || '-'}</div>
       ${open ? `<div class="bdetails">
+        <div class="bsub">📞 ${esc(c.phone) || '-'}</div>
         📍 المكان: ${esc(last.venue) || '-'}<br>
         <div class="bsum" style="margin-top:8px">
           <div><span>🧑‍✈️ حساب الفاليه</span><b>${money(last.valetTotal)}</b></div>
@@ -1103,7 +1089,9 @@ document.addEventListener('click', e => {
   const btn = e.target.closest('[data-ck]');
   if (!btn) return;
   const k = 'client:' + btn.dataset.ck;
-  if (isOpen(k)) openSet.delete(k); else openSet.add(k);
+  const was = isOpen(k);
+  [...openSet].filter(x => x.startsWith('client:')).forEach(x => openSet.delete(x));
+  if (!was) openSet.add(k);
   renderClients();
 });
 $('exportClients').onclick = () => downloadFile('mokhtar-clients.csv', 'text/csv;charset=utf-8', clientsCsv());
@@ -1343,6 +1331,7 @@ let sups = loadList('mokhtar_suppliers');
 let supMoves = loadList('mokhtar_supply_moves');       // supplier payments (+ legacy receipts)
 let golfClients = loadList('mokhtar_golf_clients2');   // clients, each with deliveries & payments
 let supMode = {}, supOpen = {}, clMode = {}, clEditDeliv = {}, formCache = {};
+let clOpenId = null; // only one golf client card open at a time
 let showSupList = false;
 const newId = p => p + Date.now() + Math.random().toString(36).slice(2, 6);
 function saveSupply() {
@@ -1445,7 +1434,7 @@ function renderSupply() {
     <div class="kpis">
       <div><span>عليّا للموردين</span><b>${money(owedSup)}</b></div>
       <div><span>ليّا عند العملاء</span><b>${money(owedCl)}</b></div>
-      <div><span>ربحي الكلي</span><b>${money(profit)}</b></div>
+      <div><span>صافي ربحي الكلي</span><b>${money(profit)}</b></div>
     </div>`;
   $('supListBox').style.display = showSupList ? '' : 'none';
   $('supListToggle').classList.toggle('on', showSupList);
@@ -1519,7 +1508,7 @@ function renderSupCard(s) {
   }
   return `<div class="booking">
     <div class="bhead" data-act="sup-toggle" data-id="${s.id}" style="cursor:pointer">
-      <div><b>${esc(s.name)}</b> <span class="tag ${st.owed > 0 ? '' : 'green'}">${st.owed > 0 ? 'الباقي ' + money(st.owed) : 'مفيش باقي ✅'}</span></div>
+      <div><b>${esc(s.name)}</b></div>
       <span style="color:var(--gold)">${open ? '▲' : '▼'}</span>
     </div>
     ${body}
@@ -1528,6 +1517,12 @@ function renderSupCard(s) {
 
 function renderClient(c) {
   const st = clientStats(c), mode = clMode[c.id];
+  if (clOpenId !== c.id) {
+    return `<div class="booking">
+      <div class="bhead" data-act="cl-open" data-id="${c.id}" style="cursor:pointer">
+        <div><b>${esc(c.name)}</b></div><span style="color:var(--gold);font-size:12px">👁️ التفاصيل ▼</span>
+      </div></div>`;
+  }
   const dl = c.deliveries || [], pays = c.payments || [];
   const srcs = [...new Set(dl.map(d => d.supplierId))].filter(id => sups.some(s => s.id === id));
   let form = '';
@@ -1579,7 +1574,7 @@ function renderClient(c) {
         <button type="button" data-act="cl-pay-save" data-id="${c.id}">حفظ الدفعة</button>
       </div></div>`;
   }
-  const details = mode === 'details' ? `<div class="sec-box">
+  const details = `<div class="sec-box">
       <div class="sec-title">🚗 التسليمات (${dl.length})</div>
       ${dl.length ? dl.map(d => {
         const cost = d.count * (Number(d.supplierCost) || 0), tot = d.count * d.price;
@@ -1597,23 +1592,22 @@ function renderClient(c) {
         <div class="d-side"><div class="d-acts"><button type="button" class="danger small" data-act="cl-pay-del" data-id="${c.id}" data-pid="${p.id}">✕</button></div></div>
       </div>`).join('') : '<div class="empty-note">مفيش دفعات لسه</div>'}
       </div>
-    </div>` : '';
+    </div>`;
   const status = st.total > 0 && st.remaining <= 0 ? '<span class="tag green">خلص ✅</span>' : '';
   return `<div class="booking">
-    <div class="bhead"><div><b>${esc(c.name)}</b> <span class="tag">${st.carts} جولف</span> ${status}
+    <div class="bhead" data-act="cl-open" data-id="${c.id}" style="cursor:pointer"><div><b>${esc(c.name)}</b> <span class="tag">${st.carts} جولف</span> ${status}
       ${c.phone ? `<div class="bmini">📞 ${esc(c.phone)}</div>` : ''}
       ${srcs.length ? `<div class="srcs">${srcs.map(id => `<span class="tag">📦 ${esc(supName(id))}</span>`).join('')}</div>` : ''}
-    </div></div>
+    </div><span style="color:var(--gold);font-size:12px">▲</span></div>
     <div class="bsum">
       <div><span>الحساب</span><b>${money(st.total)}</b></div>
       <div><span>اتدفع</span><b>${money(st.paid)}</b></div>
       <div><span>اتبقي</span><b style="color:var(--gold)">${money(st.remaining)}</b></div>
-      <div><span>ربحي</span><b>${money(st.profit)}</b></div>
+      <div><span>صافي ربحي</span><b>${money(st.profit)}</b></div>
     </div>
     <div class="btns">
       <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="deliv">➕ تسليم</button>
       <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="pay">💵 دفعة</button>
-      <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="details">👁️ التفاصيل</button>
       <button class="ghost small" data-act="cl-mode" data-id="${c.id}" data-mode="edit">✏️</button>
       <button class="danger small" data-act="cl-del" data-id="${c.id}">🗑️</button>
     </div>
@@ -1621,18 +1615,8 @@ function renderClient(c) {
   </div>`;
 }
 
-$('supNewToggle').onclick = () => { const b = $('supNewBox'); b.style.display = b.style.display === 'none' ? '' : 'none'; };
 $('clNewToggle').onclick = () => { const b = $('clNewBox'); b.style.display = b.style.display === 'none' ? '' : 'none'; };
 $('supListToggle').onclick = () => { showSupList = !showSupList; renderSupply(); };
-$('supAdd').onclick = () => {
-  const name = val('supName');
-  if (!name) { appToast('اكتب اسم المورد'); $('supName').focus(); return; }
-  sups.push({ id: newId('s'), name, phone: val('supPhone'), notes: val('supNotes') });
-  ['supName', 'supPhone', 'supNotes'].forEach(i => $(i).value = '');
-  $('supNewBox').style.display = 'none';
-  saveSupply(); renderSupply();
-  appToast('اتضاف المورد ✅');
-};
 $('clSave').onclick = () => {
   const name = val('clName');
   if (!name) { appToast('اكتب اسم العميل'); $('clName').focus(); return; }
@@ -1677,7 +1661,9 @@ $('pageSupply').addEventListener('click', async e => {
   if (act === 'fill') { $(el.dataset.target).value = el.dataset.v; $(el.dataset.target).focus(); return; }
 
   if (act === 'sup-toggle') {
-    supOpen[id] = !supOpen[id];
+    const was = !!supOpen[id];
+    supOpen = {};
+    if (!was) supOpen[id] = true;
   } else if (act === 'sup-mode') {
     supMode[id] = supMode[id] === el.dataset.mode ? null : el.dataset.mode;
   } else if (act === 'move-save') {
@@ -1709,8 +1695,12 @@ $('pageSupply').addEventListener('click', async e => {
     sups.push(sp);
     formCache[id] = { ...(formCache[id] || {}), sup: sp.id };
     appToast('اتضاف المورد ✅');
+  } else if (act === 'cl-open') {
+    clOpenId = clOpenId === id ? null : id;
+    clMode = {}; clEditDeliv = {}; formCache = {};
   } else if (act === 'cl-mode') {
     const m = el.dataset.mode;
+    clOpenId = id;
     clMode[id] = clMode[id] === m ? null : m;
     clEditDeliv[id] = null;
     formCache[id] = null;
@@ -1838,7 +1828,9 @@ document.addEventListener('click', async e => {
   const kEl = t.closest('[data-k]');
   if (kEl && !kEl.closest('#staffList') && !kEl.closest('#bookingForm')) {
     const k = kEl.dataset.k;
-    if (isOpen(k)) openSet.delete(k); else openSet.add(k);
+    const was = isOpen(k);
+    if (k.startsWith('card:') && !was) [...openSet].filter(x => x.startsWith('card:')).forEach(x => openSet.delete(x));
+    if (was) openSet.delete(k); else openSet.add(k);
     render();
     return;
   }
