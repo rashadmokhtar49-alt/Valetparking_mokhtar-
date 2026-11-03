@@ -265,6 +265,26 @@ main{padding:16px 14px 130px}
 .tabs .tab.on{background:var(--gold);color:#000}
 .fab{left:auto;right:18px;bottom:calc(96px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:20px;box-shadow:0 12px 26px rgba(201,162,39,.4)}
 .app-toast{bottom:100px}
+/* ---- Monthly expenses ---- */
+.mh{display:flex;gap:8px;align-items:center}
+.mh input{flex:1;text-align:center;font-weight:bold}
+.mtable{border-collapse:separate;border-spacing:0;font-size:12px}
+.mtable th,.mtable td{border-bottom:1px solid var(--line);border-left:1px solid var(--line2);padding:0;min-width:58px;height:44px;text-align:center;background:var(--card)}
+.mtable thead th{position:sticky;top:0;background:var(--chip);z-index:2;font-weight:800;height:34px}
+.mtable th.sticky{position:sticky;right:0;z-index:3;min-width:130px;text-align:right;padding:0 8px;background:var(--card);border-left:1px solid var(--line)}
+.mtable thead th.sticky{z-index:4}
+.mtable tr.mtot td,.mtable tr.mtot th{background:var(--input);color:var(--gold);font-weight:bold}
+.mtable td input{width:100%;height:44px;border:0;border-radius:0;background:transparent;text-align:center;padding:0;font-size:13px}
+.mname{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.mname button{padding:4px 7px}
+#mDayBox .sec-h button{padding:6px 12px}
+#mLive{position:fixed;left:0;right:0;z-index:50;background:var(--header);border-bottom:1px solid var(--gold);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-weight:bold;box-shadow:var(--shadow)}
+#mLive .v{color:var(--gold);font-size:20px}
+.inc-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.inc-row label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.inc-row input{width:100%}
+.mline{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.mline b{font-size:16px}
 </style>
 </head>
 <body>
@@ -294,7 +314,8 @@ main{padding:16px 14px 130px}
   </header>
   <nav class="pagebar">
     <button type="button" class="pg on" data-pg="ops">🏠 التشغيل</button>
-    <button type="button" class="pg" data-pg="supply">🏪 الموردين والجولف</button>
+    <button type="button" class="pg" data-pg="supply">🏪 الموردين</button>
+  <button type="button" class="pg" data-pg="month">📅 الشهر</button>
   </nav>
 </div>
 <div id="pageOps">
@@ -486,6 +507,23 @@ main{padding:16px 14px 130px}
 </div>
 
 <div id="settingsPage"></div>
+<div id="pageMonth" style="display:none">
+  <div id="mLive" style="display:none"></div>
+  <div class="panel" id="mDayBox"></div>
+  <div class="panel">
+    <div class="mh">
+      <button type="button" class="ghost small" id="mPrev">›</button>
+      <input type="month" id="mMonth">
+      <button type="button" class="ghost small" id="mNext">‹</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <input id="mName" placeholder="اسم الشخص (مرة واحدة)" style="flex:1">
+      <button type="button" id="mAddPerson" style="flex:none">➕ ضيف</button>
+    </div>
+  </div>
+  <div class="panel" style="padding:0;overflow:hidden"><div id="mGrid" style="overflow:auto"></div></div>
+</div>
+
 <div id="receipt"></div>
 
 <script>
@@ -1317,14 +1355,16 @@ async function editPerson(id) {
   bookings.forEach(b => (b.staff || []).forEach(st => { if (samePerson(old, st)) { st.name = p.name; st.phone = p.phone; } }));
   savePeople(); persist(); renderTeam(); render();
 }
-// ---- Top pages: operations / suppliers & golf ----
+// ---- Top pages: operations / suppliers & golf / monthly ----
 document.querySelectorAll('.pg').forEach(b => b.onclick = () => {
-  const sup = b.dataset.pg === 'supply';
+  const pg = b.dataset.pg;
   document.querySelectorAll('.pg').forEach(x => x.classList.toggle('on', x === b));
-  $('pageOps').style.display = sup ? 'none' : '';
-  $('pageSupply').style.display = sup ? '' : 'none';
+  $('pageOps').style.display = pg === 'ops' ? '' : 'none';
+  $('pageSupply').style.display = pg === 'supply' ? '' : 'none';
+  $('pageMonth').style.display = pg === 'month' ? '' : 'none';
   window.scrollTo({ top: 0 });
-  if (sup) renderSupply();
+  if (pg === 'supply') renderSupply();
+  if (pg === 'month') renderMonth();
 });
 
 // ---- Suppliers & golf (client-first: each delivery is entered once) ----
@@ -1805,6 +1845,153 @@ $('pageSupply').addEventListener('click', async e => {
   renderSupply();
 });
 
+// ---- Monthly expenses: people (added once) × days of the month ----
+const MP_KEY = 'mokhtar_month_people', MD_KEY = 'mokhtar_month_data';
+let monthPeople = loadList(MP_KEY);
+let monthData = (() => { try { const v = JSON.parse(localStorage.getItem(MD_KEY) || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } })();
+const MI_KEY = 'mokhtar_month_income';
+let monthIncome = (() => { try { const v = JSON.parse(localStorage.getItem(MI_KEY) || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } })();
+let mKey = (() => { const n = new Date(); return `${n.getFullYear()}-${pad(n.getMonth() + 1)}`; })();
+let mDay = new Date().getDate();
+const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+function saveMonth() {
+  try { localStorage.setItem(MP_KEY, JSON.stringify(monthPeople)); localStorage.setItem(MD_KEY, JSON.stringify(monthData)); localStorage.setItem(MI_KEY, JSON.stringify(monthIncome)); } catch (e) {}
+}
+const mDaysIn = key => { const [y, m] = key.split('-').map(Number); return new Date(y, m, 0).getDate(); };
+const mGet = (pid, d) => Number(((monthData[mKey] || {})[pid] || {})[d]) || 0;
+function mSet(pid, d, v) {
+  monthData[mKey] = monthData[mKey] || {};
+  monthData[mKey][pid] = monthData[mKey][pid] || {};
+  if (v > 0) monthData[mKey][pid][d] = v; else delete monthData[mKey][pid][d];
+}
+const mInc = d => { const x = (monthIncome[mKey] || {})[d] || {}; return { cash: Number(x.cash) || 0, insta: Number(x.insta) || 0 }; };
+function mSetInc(d, f, v) {
+  monthIncome[mKey] = monthIncome[mKey] || {};
+  monthIncome[mKey][d] = Object.assign({}, monthIncome[mKey][d] || {}, { [f]: v });
+  saveMonth();
+}
+const mDayTotal = d => monthPeople.reduce((s, p) => s + mGet(p.id, d), 0);
+const mPersonTotal = pid => { let t = 0; const n = mDaysIn(mKey); for (let d = 1; d <= n; d++) t += mGet(pid, d); return t; };
+const mMonthTotal = () => monthPeople.reduce((s, p) => s + mPersonTotal(p.id), 0);
+
+function renderMDay(n) {
+  const [y, m] = mKey.split('-').map(Number);
+  const dt = new Date(y, m - 1, mDay);
+  const rows = monthPeople.filter(p => mGet(p.id, mDay) > 0)
+    .map(p => `<div class="drow"><div class="d-main"><b>${esc(p.name)}</b></div><div class="d-side"><b>${money(mGet(p.id, mDay))}</b></div></div>`).join('');
+  const inc = mInc(mDay);
+  $('mDayBox').innerHTML = `<div class="sec-h">
+      <button type="button" class="ghost small" id="mdPrev">›</button>
+      <b>${DAYS_AR[dt.getDay()]} ${mDay} ${MONTHS_AR[m - 1]}</b>
+      <button type="button" class="ghost small" id="mdNext">‹</button>
+    </div>
+    <div class="inc-row">
+      <div><label>💵 كاش</label><input id="mCash" type="number" inputmode="numeric" min="0" placeholder="0" value="${inc.cash || ''}"></div>
+      <div><label>📱 انستا</label><input id="mInsta" type="number" inputmode="numeric" min="0" placeholder="0" value="${inc.insta || ''}"></div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="mline"><span>إجمالي اليوم (كاش + انستا)</span><b id="mIncTot"></b></div>
+      <div class="mline"><span>المصاريف (من الجدول)</span><b id="mExpTot"></b></div>
+      <div class="mline"><span>الباقي بعد المصاريف</span><b id="mLeft"></b></div>
+    </div>
+    <div style="margin-top:8px">${rows || '<div class="empty-note">مفيش مصاريف في اليوم ده</div>'}</div>`;
+  $('mdPrev').onclick = () => { mDay = mDay > 1 ? mDay - 1 : n; renderMonth(); };
+  $('mdNext').onclick = () => { mDay = mDay < n ? mDay + 1 : 1; renderMonth(); };
+  $('mCash').oninput = e => { mSetInc(mDay, 'cash', Number(e.target.value) || 0); mRefreshSummary(); };
+  $('mInsta').oninput = e => { mSetInc(mDay, 'insta', Number(e.target.value) || 0); mRefreshSummary(); };
+  mRefreshSummary();
+}
+function mRefreshSummary() {
+  if (!$('mIncTot')) return;
+  const inc = mInc(mDay), tot = inc.cash + inc.insta, exp = mDayTotal(mDay), left = tot - exp;
+  $('mIncTot').textContent = money(tot);
+  $('mExpTot').textContent = money(exp);
+  $('mLeft').textContent = money(left);
+  $('mLeft').style.color = left < 0 ? 'var(--warn-text)' : 'var(--ok)';
+}
+function renderMonth() {
+  $('mMonth').value = mKey;
+  const n = mDaysIn(mKey);
+  if (mDay > n) mDay = n;
+  renderMDay(n);
+  const days = Array.from({ length: n }, (_, i) => i + 1);
+  if (!monthPeople.length) { $('mGrid').innerHTML = '<div class="empty">ضيف الأسامي فوق، كل اسم مرة واحدة</div>'; return; }
+  const head = `<tr><th class="sticky">الاسم</th>${days.map(d => `<th>${d}</th>`).join('')}<th>الإجمالي</th></tr>`;
+  const totRow = `<tr class="mtot"><th class="sticky">مصاريف اليوم</th>${days.map(d => `<td id="mt-${d}">${mDayTotal(d) || ''}</td>`).join('')}<td id="mt-all"><b>${mMonthTotal()}</b></td></tr>`;
+  const rows = monthPeople.map(p => `<tr><th class="sticky"><div class="mname"><b>${esc(p.name)}</b><button type="button" class="danger small" data-mdel="${p.id}">✕</button></div></th>${days.map(d => `<td><input data-mp="${p.id}" data-md="${d}" type="number" min="0" inputmode="numeric" value="${mGet(p.id, d) || ''}"></td>`).join('')}<td id="mp-${p.id}"><b>${mPersonTotal(p.id)}</b></td></tr>`).join('');
+  $('mGrid').innerHTML = `<table class="mtable"><thead>${head}</thead><tbody>${totRow}${rows}</tbody></table>`;
+}
+function mRefreshTotals() {
+  const n = mDaysIn(mKey);
+  for (let d = 1; d <= n; d++) { const el = $('mt-' + d); if (el) el.textContent = mDayTotal(d) || ''; }
+  monthPeople.forEach(p => { const el = $('mp-' + p.id); if (el) el.innerHTML = `<b>${mPersonTotal(p.id)}</b>`; });
+  const all = $('mt-all'); if (all) all.innerHTML = `<b>${mMonthTotal()}</b>`;
+  renderMDay(n);
+}
+$('mMonth').onchange = () => { if ($('mMonth').value) { mKey = $('mMonth').value; mDay = 1; renderMonth(); } };
+const shiftMonth = k => {
+  const [y, m] = mKey.split('-').map(Number);
+  const d = new Date(y, m - 1 + k, 1);
+  mKey = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; mDay = 1; renderMonth();
+};
+$('mPrev').onclick = () => shiftMonth(-1);
+$('mNext').onclick = () => shiftMonth(1);
+$('mAddPerson').onclick = () => {
+  const name = $('mName').value.trim();
+  if (!name) { appToast('اكتب اسم الشخص'); return; }
+  const nk = name.toLowerCase().replace(/\s+/g, ' ');
+  if (monthPeople.some(p => p.name.trim().toLowerCase().replace(/\s+/g, ' ') === nk)) { appToast('الاسم ده موجود قبل كده'); return; }
+  monthPeople.push({ id: newId('mp'), name });
+  $('mName').value = '';
+  saveMonth(); renderMonth();
+};
+$('mGrid').addEventListener('input', e => {
+  const pid = e.target.dataset.mp;
+  if (!pid) return;
+  mSet(pid, Number(e.target.dataset.md), Number(e.target.value) || 0);
+  saveMonth(); mRefreshTotals();
+  const lv = $('mLiveV'); if (lv) lv.textContent = e.target.value || '0';
+});
+// live bar: shows the cell being typed above the keyboard
+const liveBar = $('mLive');
+function showLive(inp) {
+  const p = monthPeople.find(x => x.id === inp.dataset.mp);
+  const tw = document.querySelector('.topwrap');
+  liveBar.style.top = (tw ? tw.getBoundingClientRect().height : 0) + 'px';
+  liveBar.innerHTML = `<span>${esc(p ? p.name : '')} · يوم ${esc(inp.dataset.md)}</span><span class="v" id="mLiveV"></span>`;
+  $('mLiveV').textContent = inp.value || '0';
+  liveBar.style.display = 'flex';
+}
+// keep the cell being typed in the visible part of the screen while the keyboard opens/closes
+function kbFollow() {
+  const a = document.activeElement;
+  if (!(a && a.dataset && a.dataset.mp) || $('pageMonth').style.display === 'none') return;
+  const vv = window.visualViewport;
+  const vh = vv ? vv.height : window.innerHeight;
+  const top = liveBar.style.display !== 'none' ? liveBar.getBoundingClientRect().bottom : 0;
+  const r = a.getBoundingClientRect();
+  const want = top + (vh - top) * 0.35;
+  if (r.bottom > vh - 20 || r.top < top + 10 || Math.abs(r.top - want) > 120) window.scrollBy({ top: r.top - want, behavior: 'smooth' });
+}
+if (window.visualViewport) window.visualViewport.addEventListener('resize', () => setTimeout(kbFollow, 50));
+$('mGrid').addEventListener('focusin', e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.mp) { showLive(t); setTimeout(kbFollow, 300); }
+});
+$('mGrid').addEventListener('focusout', () => setTimeout(() => {
+  const a = document.activeElement;
+  if (!(a && a.dataset && a.dataset.mp)) liveBar.style.display = 'none';
+}, 120));
+$('mGrid').addEventListener('click', async e => {
+  const id = e.target.closest('[data-mdel]') ? e.target.closest('[data-mdel]').dataset.mdel : null;
+  if (!id) return;
+  if (!(await appConfirm('تمسح الاسم ده ومصاريفه في كل الشهور؟'))) return;
+  monthPeople = monthPeople.filter(p => p.id !== id);
+  Object.values(monthData).forEach(mm => { delete mm[id]; });
+  saveMonth(); renderMonth();
+});
+
 $('cancelEdit').onclick = () => { resetForm(); showTab('list'); };
 
 $('bookingForm').addEventListener('submit', async e => {
@@ -1992,7 +2179,7 @@ function mergeBookings(list) {
 function buildBackup() {
   return {
     app: 'mokhtar', version: 2, savedAt: new Date().toISOString(),
-    bookings, people: people || loadPeople(), notes, gear, sups, supMoves, golfClients
+    bookings, people: people || loadPeople(), notes, gear, sups, supMoves, golfClients, monthPeople, monthData, monthIncome
   };
 }
 $('exportBtn').onclick = () => {
@@ -2019,6 +2206,10 @@ $('importFile').addEventListener('change', e => {
         if (Array.isArray(data.sups)) sups = data.sups;
         if (Array.isArray(data.supMoves)) supMoves = data.supMoves;
         if (Array.isArray(data.golfClients)) golfClients = data.golfClients;
+        if (Array.isArray(data.monthPeople)) monthPeople = data.monthPeople;
+        if (data.monthData && typeof data.monthData === 'object') monthData = data.monthData;
+        if (data.monthIncome && typeof data.monthIncome === 'object') monthIncome = data.monthIncome;
+        saveMonth();
         saveSupply();
       }
       persist();
@@ -2188,7 +2379,7 @@ $('gearReset').onclick = async () => {
     el = null;
   };
   document.addEventListener('touchstart', e => {
-    if (e.touches.length !== 1 || e.target.closest('input, textarea, select, [contenteditable]') || $('pageSupply').style.display !== 'none') { tracking = false; return; }
+    if (e.touches.length !== 1 || e.target.closest('input, textarea, select, [contenteditable]') || $('pageSupply').style.display !== 'none' || $('pageMonth').style.display !== 'none') { tracking = false; return; }
     sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now();
     tracking = true; horiz = null;
     el = document.querySelector('.view.on');
