@@ -285,6 +285,9 @@ main{padding:16px 14px 130px}
 .inc-row input{width:100%}
 .mline{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .mline b{font-size:16px}
+.mperson{cursor:pointer;text-decoration:underline dotted;text-underline-offset:4px}
+.person-modal{max-height:80vh;overflow:auto;text-align:right;max-width:380px}
+.person-modal .app-modal-msg{text-align:right}
 </style>
 </head>
 <body>
@@ -1895,6 +1898,35 @@ const mDiscTotal = d => mDiscs(d).reduce((s, x) => s + (Number(x.amount) || 0), 
 // expenses paid from ticket money (deducted from total) vs tips (not deducted)
 const mSumSrc = (d, src) => monthPeople.reduce((s, p) => s + (mSrc(p.id, d) === src ? mGet(p.id, d) : 0), 0);
 const mPendingSrc = new Set();
+function openPersonPanel(pid) {
+  const p = monthPeople.find(x => x.id === pid); if (!p) return;
+  const [y, m] = mKey.split('-').map(Number), n = mDaysIn(mKey);
+  let taken = 0, takenRows = '', discTot = 0, discRows = '';
+  for (let d = 1; d <= n; d++) {
+    const amt = mGet(pid, d);
+    if (amt > 0) {
+      taken += amt;
+      takenRows += `<div class="drow"><div class="d-main"><b>${d} ${MONTHS_AR[m - 1]}</b> <small>${mSrc(pid, d) === 'ticket' ? '🎫 تكت' : '💰 تبس'}</small></div><div class="d-side"><b>${money(amt)}</b></div></div>`;
+    }
+    mDiscs(d).filter(x => x.pid === pid || (!x.pid && x.name.trim() === p.name.trim())).forEach(x => {
+      const a = Number(x.amount) || 0;
+      discTot += a;
+      discRows += `<div class="drow"><div class="d-main"><b>${d} ${MONTHS_AR[m - 1]}</b> <small>${esc(x.name)}</small></div><div class="d-side"><b>${money(a)}</b></div></div>`;
+    });
+  }
+  const ov = document.createElement('div');
+  ov.className = 'app-modal-bg';
+  ov.innerHTML = `<div class="app-modal person-modal">
+    <div class="app-modal-msg"><b>${esc(p.name)}</b> · ${MONTHS_AR[m - 1]} ${y}</div>
+    <div class="mline"><b>الفلوس اللي خدها</b><b>${money(taken)}</b></div>
+    <div style="margin-bottom:12px">${takenRows || '<div class="empty-note">مفيش</div>'}</div>
+    <div class="mline"><b>الخصومات (معلومة)</b><b>${money(discTot)}</b></div>
+    <div style="margin-bottom:12px">${discRows || '<div class="empty-note">مفيش خصومات</div>'}</div>
+    <div class="app-modal-btns"><button type="button" data-v="0">إغلاق</button></div>
+  </div>`;
+  ov.addEventListener('click', e => { if (e.target === ov || e.target.closest('button')) ov.remove(); });
+  document.body.appendChild(ov);
+}
 function askSource(name, d) {
   return new Promise(resolve => {
     const ov = document.createElement('div');
@@ -1944,10 +1976,10 @@ function renderMDay(n) {
       <div class="mline"><span>إجمالي اليوم (كاش + انستا)</span><b id="mIncTot"></b></div>
       <div class="mline"><span>مصاريف من التكت (بتتخصم)</span><b id="mTickExp"></b></div>
       <div class="mline"><span>مصاريف من التبس (مش بتتخصم)</span><b id="mTipExp"></b></div>
-      <div class="mline"><span>الخصومات (بتتخصم)</span><b id="mDiscTot"></b></div>
-      <div class="mline"><span>الباقي</span><b id="mLeft"></b></div>
+      <div class="mline"><span>الخصومات (معلومة بس، مش بتتخصم)</span><b id="mDiscTot"></b></div>
+      <div class="mline"><span>الباقي (كاش + انستا − مصاريف التكت)</span><b id="mLeft"></b></div>
     </div>
-    <div style="margin-top:12px"><b>✂️ الخصومات</b></div>
+    <div style="margin-top:12px"><b>✂️ الخصومات</b> <small>(معلومة بس)</small></div>
     <datalist id="mdList">${monthPeople.map(p => `<option value="${esc(p.name)}">`).join('')}</datalist>
     <div class="inc-row" style="grid-template-columns:2fr 1fr">
       <input id="mdName" list="mdList" placeholder="اسم الشخص (ملاحظة)">
@@ -1967,7 +1999,8 @@ function renderMDay(n) {
     const name = $('mdName').value.trim(), amount = Number($('mdAmt').value) || 0;
     if (!name) { appToast('اكتب اسم الشخص'); return; }
     if (amount <= 0) { appToast('اكتب قيمة الخصم'); return; }
-    mSetDiscs(mDay, [...mDiscs(mDay), { id: newId('dc'), name, amount }]);
+    const pm = monthPeople.find(x => x.name.trim().toLowerCase() === name.toLowerCase());
+    mSetDiscs(mDay, [...mDiscs(mDay), { id: newId('dc'), name, amount, pid: pm ? pm.id : '' }]);
     renderMDay(mDaysIn(mKey)); mRefreshTotals();
   };
   $('mDayBox').onclick = async e => {
@@ -1982,7 +2015,7 @@ function renderMDay(n) {
 function mRefreshSummary() {
   if (!$('mIncTot')) return;
   const inc = mInc(mDay), tot = inc.cash + inc.insta;
-  const tk = mSumSrc(mDay, 'ticket'), tip = mDayTotal(mDay) - tk, disc = mDiscTotal(mDay), left = tot - tk - disc;
+  const tk = mSumSrc(mDay, 'ticket'), tip = mDayTotal(mDay) - tk, disc = mDiscTotal(mDay), left = tot - tk;
   $('mTickTot').textContent = money(mTicketTotal(mDay));
   $('mIncTot').textContent = money(tot);
   $('mTickExp').textContent = money(tk);
@@ -2000,7 +2033,7 @@ function renderMonth() {
   if (!monthPeople.length) { $('mGrid').innerHTML = '<div class="empty">ضيف الأسامي فوق، كل اسم مرة واحدة</div>'; return; }
   const head = `<tr><th class="sticky">الاسم</th>${days.map(d => `<th>${d}</th>`).join('')}<th>الإجمالي</th></tr>`;
   const totRow = `<tr class="mtot"><th class="sticky">مصاريف اليوم</th>${days.map(d => `<td id="mt-${d}">${mDayTotal(d) || ''}</td>`).join('')}<td id="mt-all"><b>${mMonthTotal()}</b></td></tr>`;
-  const rows = monthPeople.map(p => `<tr><th class="sticky"><div class="mname"><b>${esc(p.name)}</b><button type="button" class="danger small" data-mdel="${p.id}">✕</button></div></th>${days.map(d => `<td><input data-mp="${p.id}" data-md="${d}" type="number" min="0" inputmode="numeric" value="${mGet(p.id, d) || ''}"></td>`).join('')}<td id="mp-${p.id}"><b>${mPersonTotal(p.id)}</b></td></tr>`).join('');
+  const rows = monthPeople.map(p => `<tr><th class="sticky"><div class="mname"><b class="mperson" data-mperson="${p.id}">${esc(p.name)}</b><button type="button" class="danger small" data-mdel="${p.id}">✕</button></div></th>${days.map(d => `<td><input data-mp="${p.id}" data-md="${d}" type="number" min="0" inputmode="numeric" value="${mGet(p.id, d) || ''}"></td>`).join('')}<td id="mp-${p.id}"><b>${mPersonTotal(p.id)}</b></td></tr>`).join('');
   $('mGrid').innerHTML = `<table class="mtable"><thead>${head}</thead><tbody>${totRow}${rows}</tbody></table>`;
 }
 function mRefreshTotals() {
@@ -2081,6 +2114,8 @@ $('mGrid').addEventListener('focusout', () => setTimeout(() => {
   if (!(a && a.dataset && a.dataset.mp)) liveBar.style.display = 'none';
 }, 120));
 $('mGrid').addEventListener('click', async e => {
+  const pn = e.target.closest('[data-mperson]');
+  if (pn) { openPersonPanel(pn.dataset.mperson); return; }
   const id = e.target.closest('[data-mdel]') ? e.target.closest('[data-mdel]').dataset.mdel : null;
   if (!id) return;
   if (!(await appConfirm('تمسح الاسم ده ومصاريفه في كل الشهور؟'))) return;
