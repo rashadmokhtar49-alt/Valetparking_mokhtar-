@@ -296,6 +296,35 @@ main{padding:16px 14px 130px}
 .ms-p{color:#2fc25b!important;font-weight:bold}
 .mlegend{font-size:12px;color:var(--muted);margin:8px 2px}
 #mLiveSrc{padding:4px 10px;font-size:12px}
+/* ---- UH month page polish ---- */
+#pageMonth .panel{margin-bottom:10px;padding:14px}
+#pageMonth .sec-h b{font-size:16px}
+#pageMonth .inc-row{gap:10px;margin-top:8px}
+#pageMonth .inc-row label{font-size:13px;margin-bottom:6px;color:var(--muted)}
+#pageMonth input{font-size:16px;min-height:44px}
+#pageMonth .mh button{min-width:44px;height:40px}
+#pageMonth .mh input{height:40px}
+#pageMonth .mline{padding:9px 0}
+#pageMonth .mline span{font-size:13px;color:var(--muted)}
+#pageMonth .mline b{font-size:16px}
+#pageMonth .seg{display:none}
+.mtable.day{width:100%;table-layout:fixed}
+.mtable.day th,.mtable.day td{min-width:0}
+.mtable.month{width:max-content;table-layout:auto}
+.mtable.month th,.mtable.month td{min-width:46px}
+.mtable.month td input{min-width:44px}
+.mtable th,.mtable td{height:48px}
+.mtable th.sticky{width:118px;min-width:118px;max-width:118px}
+.mtable thead th{height:36px;font-size:13px}
+.mtable td input{height:48px;font-size:16px;font-weight:600;padding:0}
+.mtable tr.mtot th,.mtable tr.mtot td{font-size:13px}
+.mname{gap:4px}
+.mname b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:78px}
+.mname button{padding:2px 6px;font-size:12px;flex:none}
+.mlegend{font-size:12px;line-height:1.6;margin:10px 2px 8px;color:var(--muted)}
+#mLive{padding:12px 16px}
+/* hide the page tabs while typing in the month page so the whole screen is free */
+body.typing nav.pagebar{display:none}
 </style>
 </head>
 <body>
@@ -326,7 +355,7 @@ main{padding:16px 14px 130px}
   <nav class="pagebar">
     <button type="button" class="pg on" data-pg="ops">🏠 التشغيل</button>
     <button type="button" class="pg" data-pg="supply">🏪 الموردين</button>
-  <button type="button" class="pg" data-pg="month">📅 الشهر</button>
+  <button type="button" class="pg" data-pg="month">UH</button>
   </nav>
 </div>
 <div id="pageOps">
@@ -531,12 +560,9 @@ main{padding:16px 14px 130px}
       <input id="mName" placeholder="اسم الشخص (مرة واحدة)" style="flex:1">
       <button type="button" id="mAddPerson" style="flex:none">➕ ضيف</button>
     </div>
-    <div class="seg" id="mDefSrc"><span>المصروف الجديد من:</span>
-      <button type="button" data-src="ticket">🎫 تكت</button>
-      <button type="button" data-src="tip">💰 تبس</button>
-    </div>
+
   </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div class="mlegend" id="mGridLegend"></div><button type="button" class="ghost small" id="mViewBtn"></button></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="mlegend" id="mGridLegend" style="flex:1;min-width:180px"></div><button type="button" class="ghost small" id="mViewBtn" style="white-space:nowrap"></button></div>
   <div class="panel" style="padding:0;overflow:hidden"><div id="mGrid" style="overflow:auto"></div></div>
 </div>
 
@@ -1940,6 +1966,48 @@ function openPersonPanel(pid) {
   ov.addEventListener('click', e => { if (e.target === ov || e.target.closest('button')) ov.remove(); });
   document.body.appendChild(ov);
 }
+const mPendingSrc = new Set();
+function askSource(name, d) {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'app-modal-bg';
+    ov.innerHTML = `<div class="app-modal">
+      <div class="app-modal-msg">مصروف ${esc(name)} يوم ${d}: ده من فلوس التبس ولا من فلوس التكت؟</div>
+      <div class="app-modal-btns">
+        <button type="button" class="ghost" data-v="tip">💰 من التبس</button>
+        <button type="button" data-v="ticket">🎫 من التكت</button>
+      </div></div>`;
+    ov.addEventListener('click', e => {
+      const v = e.target.closest('button')?.dataset.v; // only the two buttons close it
+      if (v === undefined) return;
+      ov.remove(); resolve(v);
+    });
+    document.body.appendChild(ov);
+  });
+}
+function askTransfer(max) {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'app-modal-bg';
+    ov.innerHTML = `<div class="app-modal">
+      <div class="app-modal-msg">تحويل من الانستا للكاش<br><small>المتاح في الانستا: ${money(max)}</small></div>
+      <input id="trAmt" type="number" inputmode="numeric" min="1" value="${max}" style="width:100%;height:44px;font-size:16px;margin-bottom:14px;text-align:center">
+      <div class="app-modal-btns">
+        <button type="button" class="ghost" data-v="0">إلغاء</button>
+        <button type="button" data-v="1">تأكيد</button>
+      </div></div>`;
+    ov.addEventListener('click', e => {
+      const v = e.target.closest('button')?.dataset.v;
+      if (v === undefined) return;
+      const amt = Number(ov.querySelector('#trAmt').value) || 0;
+      if (v === '0') { ov.remove(); resolve(0); return; }
+      if (amt <= 0 || amt > max) { appToast('المبلغ لازم يكون بين 1 و ' + max); return; }
+      ov.remove(); resolve(amt);
+    });
+    document.body.appendChild(ov);
+    setTimeout(() => { const i = ov.querySelector('#trAmt'); if (i) { i.focus(); i.select(); } }, 50);
+  });
+}
 const mDayTotal = d => monthPeople.reduce((s, p) => s + mGet(p.id, d), 0);
 const mPersonTotal = pid => { let t = 0; const n = mDaysIn(mKey); for (let d = 1; d <= n; d++) t += mGet(pid, d); return t; };
 const mMonthTotal = () => monthPeople.reduce((s, p) => s + mPersonTotal(p.id), 0);
@@ -1959,7 +2027,7 @@ function renderMDay(n) {
     </div>
     <div class="inc-row">
       <div><label>💵 كاش</label><input id="mCash" type="number" inputmode="numeric" min="0" placeholder="0" value="${inc.cash || ''}"></div>
-      <div><label>📱 انستا</label><input id="mInsta" type="number" inputmode="numeric" min="0" placeholder="0" value="${inc.insta || ''}"></div>
+      <div><label>📱 انستا</label><input id="mInsta" type="number" inputmode="numeric" min="0" placeholder="0" value="${inc.insta || ''}"><button type="button" class="ghost small" id="mToCash" style="width:100%;margin-top:6px">⬅️ تحويل للكاش</button></div>
     </div>
     <div class="inc-row">
       <div><label>🎫 عدد التكت</label><input id="mTCount" type="number" inputmode="numeric" min="0" placeholder="0" value="${tk.count || ''}"></div>
@@ -1987,6 +2055,16 @@ function renderMDay(n) {
   $('mdNext').onclick = () => { mDay = mDay < n ? mDay + 1 : 1; renderMonth(); };
   $('mCash').oninput = e => { mSetInc(mDay, 'cash', Number(e.target.value) || 0); mRefreshSummary(); };
   $('mInsta').oninput = e => { mSetInc(mDay, 'insta', Number(e.target.value) || 0); mRefreshSummary(); };
+  $('mToCash').onclick = async () => {
+    const cur = mInc(mDay);
+    if (cur.insta <= 0) { appToast('مفيش فلوس انستا تتحول'); return; }
+    const amt = await askTransfer(cur.insta);
+    if (!amt) return;
+    const now = mInc(mDay), moved = Math.min(amt, now.insta);
+    mSetInc(mDay, 'insta', now.insta - moved);
+    mSetInc(mDay, 'cash', now.cash + moved);
+    renderMDay(mDaysIn(mKey)); mRefreshTotals();
+  };
   $('mTCount').oninput = e => { mSetTicket(mDay, 'count', Number(e.target.value) || 0); mRefreshSummary(); };
   $('mTPrice').oninput = e => { mSetTicket(mDay, 'price', Number(e.target.value) || 0); mRefreshSummary(); };
   $('mdAdd').onclick = () => {
@@ -2027,11 +2105,10 @@ function renderMonth() {
   $('mGridLegend').textContent = 'اضغط على الاسم لتفاصيله · Enter للي تحته · أحمر = تكت · أخضر = تبس';
   $('mViewBtn').textContent = mView === 'day' ? '📅 الشهر كله' : '📆 اليوم بس';
   if (!monthPeople.length) { $('mGrid').innerHTML = '<div class="empty">ضيف الأسامي فوق، كل اسم مرة واحدة</div>'; return; }
-  const head = `<tr><th class="sticky">الاسم</th>${days.map(d => `<th>${d}</th>`).join('')}<th>إجمالي الشهر</th></tr>`;
+  const head = `<tr><th class="sticky">الاسم</th>${days.map(d => `<th>${d}</th>`).join('')}<th>الشهر</th></tr>`;
   const totRow = `<tr class="mtot"><th class="sticky">مصاريف اليوم</th>${days.map(d => `<td id="mt-${d}">${mDayTotal(d) || ''}</td>`).join('')}<td id="mt-all"><b>${mMonthTotal()}</b></td></tr>`;
   const rows = monthPeople.map(p => `<tr><th class="sticky"><div class="mname"><b class="mperson" data-mperson="${p.id}">${esc(p.name)}</b><button type="button" class="danger small" data-mdel="${p.id}">✕</button></div></th>${days.map(d => `<td><input class="${mCls(p.id, d)}" data-mp="${p.id}" data-md="${d}" type="number" min="0" inputmode="numeric" value="${mGet(p.id, d) || ''}"></td>`).join('')}<td id="mp-${p.id}"><b>${mPersonTotal(p.id)}</b></td></tr>`).join('');
-  paintDef();
-  $('mGrid').innerHTML = `<table class="mtable"><thead>${head}</thead><tbody>${totRow}${rows}</tbody></table>`;
+  $('mGrid').innerHTML = `<table class="mtable ${mView}"><thead>${head}</thead><tbody>${totRow}${rows}</tbody></table>`;
 }
 function mRefreshTotals() {
   const n = mDaysIn(mKey);
@@ -2067,41 +2144,57 @@ $('mGrid').addEventListener('input', e => {
   saveMonth(); mRefreshTotals();
   const lv = $('mLiveV'); if (lv) lv.textContent = e.target.value || '0';
 });
-$('mGrid').addEventListener('change', e => {
+$('mGrid').addEventListener('change', async e => {
   const pid = e.target.dataset.mp; if (!pid) return;
   const d = Number(e.target.dataset.md);
-  if (mGet(pid, d) <= 0) mSetSrc(pid, d, '');
-  else if (!mSrc(pid, d)) mSetSrc(pid, d, mDef());
-  saveMonth(); e.target.className = mCls(pid, d); mRefreshTotals();
+  if (mGet(pid, d) <= 0) { mSetSrc(pid, d, ''); saveMonth(); e.target.className = ''; mRefreshTotals(); return; }
+  const key = pid + '|' + d;
+  if (mPendingSrc.has(key)) return;
+  mPendingSrc.add(key);
+  try {
+    const p = monthPeople.find(x => x.id === pid);
+    const v = await askSource(p ? p.name : '', d);
+    if (v) mSetSrc(pid, d, v);
+    else {
+      const prev = Number(e.target.dataset.prev) || 0;
+      mSet(pid, d, prev); e.target.value = prev || '';
+      if (!prev) mSetSrc(pid, d, '');
+    }
+    saveMonth(); e.target.className = mCls(pid, d); mRefreshTotals();
+  } finally { mPendingSrc.delete(key); }
 });
 // live bar: shows the cell being typed above the keyboard
 const liveBar = $('mLive');
 let liveInp = null;
-const mDef = () => (monthExtra.defSrc === 'tip' ? 'tip' : 'ticket');
 const mCls = (pid, d) => { const x = mSrc(pid, d); return x === 'ticket' ? 'ms-t' : x === 'tip' ? 'ms-p' : ''; };
 const srcLabel = x => (x === 'tip' ? '💰 تبس' : '🎫 تكت');
-function paintDef() {
-  document.querySelectorAll('#mDefSrc [data-src]').forEach(b => b.classList.toggle('on', b.dataset.src === mDef()));
-}
 function paintLiveSrc() {
   const b = $('mLiveSrc'); if (!b || !liveInp) return;
   const pid = liveInp.dataset.mp, d = Number(liveInp.dataset.md);
   b.textContent = 'غيّر إلى ' + (mSrc(pid, d) === 'tip' ? '🎫 تكت' : '💰 تبس');
   b.dataset.pid = pid; b.dataset.md = d;
 }
-document.querySelectorAll('#mDefSrc [data-src]').forEach(b => b.onclick = () => {
-  monthExtra.defSrc = b.dataset.src; saveMonth(); paintDef();
-});
 $('mLive').addEventListener('click', e => {
   if (!e.target.closest('#mLiveSrc') || !liveInp) return;
   const pid = liveInp.dataset.mp, d = Number(liveInp.dataset.md);
   if (mGet(pid, d) > 0) mSetSrc(pid, d, mSrc(pid, d) === 'tip' ? 'ticket' : 'tip');
   saveMonth(); liveInp.className = mCls(pid, d); paintLiveSrc(); mRefreshTotals();
 });
-function showLive(inp) {
-  const p = monthPeople.find(x => x.id === inp.dataset.mp);
+function placeLive() {
   const tw = document.querySelector('.topwrap');
   liveBar.style.top = (tw ? tw.getBoundingClientRect().height : 0) + 'px';
+}
+function syncTyping() {
+  const a = document.activeElement;
+  const on = !!(a && a.tagName === 'INPUT' && $('pageMonth').contains(a) && $('pageMonth').style.display !== 'none');
+  document.body.classList.toggle('typing', on);
+  placeLive();
+}
+document.addEventListener('focusin', syncTyping);
+document.addEventListener('focusout', () => setTimeout(syncTyping, 120));
+function showLive(inp) {
+  const p = monthPeople.find(x => x.id === inp.dataset.mp);
+  placeLive();
   liveBar.innerHTML = `<span>${esc(p ? p.name : '')} · يوم ${esc(inp.dataset.md)}</span><span class="v" id="mLiveV"></span><button type="button" class="ghost" id="mLiveSrc"></button>`;
   $('mLiveV').textContent = inp.value || '0';
   liveInp = inp; paintLiveSrc();
@@ -2123,7 +2216,7 @@ $('mGrid').addEventListener('focusin', e => {
   const t = e.target;
   if (t.dataset && t.dataset.mp) { showLive(t); setTimeout(() => { kbFollow(); }, 300); }
 });
-$('mGrid').addEventListener('focus', e => { if (e.target.dataset && e.target.dataset.mp) e.target.select(); }, true);
+$('mGrid').addEventListener('focus', e => { if (e.target.dataset && e.target.dataset.mp) { e.target.dataset.prev = e.target.value; e.target.select(); } }, true);
 $('mGrid').addEventListener('keydown', e => {
   if (e.key !== 'Enter' || !(e.target.dataset && e.target.dataset.mp)) return;
   e.preventDefault();
