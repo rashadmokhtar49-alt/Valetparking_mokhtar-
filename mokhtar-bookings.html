@@ -288,6 +288,14 @@ main{padding:16px 14px 130px}
 .mperson{cursor:pointer;text-decoration:underline dotted;text-underline-offset:4px}
 .person-modal{max-height:80vh;overflow:auto;text-align:right;max-width:380px}
 .person-modal .app-modal-msg{text-align:right}
+.seg{display:flex;gap:6px;margin-top:10px;align-items:center}
+.seg span{font-size:13px;color:var(--muted);margin-left:4px}
+.seg button{flex:1}
+.seg button:not(.on){background:var(--chip);color:var(--text);border:1px solid var(--line)}
+.ms-t{color:#ff4d4f!important;font-weight:bold}
+.ms-p{color:#2fc25b!important;font-weight:bold}
+.mlegend{font-size:12px;color:var(--muted);margin:8px 2px}
+#mLiveSrc{padding:4px 10px;font-size:12px}
 </style>
 </head>
 <body>
@@ -523,7 +531,12 @@ main{padding:16px 14px 130px}
       <input id="mName" placeholder="اسم الشخص (مرة واحدة)" style="flex:1">
       <button type="button" id="mAddPerson" style="flex:none">➕ ضيف</button>
     </div>
+    <div class="seg" id="mDefSrc"><span>المصروف الجديد من:</span>
+      <button type="button" data-src="ticket">🎫 تكت</button>
+      <button type="button" data-src="tip">💰 تبس</button>
+    </div>
   </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div class="mlegend" id="mGridLegend"></div><button type="button" class="ghost small" id="mViewBtn"></button></div>
   <div class="panel" style="padding:0;overflow:hidden"><div id="mGrid" style="overflow:auto"></div></div>
 </div>
 
@@ -1858,6 +1871,7 @@ let monthExtra = (() => { const d = { src: {}, ticket: {}, disc: {} }; try { con
 let monthIncome = (() => { try { const v = JSON.parse(localStorage.getItem(MI_KEY) || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } })();
 let mKey = (() => { const n = new Date(); return `${n.getFullYear()}-${pad(n.getMonth() + 1)}`; })();
 let mDay = new Date().getDate();
+let mView = 'day'; // 'day' = one day column (default), 'month' = all days
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 function saveMonth() {
@@ -1897,7 +1911,6 @@ function mSetDiscs(d, arr) {
 const mDiscTotal = d => mDiscs(d).reduce((s, x) => s + (Number(x.amount) || 0), 0);
 // expenses paid from ticket money (deducted from total) vs tips (not deducted)
 const mSumSrc = (d, src) => monthPeople.reduce((s, p) => s + (mSrc(p.id, d) === src ? mGet(p.id, d) : 0), 0);
-const mPendingSrc = new Set();
 function openPersonPanel(pid) {
   const p = monthPeople.find(x => x.id === pid); if (!p) return;
   const [y, m] = mKey.split('-').map(Number), n = mDaysIn(mKey);
@@ -1926,25 +1939,6 @@ function openPersonPanel(pid) {
   </div>`;
   ov.addEventListener('click', e => { if (e.target === ov || e.target.closest('button')) ov.remove(); });
   document.body.appendChild(ov);
-}
-function askSource(name, d) {
-  return new Promise(resolve => {
-    const ov = document.createElement('div');
-    ov.className = 'app-modal-bg';
-    ov.innerHTML = `<div class="app-modal">
-      <div class="app-modal-msg">مصروف ${esc(name)} يوم ${d}: ده من فلوس التبس ولا من فلوس التكت؟</div>
-      <div class="app-modal-btns">
-        <button type="button" class="ghost" data-v="tip">💰 من التبس</button>
-        <button type="button" data-v="ticket">🎫 من التكت</button>
-      </div></div>`;
-    ov.addEventListener('click', e => {
-      if (e.target === ov) { ov.remove(); resolve(null); return; }
-      const v = e.target.closest('button')?.dataset.v;
-      if (v === undefined) return;
-      ov.remove(); resolve(v);
-    });
-    document.body.appendChild(ov);
-  });
 }
 const mDayTotal = d => monthPeople.reduce((s, p) => s + mGet(p.id, d), 0);
 const mPersonTotal = pid => { let t = 0; const n = mDaysIn(mKey); for (let d = 1; d <= n; d++) t += mGet(pid, d); return t; };
@@ -2029,11 +2023,14 @@ function renderMonth() {
   const n = mDaysIn(mKey);
   if (mDay > n) mDay = n;
   renderMDay(n);
-  const days = Array.from({ length: n }, (_, i) => i + 1);
+  const days = mView === 'day' ? [mDay] : Array.from({ length: n }, (_, i) => i + 1);
+  $('mGridLegend').textContent = 'اضغط على الاسم لتفاصيله · Enter للي تحته · أحمر = تكت · أخضر = تبس';
+  $('mViewBtn').textContent = mView === 'day' ? '📅 الشهر كله' : '📆 اليوم بس';
   if (!monthPeople.length) { $('mGrid').innerHTML = '<div class="empty">ضيف الأسامي فوق، كل اسم مرة واحدة</div>'; return; }
-  const head = `<tr><th class="sticky">الاسم</th>${days.map(d => `<th>${d}</th>`).join('')}<th>الإجمالي</th></tr>`;
+  const head = `<tr><th class="sticky">الاسم</th>${days.map(d => `<th>${d}</th>`).join('')}<th>إجمالي الشهر</th></tr>`;
   const totRow = `<tr class="mtot"><th class="sticky">مصاريف اليوم</th>${days.map(d => `<td id="mt-${d}">${mDayTotal(d) || ''}</td>`).join('')}<td id="mt-all"><b>${mMonthTotal()}</b></td></tr>`;
-  const rows = monthPeople.map(p => `<tr><th class="sticky"><div class="mname"><b class="mperson" data-mperson="${p.id}">${esc(p.name)}</b><button type="button" class="danger small" data-mdel="${p.id}">✕</button></div></th>${days.map(d => `<td><input data-mp="${p.id}" data-md="${d}" type="number" min="0" inputmode="numeric" value="${mGet(p.id, d) || ''}"></td>`).join('')}<td id="mp-${p.id}"><b>${mPersonTotal(p.id)}</b></td></tr>`).join('');
+  const rows = monthPeople.map(p => `<tr><th class="sticky"><div class="mname"><b class="mperson" data-mperson="${p.id}">${esc(p.name)}</b><button type="button" class="danger small" data-mdel="${p.id}">✕</button></div></th>${days.map(d => `<td><input class="${mCls(p.id, d)}" data-mp="${p.id}" data-md="${d}" type="number" min="0" inputmode="numeric" value="${mGet(p.id, d) || ''}"></td>`).join('')}<td id="mp-${p.id}"><b>${mPersonTotal(p.id)}</b></td></tr>`).join('');
+  paintDef();
   $('mGrid').innerHTML = `<table class="mtable"><thead>${head}</thead><tbody>${totRow}${rows}</tbody></table>`;
 }
 function mRefreshTotals() {
@@ -2043,11 +2040,14 @@ function mRefreshTotals() {
   const all = $('mt-all'); if (all) all.innerHTML = `<b>${mMonthTotal()}</b>`;
   renderMDay(n);
 }
-$('mMonth').onchange = () => { if ($('mMonth').value) { mKey = $('mMonth').value; mDay = 1; renderMonth(); } };
+$('mViewBtn').onclick = () => { mView = mView === 'day' ? 'month' : 'day'; renderMonth(); };
+// opening a month: today if it's the current month, otherwise day 1
+const mDefaultDay = () => { const n = new Date(); const tk = `${n.getFullYear()}-${pad(n.getMonth() + 1)}`; return mKey === tk ? n.getDate() : 1; };
+$('mMonth').onchange = () => { if ($('mMonth').value) { mKey = $('mMonth').value; mDay = mDefaultDay(); renderMonth(); } };
 const shiftMonth = k => {
   const [y, m] = mKey.split('-').map(Number);
   const d = new Date(y, m - 1 + k, 1);
-  mKey = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; mDay = 1; renderMonth();
+  mKey = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; mDay = mDefaultDay(); renderMonth();
 };
 $('mPrev').onclick = () => shiftMonth(-1);
 $('mNext').onclick = () => shiftMonth(1);
@@ -2067,30 +2067,44 @@ $('mGrid').addEventListener('input', e => {
   saveMonth(); mRefreshTotals();
   const lv = $('mLiveV'); if (lv) lv.textContent = e.target.value || '0';
 });
-$('mGrid').addEventListener('change', async e => {
+$('mGrid').addEventListener('change', e => {
   const pid = e.target.dataset.mp; if (!pid) return;
   const d = Number(e.target.dataset.md);
-  if (mGet(pid, d) <= 0) { mSetSrc(pid, d, ''); saveMonth(); mRefreshTotals(); return; }
-  if (mSrc(pid, d)) { mRefreshTotals(); return; }
-  const key = pid + '|' + d;
-  if (mPendingSrc.has(key)) return;
-  mPendingSrc.add(key);
-  try {
-    const p = monthPeople.find(x => x.id === pid);
-    const v = await askSource(p ? p.name : '', d);
-    if (!v) { mSet(pid, d, 0); e.target.value = ''; }
-    else mSetSrc(pid, d, v);
-    saveMonth(); mRefreshTotals();
-  } finally { mPendingSrc.delete(key); }
+  if (mGet(pid, d) <= 0) mSetSrc(pid, d, '');
+  else if (!mSrc(pid, d)) mSetSrc(pid, d, mDef());
+  saveMonth(); e.target.className = mCls(pid, d); mRefreshTotals();
 });
 // live bar: shows the cell being typed above the keyboard
 const liveBar = $('mLive');
+let liveInp = null;
+const mDef = () => (monthExtra.defSrc === 'tip' ? 'tip' : 'ticket');
+const mCls = (pid, d) => { const x = mSrc(pid, d); return x === 'ticket' ? 'ms-t' : x === 'tip' ? 'ms-p' : ''; };
+const srcLabel = x => (x === 'tip' ? '💰 تبس' : '🎫 تكت');
+function paintDef() {
+  document.querySelectorAll('#mDefSrc [data-src]').forEach(b => b.classList.toggle('on', b.dataset.src === mDef()));
+}
+function paintLiveSrc() {
+  const b = $('mLiveSrc'); if (!b || !liveInp) return;
+  const pid = liveInp.dataset.mp, d = Number(liveInp.dataset.md);
+  b.textContent = 'غيّر إلى ' + (mSrc(pid, d) === 'tip' ? '🎫 تكت' : '💰 تبس');
+  b.dataset.pid = pid; b.dataset.md = d;
+}
+document.querySelectorAll('#mDefSrc [data-src]').forEach(b => b.onclick = () => {
+  monthExtra.defSrc = b.dataset.src; saveMonth(); paintDef();
+});
+$('mLive').addEventListener('click', e => {
+  if (!e.target.closest('#mLiveSrc') || !liveInp) return;
+  const pid = liveInp.dataset.mp, d = Number(liveInp.dataset.md);
+  if (mGet(pid, d) > 0) mSetSrc(pid, d, mSrc(pid, d) === 'tip' ? 'ticket' : 'tip');
+  saveMonth(); liveInp.className = mCls(pid, d); paintLiveSrc(); mRefreshTotals();
+});
 function showLive(inp) {
   const p = monthPeople.find(x => x.id === inp.dataset.mp);
   const tw = document.querySelector('.topwrap');
   liveBar.style.top = (tw ? tw.getBoundingClientRect().height : 0) + 'px';
-  liveBar.innerHTML = `<span>${esc(p ? p.name : '')} · يوم ${esc(inp.dataset.md)}</span><span class="v" id="mLiveV"></span>`;
+  liveBar.innerHTML = `<span>${esc(p ? p.name : '')} · يوم ${esc(inp.dataset.md)}</span><span class="v" id="mLiveV"></span><button type="button" class="ghost" id="mLiveSrc"></button>`;
   $('mLiveV').textContent = inp.value || '0';
+  liveInp = inp; paintLiveSrc();
   liveBar.style.display = 'flex';
 }
 // keep the cell being typed in the visible part of the screen while the keyboard opens/closes
@@ -2107,7 +2121,26 @@ function kbFollow() {
 if (window.visualViewport) window.visualViewport.addEventListener('resize', () => setTimeout(kbFollow, 50));
 $('mGrid').addEventListener('focusin', e => {
   const t = e.target;
-  if (t.dataset && t.dataset.mp) { showLive(t); setTimeout(kbFollow, 300); }
+  if (t.dataset && t.dataset.mp) { showLive(t); setTimeout(() => { kbFollow(); }, 300); }
+});
+$('mGrid').addEventListener('focus', e => { if (e.target.dataset && e.target.dataset.mp) e.target.select(); }, true);
+$('mGrid').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !(e.target.dataset && e.target.dataset.mp)) return;
+  e.preventDefault();
+  const n = mDaysIn(mKey);
+  let r = monthPeople.findIndex(x => x.id === e.target.dataset.mp), d = Number(e.target.dataset.md);
+  r += 1;
+  if (r >= monthPeople.length) {
+    if (mView === 'day') {
+      mDay = mDay >= n ? 1 : mDay + 1; renderMonth();
+      const f = document.querySelector(`#mGrid input[data-mp="${monthPeople[0].id}"][data-md="${mDay}"]`);
+      if (f) f.focus();
+      return;
+    }
+    r = 0; d = d >= n ? 1 : d + 1;
+  }
+  const next = document.querySelector(`#mGrid input[data-mp="${monthPeople[r].id}"][data-md="${d}"]`);
+  if (next) next.focus();
 });
 $('mGrid').addEventListener('focusout', () => setTimeout(() => {
   const a = document.activeElement;
