@@ -1850,13 +1850,15 @@ const MP_KEY = 'mokhtar_month_people', MD_KEY = 'mokhtar_month_data';
 let monthPeople = loadList(MP_KEY);
 let monthData = (() => { try { const v = JSON.parse(localStorage.getItem(MD_KEY) || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } })();
 const MI_KEY = 'mokhtar_month_income';
+const MX_KEY = 'mokhtar_month_extra';
+let monthExtra = (() => { const d = { src: {}, ticket: {}, disc: {} }; try { const v = JSON.parse(localStorage.getItem(MX_KEY) || '{}'); return v && typeof v === 'object' ? Object.assign(d, v) : d; } catch (e) { return d; } })();
 let monthIncome = (() => { try { const v = JSON.parse(localStorage.getItem(MI_KEY) || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } })();
 let mKey = (() => { const n = new Date(); return `${n.getFullYear()}-${pad(n.getMonth() + 1)}`; })();
 let mDay = new Date().getDate();
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 function saveMonth() {
-  try { localStorage.setItem(MP_KEY, JSON.stringify(monthPeople)); localStorage.setItem(MD_KEY, JSON.stringify(monthData)); localStorage.setItem(MI_KEY, JSON.stringify(monthIncome)); } catch (e) {}
+  try { localStorage.setItem(MP_KEY, JSON.stringify(monthPeople)); localStorage.setItem(MD_KEY, JSON.stringify(monthData)); localStorage.setItem(MI_KEY, JSON.stringify(monthIncome)); localStorage.setItem(MX_KEY, JSON.stringify(monthExtra)); } catch (e) {}
 }
 const mDaysIn = key => { const [y, m] = key.split('-').map(Number); return new Date(y, m, 0).getDate(); };
 const mGet = (pid, d) => Number(((monthData[mKey] || {})[pid] || {})[d]) || 0;
@@ -1871,6 +1873,47 @@ function mSetInc(d, f, v) {
   monthIncome[mKey][d] = Object.assign({}, monthIncome[mKey][d] || {}, { [f]: v });
   saveMonth();
 }
+const mSrc = (pid, d) => ((((monthExtra.src || {})[mKey] || {})[pid]) || {})[d] || '';
+function mSetSrc(pid, d, v) {
+  const s = monthExtra.src; s[mKey] = s[mKey] || {}; s[mKey][pid] = s[mKey][pid] || {};
+  if (v) s[mKey][pid][d] = v; else delete s[mKey][pid][d];
+}
+const mTicket = d => { const x = (((monthExtra.ticket || {})[mKey]) || {})[d] || {}; return { count: Number(x.count) || 0, price: Number(x.price) || 0 }; };
+function mSetTicket(d, f, v) {
+  const t = monthExtra.ticket; t[mKey] = t[mKey] || {};
+  t[mKey][d] = Object.assign({}, t[mKey][d] || {}, { [f]: v });
+  saveMonth();
+}
+const mTicketTotal = d => { const t = mTicket(d); return t.count * t.price; };
+const mDiscs = d => (((monthExtra.disc || {})[mKey]) || {})[d] || [];
+function mSetDiscs(d, arr) {
+  const x = monthExtra.disc; x[mKey] = x[mKey] || {};
+  if (arr.length) x[mKey][d] = arr; else delete x[mKey][d];
+  saveMonth();
+}
+const mDiscTotal = d => mDiscs(d).reduce((s, x) => s + (Number(x.amount) || 0), 0);
+// expenses paid from ticket money (deducted from total) vs tips (not deducted)
+const mSumSrc = (d, src) => monthPeople.reduce((s, p) => s + (mSrc(p.id, d) === src ? mGet(p.id, d) : 0), 0);
+const mPendingSrc = new Set();
+function askSource(name, d) {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'app-modal-bg';
+    ov.innerHTML = `<div class="app-modal">
+      <div class="app-modal-msg">مصروف ${esc(name)} يوم ${d}: ده من فلوس التبس ولا من فلوس التكت؟</div>
+      <div class="app-modal-btns">
+        <button type="button" class="ghost" data-v="tip">💰 من التبس</button>
+        <button type="button" data-v="ticket">🎫 من التكت</button>
+      </div></div>`;
+    ov.addEventListener('click', e => {
+      if (e.target === ov) { ov.remove(); resolve(null); return; }
+      const v = e.target.closest('button')?.dataset.v;
+      if (v === undefined) return;
+      ov.remove(); resolve(v);
+    });
+    document.body.appendChild(ov);
+  });
+}
 const mDayTotal = d => monthPeople.reduce((s, p) => s + mGet(p.id, d), 0);
 const mPersonTotal = pid => { let t = 0; const n = mDaysIn(mKey); for (let d = 1; d <= n; d++) t += mGet(pid, d); return t; };
 const mMonthTotal = () => monthPeople.reduce((s, p) => s + mPersonTotal(p.id), 0);
@@ -1879,8 +1922,10 @@ function renderMDay(n) {
   const [y, m] = mKey.split('-').map(Number);
   const dt = new Date(y, m - 1, mDay);
   const rows = monthPeople.filter(p => mGet(p.id, mDay) > 0)
-    .map(p => `<div class="drow"><div class="d-main"><b>${esc(p.name)}</b></div><div class="d-side"><b>${money(mGet(p.id, mDay))}</b></div></div>`).join('');
-  const inc = mInc(mDay);
+    .map(p => `<div class="drow"><div class="d-main"><b>${esc(p.name)}</b> <small>${mSrc(p.id, mDay) === 'ticket' ? '🎫 تكت' : '💰 تبس'}</small></div><div class="d-side"><b>${money(mGet(p.id, mDay))}</b></div></div>`).join('');
+  const discs = mDiscs(mDay);
+  const discRows = discs.map(x => `<div class="drow"><div class="d-main"><b>${esc(x.name)}</b></div><div class="d-side"><b>${money(Number(x.amount) || 0)}</b> <button type="button" class="danger small" data-dcdel="${x.id}">✕</button></div></div>`).join('');
+  const inc = mInc(mDay), tk = mTicket(mDay);
   $('mDayBox').innerHTML = `<div class="sec-h">
       <button type="button" class="ghost small" id="mdPrev">›</button>
       <b>${DAYS_AR[dt.getDay()]} ${mDay} ${MONTHS_AR[m - 1]}</b>
@@ -1890,23 +1935,59 @@ function renderMDay(n) {
       <div><label>💵 كاش</label><input id="mCash" type="number" inputmode="numeric" min="0" placeholder="0" value="${inc.cash || ''}"></div>
       <div><label>📱 انستا</label><input id="mInsta" type="number" inputmode="numeric" min="0" placeholder="0" value="${inc.insta || ''}"></div>
     </div>
-    <div style="margin-top:10px">
-      <div class="mline"><span>إجمالي اليوم (كاش + انستا)</span><b id="mIncTot"></b></div>
-      <div class="mline"><span>المصاريف (من الجدول)</span><b id="mExpTot"></b></div>
-      <div class="mline"><span>الباقي بعد المصاريف</span><b id="mLeft"></b></div>
+    <div class="inc-row">
+      <div><label>🎫 عدد التكت</label><input id="mTCount" type="number" inputmode="numeric" min="0" placeholder="0" value="${tk.count || ''}"></div>
+      <div><label>سعر التكت</label><input id="mTPrice" type="number" inputmode="numeric" min="0" placeholder="0" value="${tk.price || ''}"></div>
     </div>
-    <div style="margin-top:8px">${rows || '<div class="empty-note">مفيش مصاريف في اليوم ده</div>'}</div>`;
+    <div style="margin-top:10px">
+      <div class="mline"><span>إجمالي التكت اليومي (عدد × سعر)</span><b id="mTickTot"></b></div>
+      <div class="mline"><span>إجمالي اليوم (كاش + انستا)</span><b id="mIncTot"></b></div>
+      <div class="mline"><span>مصاريف من التكت (بتتخصم)</span><b id="mTickExp"></b></div>
+      <div class="mline"><span>مصاريف من التبس (مش بتتخصم)</span><b id="mTipExp"></b></div>
+      <div class="mline"><span>الخصومات (بتتخصم)</span><b id="mDiscTot"></b></div>
+      <div class="mline"><span>الباقي</span><b id="mLeft"></b></div>
+    </div>
+    <div style="margin-top:12px"><b>✂️ الخصومات</b></div>
+    <datalist id="mdList">${monthPeople.map(p => `<option value="${esc(p.name)}">`).join('')}</datalist>
+    <div class="inc-row" style="grid-template-columns:2fr 1fr">
+      <input id="mdName" list="mdList" placeholder="اسم الشخص (ملاحظة)">
+      <input id="mdAmt" type="number" inputmode="numeric" min="0" placeholder="الخصم">
+    </div>
+    <button type="button" id="mdAdd" style="margin-top:8px;width:100%">➕ ضيف خصم</button>
+    <div style="margin-top:6px">${discRows || ''}</div>
+    <div style="margin-top:12px"><b>المصاريف</b></div>
+    <div style="margin-top:6px">${rows || '<div class="empty-note">مفيش مصاريف في اليوم ده</div>'}</div>`;
   $('mdPrev').onclick = () => { mDay = mDay > 1 ? mDay - 1 : n; renderMonth(); };
   $('mdNext').onclick = () => { mDay = mDay < n ? mDay + 1 : 1; renderMonth(); };
   $('mCash').oninput = e => { mSetInc(mDay, 'cash', Number(e.target.value) || 0); mRefreshSummary(); };
   $('mInsta').oninput = e => { mSetInc(mDay, 'insta', Number(e.target.value) || 0); mRefreshSummary(); };
+  $('mTCount').oninput = e => { mSetTicket(mDay, 'count', Number(e.target.value) || 0); mRefreshSummary(); };
+  $('mTPrice').oninput = e => { mSetTicket(mDay, 'price', Number(e.target.value) || 0); mRefreshSummary(); };
+  $('mdAdd').onclick = () => {
+    const name = $('mdName').value.trim(), amount = Number($('mdAmt').value) || 0;
+    if (!name) { appToast('اكتب اسم الشخص'); return; }
+    if (amount <= 0) { appToast('اكتب قيمة الخصم'); return; }
+    mSetDiscs(mDay, [...mDiscs(mDay), { id: newId('dc'), name, amount }]);
+    renderMDay(mDaysIn(mKey)); mRefreshTotals();
+  };
+  $('mDayBox').onclick = async e => {
+    const id = e.target.closest('[data-dcdel]') ? e.target.closest('[data-dcdel]').dataset.dcdel : null;
+    if (!id) return;
+    if (!(await appConfirm('تمسح الخصم ده؟'))) return;
+    mSetDiscs(mDay, mDiscs(mDay).filter(x => x.id !== id));
+    renderMDay(mDaysIn(mKey)); mRefreshTotals();
+  };
   mRefreshSummary();
 }
 function mRefreshSummary() {
   if (!$('mIncTot')) return;
-  const inc = mInc(mDay), tot = inc.cash + inc.insta, exp = mDayTotal(mDay), left = tot - exp;
+  const inc = mInc(mDay), tot = inc.cash + inc.insta;
+  const tk = mSumSrc(mDay, 'ticket'), tip = mDayTotal(mDay) - tk, disc = mDiscTotal(mDay), left = tot - tk - disc;
+  $('mTickTot').textContent = money(mTicketTotal(mDay));
   $('mIncTot').textContent = money(tot);
-  $('mExpTot').textContent = money(exp);
+  $('mTickExp').textContent = money(tk);
+  $('mTipExp').textContent = money(tip);
+  $('mDiscTot').textContent = money(disc);
   $('mLeft').textContent = money(left);
   $('mLeft').style.color = left < 0 ? 'var(--warn-text)' : 'var(--ok)';
 }
@@ -1953,6 +2034,22 @@ $('mGrid').addEventListener('input', e => {
   saveMonth(); mRefreshTotals();
   const lv = $('mLiveV'); if (lv) lv.textContent = e.target.value || '0';
 });
+$('mGrid').addEventListener('change', async e => {
+  const pid = e.target.dataset.mp; if (!pid) return;
+  const d = Number(e.target.dataset.md);
+  if (mGet(pid, d) <= 0) { mSetSrc(pid, d, ''); saveMonth(); mRefreshTotals(); return; }
+  if (mSrc(pid, d)) { mRefreshTotals(); return; }
+  const key = pid + '|' + d;
+  if (mPendingSrc.has(key)) return;
+  mPendingSrc.add(key);
+  try {
+    const p = monthPeople.find(x => x.id === pid);
+    const v = await askSource(p ? p.name : '', d);
+    if (!v) { mSet(pid, d, 0); e.target.value = ''; }
+    else mSetSrc(pid, d, v);
+    saveMonth(); mRefreshTotals();
+  } finally { mPendingSrc.delete(key); }
+});
 // live bar: shows the cell being typed above the keyboard
 const liveBar = $('mLive');
 function showLive(inp) {
@@ -1989,6 +2086,7 @@ $('mGrid').addEventListener('click', async e => {
   if (!(await appConfirm('تمسح الاسم ده ومصاريفه في كل الشهور؟'))) return;
   monthPeople = monthPeople.filter(p => p.id !== id);
   Object.values(monthData).forEach(mm => { delete mm[id]; });
+  Object.values(monthExtra.src || {}).forEach(mm => { delete mm[id]; });
   saveMonth(); renderMonth();
 });
 
@@ -2179,7 +2277,7 @@ function mergeBookings(list) {
 function buildBackup() {
   return {
     app: 'mokhtar', version: 2, savedAt: new Date().toISOString(),
-    bookings, people: people || loadPeople(), notes, gear, sups, supMoves, golfClients, monthPeople, monthData, monthIncome
+    bookings, people: people || loadPeople(), notes, gear, sups, supMoves, golfClients, monthPeople, monthData, monthIncome, monthExtra
   };
 }
 $('exportBtn').onclick = () => {
@@ -2209,6 +2307,7 @@ $('importFile').addEventListener('change', e => {
         if (Array.isArray(data.monthPeople)) monthPeople = data.monthPeople;
         if (data.monthData && typeof data.monthData === 'object') monthData = data.monthData;
         if (data.monthIncome && typeof data.monthIncome === 'object') monthIncome = data.monthIncome;
+        if (data.monthExtra && typeof data.monthExtra === 'object') monthExtra = Object.assign({ src: {}, ticket: {}, disc: {} }, data.monthExtra);
         saveMonth();
         saveSupply();
       }
