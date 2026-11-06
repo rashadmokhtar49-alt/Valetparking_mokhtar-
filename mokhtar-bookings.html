@@ -294,6 +294,7 @@ main{padding:16px 14px 130px}
 .seg button:not(.on){background:var(--chip);color:var(--text);border:1px solid var(--line)}
 .ms-t{color:#ff4d4f!important;font-weight:bold}
 .ms-p{color:#2fc25b!important;font-weight:bold}
+.ms-abs{background:rgba(128,128,128,.2)}
 .mlegend{font-size:12px;color:var(--muted);margin:8px 2px}
 #mLiveSrc{padding:4px 10px;font-size:12px}
 /* ---- UH month page polish ---- */
@@ -1944,6 +1945,14 @@ function mSetDiscs(d, arr) {
   if (arr.length) x[mKey][d] = arr; else delete x[mKey][d];
   saveMonth();
 }
+const mAbs = (pid, d) => !!((((monthExtra.absent || {})[mKey] || {})[pid] || {})[d]);
+function mSetAbs(pid, d, v) {
+  monthExtra.absent = monthExtra.absent || {};
+  const a = monthExtra.absent; a[mKey] = a[mKey] || {}; a[mKey][pid] = a[mKey][pid] || {};
+  if (v) a[mKey][pid][d] = true; else delete a[mKey][pid][d];
+  saveMonth();
+}
+const mAbsCount = pid => { let n = 0; const days = mDaysIn(mKey); for (let d = 1; d <= days; d++) if (mAbs(pid, d)) n++; return n; };
 const mDiscTotal = d => mDiscs(d).reduce((s, x) => s + (Number(x.amount) || 0), 0);
 // expenses paid from ticket money (deducted from total) vs tips (not deducted)
 const mSumSrc = (d, src) => monthPeople.reduce((s, p) => s + (mSrc(p.id, d) === src ? mGet(p.id, d) : 0), 0);
@@ -2022,15 +2031,16 @@ function reportHtml(n) {
   const T = { cash: 0, insta: 0, tot: 0, tick: 0, tickExp: 0, tipExp: 0, disc: 0, left: 0 };
   let rows = '';
   for (let d = 1; d <= n; d++) {
+    const absNames = monthPeople.filter(p => mAbs(p.id, d)).map(p => p.name).join('، ');
     const inc = mInc(d), tk = mTicketTotal(d), tkExp = mSumSrc(d, 'ticket');
     const tipExp = mDayTotal(d) - tkExp, disc = mDiscTotal(d);
-    if (!(inc.cash || inc.insta || tk || tkExp || tipExp || disc)) continue;
+    if (!(inc.cash || inc.insta || tk || tkExp || tipExp || disc || absNames)) continue;
     const tot = inc.cash + inc.insta, left = tot - tkExp;
     T.cash += inc.cash; T.insta += inc.insta; T.tot += tot; T.tick += tk;
     T.tickExp += tkExp; T.tipExp += tipExp; T.disc += disc; T.left += left;
-    rows += `<tr class="rrow" data-rday="${d}"><td><b>${d}</b></td><td>${money(inc.cash)}</td><td>${money(inc.insta)}</td><td>${money(tot)}</td><td>${money(tk)}</td><td>${money(tkExp)}</td><td>${money(tipExp)}</td><td>${money(disc)}</td><td><b>${money(left)}</b></td></tr>`;
+    rows += `<tr class="rrow" data-rday="${d}"><td><b>${d}</b></td><td>${money(inc.cash)}</td><td>${money(inc.insta)}</td><td>${money(tot)}</td><td>${money(tk)}</td><td>${money(tkExp)}</td><td>${money(tipExp)}</td><td>${money(disc)}</td><td><b>${money(left)}</b></td><td>${esc(absNames) || '-'}</td></tr>`;
   }
-  const people = monthPeople.map(p => `<div class="mline"><span>${esc(p.name)}</span><b>${money(mPersonTotal(p.id))}</b></div>`).join('');
+  const people = monthPeople.map(p => `<div class="mline"><span>${esc(p.name)}</span><b>${money(mPersonTotal(p.id))} · غاب ${mAbsCount(p.id)} يوم</b></div>`).join('');
   return `<div class="rwrap">
     <div class="kpis">
       <div><span>💵 كاش</span><b>${money(T.cash)}</b></div>
@@ -2044,8 +2054,8 @@ function reportHtml(n) {
     </div>
     <div style="margin-top:14px"><b>الأيام</b></div>
     <div class="rscroll"><table class="rtable">
-      <thead><tr><th>اليوم</th><th>كاش</th><th>انستا</th><th>الإجمالي</th><th>التكت</th><th>مصاريف تكت</th><th>مصاريف تبس</th><th>خصومات</th><th>الباقي</th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="9" class="empty-note">مفيش بيانات في الشهر ده</td></tr>'}</tbody>
+      <thead><tr><th>اليوم</th><th>كاش</th><th>انستا</th><th>الإجمالي</th><th>التكت</th><th>مصاريف تكت</th><th>مصاريف تبس</th><th>خصومات</th><th>الباقي</th><th>الغياب</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="10" class="empty-note">مفيش بيانات في الشهر ده</td></tr>'}</tbody>
     </table></div>
     <div style="margin-top:14px"><b>إجمالي كل شخص في الشهر</b></div>
     <div style="margin-top:6px">${people || '<div class="empty-note">مفيش أسامي</div>'}</div>
@@ -2086,6 +2096,7 @@ function renderMDay(n) {
       <div class="mline"><span>مصاريف من التكت (بتتخصم)</span><b id="mTickExp"></b></div>
       <div class="mline"><span>مصاريف من التبس (مش بتتخصم)</span><b id="mTipExp"></b></div>
       <div class="mline"><span>الخصومات (معلومة بس، مش بتتخصم)</span><b id="mDiscTot"></b></div>
+      <div class="mline"><span>الغياب اليوم</span><b id="mAbsTot"></b></div>
       <div class="mline"><span>الباقي (كاش + انستا − مصاريف التكت)</span><b id="mLeft"></b></div>
     </div>
     <div style="margin-top:12px"><b>✂️ الخصومات</b> <small>(معلومة بس)</small></div>
@@ -2096,6 +2107,8 @@ function renderMDay(n) {
     </div>
     <button type="button" id="mdAdd" style="margin-top:8px;width:100%">➕ ضيف خصم</button>
     <div style="margin-top:6px">${discRows || ''}</div>
+    <div style="margin-top:12px"><b>🚫 الغياب</b> <small>اضغط على الزرار لو الشخص غاب</small></div>
+    <div style="margin-top:6px">${monthPeople.map(p => `<div class="drow"><div class="d-main"><b>${esc(p.name)}</b></div><div class="d-side"><button type="button" class="${mAbs(p.id, mDay) ? 'danger' : 'ghost'} small" data-abs="${p.id}">${mAbs(p.id, mDay) ? '🚫 غايب' : '✅ حاضر'}</button></div></div>`).join('') || '<div class="empty-note">ضيف أسامي الأول</div>'}</div>
     <div style="margin-top:12px"><b>المصاريف</b></div>
     <div style="margin-top:6px">${rows || '<div class="empty-note">مفيش مصاريف في اليوم ده</div>'}</div>`;
   $('mdPrev').onclick = () => { mDay = mDay > 1 ? mDay - 1 : n; renderMonth(); };
@@ -2154,6 +2167,8 @@ function mRefreshSummary() {
   $('mDiscTot').textContent = money(disc);
   $('mLeft').textContent = money(left);
   $('mLeft').style.color = left < 0 ? 'var(--warn-text)' : 'var(--ok)';
+  const ab = monthPeople.filter(p => mAbs(p.id, mDay));
+  if ($('mAbsTot')) $('mAbsTot').textContent = ab.length ? ab.map(p => p.name).join('، ') : 'مفيش';
 }
 function renderMonth() {
   $('mMonth').value = mKey;
@@ -2171,7 +2186,7 @@ function renderMonth() {
   if (!monthPeople.length) { $('mGrid').innerHTML = '<div class="empty">ضيف الأسامي فوق، كل اسم مرة واحدة</div>'; return; }
   const head = `<tr><th class="sticky">الاسم</th>${days.map(d => `<th>${d}</th>`).join('')}<th>الشهر</th></tr>`;
   const totRow = `<tr class="mtot"><th class="sticky">مصاريف اليوم</th>${days.map(d => `<td id="mt-${d}">${mDayTotal(d) || ''}</td>`).join('')}<td id="mt-all"><b>${mMonthTotal()}</b></td></tr>`;
-  const rows = monthPeople.map(p => `<tr><th class="sticky"><div class="mname"><b class="mperson" data-mperson="${p.id}">${esc(p.name)}</b><button type="button" class="danger small" data-mdel="${p.id}">✕</button></div></th>${days.map(d => `<td><input class="${mCls(p.id, d)}" data-mp="${p.id}" data-md="${d}" type="number" min="0" inputmode="numeric" value="${mGet(p.id, d) || ''}"></td>`).join('')}<td id="mp-${p.id}"><b>${mPersonTotal(p.id)}</b></td></tr>`).join('');
+  const rows = monthPeople.map(p => `<tr><th class="sticky"><div class="mname"><b class="mperson" data-mperson="${p.id}">${esc(p.name)}</b>${mView === 'day' && mAbs(p.id, mDay) ? '<small style="color:var(--warn-text)">🚫</small>' : ''}<button type="button" class="danger small" data-mdel="${p.id}">✕</button></div></th>${days.map(d => `<td><input class="${mCls(p.id, d)}" data-mp="${p.id}" data-md="${d}" type="number" min="0" inputmode="numeric" value="${mGet(p.id, d) || ''}"></td>`).join('')}<td id="mp-${p.id}"><b>${mPersonTotal(p.id)}</b></td></tr>`).join('');
   $('mGrid').innerHTML = `<table class="mtable ${mView}"><thead>${head}</thead><tbody>${totRow}${rows}</tbody></table>`;
 }
 function mRefreshTotals() {
@@ -2231,7 +2246,7 @@ $('mGrid').addEventListener('change', async e => {
 // live bar: shows the cell being typed above the keyboard
 const liveBar = $('mLive');
 let liveInp = null;
-const mCls = (pid, d) => { const x = mSrc(pid, d); return x === 'ticket' ? 'ms-t' : x === 'tip' ? 'ms-p' : ''; };
+const mCls = (pid, d) => { const x = mSrc(pid, d); if (!x && mAbs(pid, d)) return 'ms-abs'; return x === 'ticket' ? 'ms-t' : x === 'tip' ? 'ms-p' : ''; };
 const srcLabel = x => (x === 'tip' ? '💰 تبس' : '🎫 تكت');
 function paintLiveSrc() {
   const b = $('mLiveSrc'); if (!b || !liveInp) return;
@@ -2283,7 +2298,11 @@ $('mGrid').addEventListener('focusin', e => {
   if (t.dataset && t.dataset.mp) { showLive(t); setTimeout(() => { kbFollow(); }, 300); }
 });
 $('mGrid').addEventListener('focus', e => { if (e.target.dataset && e.target.dataset.mp) { e.target.dataset.prev = e.target.value; e.target.select(); } }, true);
-$('mDayBox').addEventListener('click', e => { if (e.target.closest('[data-ok-for]')) closeAndShow(); });
+$('mDayBox').addEventListener('click', e => {
+  if (e.target.closest('[data-ok-for]')) { closeAndShow(); return; }
+  const ab = e.target.closest('[data-abs]');
+  if (ab) { mSetAbs(ab.dataset.abs, mDay, !mAbs(ab.dataset.abs, mDay)); renderMDay(mDaysIn(mKey)); mRefreshTotals(); }
+});
 $('mDayBox').addEventListener('keydown', e => {
   if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
   e.preventDefault();
