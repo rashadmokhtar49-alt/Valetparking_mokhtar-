@@ -15,8 +15,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-:root{color-scheme:light dark;--gold:#c9a227;--bg:#0b0b0b;--card:#151515;--card2:#111;--input:#0e0e0e;--chip:#1a1a1a;--header:#000;--line:var(--line);--line2:#1f1f1f;--text:#f2f2f2;--muted:#8f8f8f;--red:#e5484d;--green:#25a244;--ok:#7ee08f;--warn-text:#ffb4b4;--alert-bg:#16140a;--info-bg:#0d2a3a;--info-text:#9fd8f5;--info-border:#2a7fa8;--nav-bg:rgba(0,0,0,.94);--shadow:rgba(0,0,0,.5)}
+:root{color-scheme:light dark;--gold:#c9a227;--bg:#0b0b0b;--card:#151515;--card2:#111;--input:#0e0e0e;--chip:#1a1a1a;--header:#000;--line:#262626;--line2:#1f1f1f;--text:#f2f2f2;--muted:#8f8f8f;--red:#e5484d;--green:#25a244;--ok:#7ee08f;--warn-text:#ffb4b4;--alert-bg:#16140a;--info-bg:#0d2a3a;--info-text:#9fd8f5;--info-border:#2a7fa8;--nav-bg:rgba(0,0,0,.94);--shadow:rgba(0,0,0,.5)}
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--gold:#9c7a12;--bg:#f4f3ef;--card:#ffffff;--card2:#fbfaf7;--input:#f5f4f0;--chip:#ebe9e3;--header:#ffffff;--line:#dcd9d0;--line2:#e8e5dc;--text:#1b1b1b;--muted:#6b6b6b;--ok:#1f7a3a;--warn-text:#b42318;--alert-bg:#fff8e1;--info-bg:#e6f3fa;--info-text:#0b5a7a;--info-border:#7fb8d6;--nav-bg:rgba(255,255,255,.95);--shadow:rgba(0,0,0,.12)}}
+:root[data-theme="light"]{--gold:#9c7a12;--bg:#f4f3ef;--card:#ffffff;--card2:#fbfaf7;--input:#f5f4f0;--chip:#ebe9e3;--header:#ffffff;--line:#dcd9d0;--line2:#e8e5dc;--text:#1b1b1b;--muted:#6b6b6b;--ok:#1f7a3a;--warn-text:#b42318;--alert-bg:#fff8e1;--info-bg:#e6f3fa;--info-text:#0b5a7a;--info-border:#7fb8d6;--nav-bg:rgba(255,255,255,.95);--shadow:rgba(0,0,0,.12)}
 *{box-sizing:border-box}
 body{margin:0;font-family:Cairo,Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
 .top{background:var(--header);border-bottom:1px solid var(--gold);padding:16px 12px 12px;text-align:center}
@@ -340,7 +341,11 @@ body.typing nav.pagebar{display:none}
 .rtable th,.rtable td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
 .rtable thead th{background:var(--chip);position:sticky;top:0}
 .rtable tr.rrow{cursor:pointer}
+.rtools{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.ralert{background:var(--alert-bg);border:1px solid var(--warn-text);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--warn-text)}
+.ralert b{display:block;margin-bottom:4px}
 </style>
+<script>try{var t=localStorage.getItem('mokhtar_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 </head>
 <body>
 <div id="lock"><div class="lock-box">
@@ -2077,6 +2082,7 @@ function reportHtml(n) {
   }
   const people = monthPeople.map(p => `<div class="mline"><span>${esc(p.name)}</span><b>${money(mPersonTotal(p.id))} · غاب ${mAbsCount(p.id)} يوم</b></div>`).join('');
   return `<div class="rwrap">
+    <div class="rtools"><button type="button" class="ghost small" id="rCsv">📥 تحميل Excel</button><button type="button" class="ghost small" id="rWa">📤 ملخص واتساب</button></div>${alertsHtml(n)}
     <div class="kpis">
       <div><span>💵 كاش</span><b>${money(T.cash)}</b></div>
       <div><span>📱 انستا</span><b>${money(T.insta)}</b></div>
@@ -2087,6 +2093,7 @@ function reportHtml(n) {
       <div><span>خصومات (معلومة)</span><b>${money(T.disc)}</b></div>
       <div><span>الباقي</span><b style="color:${T.left < 0 ? 'var(--warn-text)' : 'var(--ok)'}">${money(T.left)}</b></div>
     </div>
+    ${compareHtml()}
     <div style="margin-top:14px"><b>الأيام</b></div>
     <div class="rscroll"><table class="rtable">
       <thead><tr><th>اليوم</th><th>كاش</th><th>انستا</th><th>الإجمالي</th><th>التكت</th><th>مصاريف تكت</th><th>مصاريف تبس</th><th>خصومات</th><th>الباقي</th><th>الغياب</th></tr></thead>
@@ -2095,6 +2102,88 @@ function reportHtml(n) {
     <div style="margin-top:14px"><b>إجمالي كل شخص في الشهر</b></div>
     <div style="margin-top:6px">${people || '<div class="empty-note">مفيش أسامي</div>'}</div>
   </div>`;
+}
+// ---- figures for reports, comparison, alerts, receipt and sharing ----
+function dayFigures(d) {
+  const inc = mInc(d), tkExp = mSumSrc(d, 'ticket'), exp = mDayTotal(d), tot = inc.cash + inc.insta;
+  return {
+    cash: inc.cash, insta: inc.insta, tot,
+    tkCount: mTicket(d).count, tkTot: mTicketTotal(d),
+    tkExp, tipExp: exp - tkExp, disc: mDiscTotal(d), left: tot - tkExp,
+    absNames: monthPeople.filter(p => mAbs(p.id, d)).map(p => p.name)
+  };
+}
+function monthSums(key) {
+  const saved = mKey; mKey = key;
+  const out = { tot: 0, tick: 0, tickExp: 0, disc: 0, left: 0 };
+  try {
+    const n = mDaysIn(key);
+    for (let d = 1; d <= n; d++) {
+      const f = dayFigures(d);
+      if (!(f.tot || f.tkTot || f.tkExp || f.tipExp || f.disc)) continue;
+      out.tot += f.tot; out.tick += f.tkTot; out.tickExp += f.tkExp; out.disc += f.disc; out.left += f.left;
+    }
+  } finally { mKey = saved; }
+  return out;
+}
+function prevMonthKey() { const [y, m] = mKey.split('-').map(Number); const d = new Date(y, m - 2, 1); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; }
+function maxAbsStreak(pid) {
+  let best = 0, cur = 0; const n = mDaysIn(mKey);
+  for (let d = 1; d <= n; d++) { if (mAbs(pid, d)) { cur++; best = Math.max(best, cur); } else cur = 0; }
+  return best;
+}
+function alertsHtml(n) {
+  const items = [];
+  for (let d = 1; d <= n; d++) {
+    const f = dayFigures(d);
+    if ((f.tot > 0 || f.tkExp > 0 || f.tipExp > 0) && f.left < 0) items.push(`يوم ${d}: الباقي سالب (${money(f.left)})`);
+  }
+  monthPeople.forEach(p => { const st = maxAbsStreak(p.id); if (st >= 3) items.push(`${esc(p.name)} غاب ${st} أيام متتالية`); });
+  return items.length ? `<div class="ralert"><b>⚠️ تنبيهات</b>${items.map(x => `<div>• ${x}</div>`).join('')}</div>` : '';
+}
+function compareHtml() {
+  const cur = monthSums(mKey), pk = prevMonthKey(), prev = monthSums(pk);
+  const row = (label, a, b) => {
+    const diff = a - b, col = diff < 0 ? 'var(--warn-text)' : 'var(--ok)';
+    return `<div class="mline"><span>${label}</span><span><b>${money(a)}</b> <small>مقابل ${money(b)}</small> <b style="color:${col}">${diff >= 0 ? '+' : ''}${money(diff)}</b></span></div>`;
+  };
+  return `<div style="margin-top:14px"><b>📈 مقارنة بالشهر اللي قبله (${MONTHS_AR[Number(pk.split('-')[1]) - 1]})</b></div>`
+    + row('إجمالي الفلوس', cur.tot, prev.tot) + row('إجمالي التكت', cur.tick, prev.tick) + row('الباقي', cur.left, prev.left);
+}
+function csvReport() {
+  const n = mDaysIn(mKey);
+  const rows = [['اليوم', 'كاش', 'انستا', 'الإجمالي', 'عدد التكت', 'إجمالي التكت', 'مصاريف تكت', 'مصاريف تبس', 'خصومات', 'الباقي', 'الغياب']];
+  for (let d = 1; d <= n; d++) {
+    const f = dayFigures(d);
+    if (!(f.tot || f.tkCount || f.tkExp || f.tipExp || f.disc || f.absNames.length)) continue;
+    rows.push([d, f.cash, f.insta, f.tot, f.tkCount, f.tkTot, f.tkExp, f.tipExp, f.disc, f.left, f.absNames.join(' - ')]);
+  }
+  rows.push([]); rows.push(['الشخص', 'إجمالي ما خده', 'أيام الغياب']);
+  monthPeople.forEach(p => rows.push([p.name, mPersonTotal(p.id), mAbsCount(p.id)]));
+  return '\uFEFF' + rows.map(r => r.map(c => { const t = String(c ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(',')).join('\r\n');
+}
+function monthText() {
+  const cur = monthSums(mKey), [y, m] = mKey.split('-').map(Number);
+  const people = monthPeople.map(p => `${p.name}: ${money(mPersonTotal(p.id))}`).join('\n');
+  return `📅 ملخص ${MONTHS_AR[m - 1]} ${y}\n💵 إجمالي الفلوس: ${money(cur.tot)}\n🎫 إجمالي التكت: ${money(cur.tick)}\nمصاريف تكت: ${money(cur.tickExp)}\nخصومات: ${money(cur.disc)}\nالباقي: ${money(cur.left)}\n\n👥 الأشخاص:\n${people}`;
+}
+function receiptText(d) {
+  const f = dayFigures(d), [y, m] = mKey.split('-').map(Number);
+  const gates = [1, 2].map(g => {
+    const en = gateGet(d, g).stop;
+    return `🚪 بوابة ${g}: من ${gateStart(d, g) === '' ? '-' : gateStart(d, g)} إلى ${en === undefined || en === '' ? '-' : en} (${gateCount(d, g)} تكت)`;
+  }).join('\n');
+  return `🧾 إيصال يوم ${d} ${MONTHS_AR[m - 1]} ${y}\n💵 كاش: ${money(f.cash)}\n📱 انستا: ${money(f.insta)}\nإجمالي اليوم: ${money(f.tot)}\n🎫 التكت: ${f.tkCount} × ${mPriceOn(d)} = ${money(f.tkTot)}\n${gates}\nمصاريف تكت: ${money(f.tkExp)}\nمصاريف تبس: ${money(f.tipExp)}\nخصومات: ${money(f.disc)}\nالباقي: ${money(f.left)}\n🚫 غياب: ${f.absNames.join('، ') || 'مفيش'}`;
+}
+function shareText(text) { window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank'); }
+function setTheme(v) {
+  try { localStorage.setItem('mokhtar_theme', v); } catch (e) {}
+  if (v === 'light' || v === 'dark') document.documentElement.setAttribute('data-theme', v); else document.documentElement.removeAttribute('data-theme');
+  paintTheme();
+}
+function paintTheme() {
+  let cur = 'auto'; try { cur = localStorage.getItem('mokhtar_theme') || 'auto'; } catch (e) {}
+  document.querySelectorAll('[data-theme-set]').forEach(b => b.classList.toggle('on', b.dataset.themeSet === cur));
 }
 function closeAndShow() {
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -2127,7 +2216,7 @@ function renderMDay(n) {
     <div style="margin-top:12px"><b>🎟 السريال</b> <small>اكتب رقم السريال اللي وقفت عنده</small></div>
     ${[1, 2].map(g => `<div class="inc-row"><div><label>🚪 بوابة ${g} · بدأت من سريال</label><input data-gs="${g}" data-gf="start" type="number" inputmode="numeric" placeholder="-" value="${gateStart(mDay, g)}"></div><div><label>وقفت عند سريال</label><input data-gs="${g}" data-gf="stop" type="number" inputmode="numeric" placeholder="-" value="${gateGet(mDay, g).stop ?? ''}"></div></div><div class="mline"><span>قطعت من بوابة ${g}</span><b id="gc${g}">${gateCount(mDay, g)} تكت</b></div>`).join('')}
     <div class="mline"><span>إجمالي التكت من البوابتين</span><b id="mGateTot">${gateTotal(mDay)} تكت</b></div>
-    <div id="mSummary" style="margin-top:10px">
+    <div id="mSummary" style="margin-top:10px"><div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button type="button" class="ghost small" id="mReceipt">🧾 إيصال اليوم واتساب</button></div>
       <div class="mline"><span>إجمالي التكت اليومي (عدد × سعر)</span><b id="mTickTot"></b></div>
       <div class="mline"><span>إجمالي اليوم (كاش + انستا)</span><b id="mIncTot"></b></div>
       <div class="mline"><span>مصاريف من التكت (بتتخصم)</span><b id="mTickExp"></b></div>
@@ -2150,6 +2239,7 @@ function renderMDay(n) {
     <div style="margin-top:6px">${rows || '<div class="empty-note">مفيش مصاريف في اليوم ده</div>'}</div>`;
   $('mdPrev').onclick = () => { mDay = mDay > 1 ? mDay - 1 : n; renderMonth(); };
   $('mdNext').onclick = () => { mDay = mDay < n ? mDay + 1 : 1; renderMonth(); };
+  $('mReceipt').onclick = () => shareText(receiptText(mDay));
   $('mAllPresent').onclick = () => { monthPeople.forEach(p => mSetAbs(p.id, mDay, false)); renderMDay(n); mRefreshTotals(); };
   // money typed -> tickets are worked out from the total
   const moneyChanged = () => {
@@ -2227,6 +2317,8 @@ function renderMonth() {
   if (mView === 'report') {
     $('mGridLegend').textContent = 'ملخص الشهر كله · اضغط على أي يوم عشان تفتحه';
     $('mGrid').innerHTML = reportHtml(n);
+    if ($('rCsv')) $('rCsv').onclick = () => downloadFile(`UH-${mKey}.csv`, 'text/csv;charset=utf-8', csvReport());
+    if ($('rWa')) $('rWa').onclick = () => shareText(monthText());
     return;
   }
   const days = mView === 'day' ? [mDay] : Array.from({ length: n }, (_, i) => i + 1);
@@ -2729,6 +2821,14 @@ function openSettings() {
       <div class="set-row"><div>استيراد نسخة<small>ارجع نسخة اتعملت قبل كده</small></div><button type="button" class="ghost small" id="setImport">استيراد</button></div>
     </div>
     <div class="panel">
+      <h2>🎨 المظهر</h2>
+      <div class="vtabs" style="display:flex;gap:6px">
+        <button type="button" data-theme-set="auto">تلقائي</button>
+        <button type="button" data-theme-set="light">فاتح</button>
+        <button type="button" data-theme-set="dark">غامق</button>
+      </div>
+    </div>
+    <div class="panel">
       <h2>🎫 سعر التكت</h2>
       <div class="set-row"><div>سعر التكت الثابت<small>السعر الجديد بيشتغل من النهارده، والأيام اللي فاتت بتفضل بالسعر القديم</small></div>
         <div style="display:flex;gap:6px;align-items:center"><input id="tkPrice" type="number" inputmode="numeric" min="1" value="${priceNow()}" style="width:90px"><button type="button" class="ghost small" id="tkSave">حفظ</button></div></div>
@@ -2753,6 +2853,7 @@ function openSettings() {
   window.scrollTo({ top: 0 });
 
   $('setClose').onclick = () => { pg.style.display = 'none'; };
+  paintTheme();
   $('tkSave').onclick = () => {
     const v = Number($('tkPrice').value);
     if (!(v > 0)) { appToast('اكتب سعر صح'); return; }
@@ -2771,6 +2872,8 @@ function openSettings() {
     } catch (e) { appToast('متعرفش تحفظ النسخة على المتصفح ده'); }
   };
   pg.onclick = async e => {
+    const th = e.target.closest('[data-theme-set]');
+    if (th) { setTheme(th.dataset.themeSet); return; }
     const r = e.target.closest('[data-snapr]'), d = e.target.closest('[data-snapd]');
     if (r) {
       const rec = await snapGet(r.dataset.snapr);
