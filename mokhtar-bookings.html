@@ -225,17 +225,21 @@ a{-webkit-touch-callout:none}
 #lock{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;align-items:center;justify-content:center;padding:20px}
 #lock.shake .lock-box{animation:shake .4s}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
-.lock-box{width:100%;max-width:300px;text-align:center}
-.lock-ico{font-size:36px}
-.lock-t{font-size:18px;font-weight:800;color:var(--gold);margin-top:6px;direction:ltr}
-.lock-sub{color:var(--muted);font-size:13px;margin:4px 0 18px}
-.dots{display:flex;justify-content:center;gap:14px;margin-bottom:12px}
-.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--gold);display:block}
-.dots i.on{background:var(--gold)}
-.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:10px}
-.keys button{height:64px;border-radius:50%;font-size:22px;padding:0;background:var(--chip);color:var(--text);border:1px solid var(--line)}
+.lock-box{width:100%;max-width:320px;text-align:center}
+.lock-ico{font-size:30px}
+.lock-t{font-size:16px;font-weight:700;color:var(--gold);margin-top:6px;direction:ltr;letter-spacing:.5px}
+.lock-sub{color:var(--muted);font-size:14px;margin:6px 0 24px}
+.dots{display:flex;justify-content:center;gap:18px;margin:6px 0 28px}
+.dots i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--gold);display:block;transition:background .12s,transform .12s,border-color .12s}
+.dots i.on{background:var(--gold);transform:scale(1.15)}
+.dots.bad i{background:#e5484d;border-color:#e5484d}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 18px;justify-items:center;margin-top:4px;direction:ltr}
+.keys button{width:78px;height:78px;border-radius:50%;font-size:30px;font-weight:500;padding:0;background:rgba(128,128,128,.16);color:var(--text);border:0;transition:transform .08s,background .08s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.keys button:active{transform:scale(.9);background:rgba(128,128,128,.34)}
 .keys button.zero{grid-column:2}
-.lock-msg{color:var(--warn-text);font-size:13px;min-height:20px;margin-top:12px}
+.keys button.back{background:transparent;font-size:24px}
+.keys button.back:active{background:rgba(128,128,128,.22)}
+.lock-msg{color:#e5484d;font-size:13px;min-height:20px;margin-top:20px}
 #lockBtn{position:absolute;left:12px;top:12px;padding:6px 10px;font-size:12px}
 /* ---- Settings ---- */
 #lockBtn{left:12px}
@@ -348,7 +352,7 @@ body.typing nav.pagebar{display:none}
     <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button>
     <button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button>
     <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
-    <button type="button" class="zero" data-key="0">0</button><button type="button" data-key="back">⌫</button>
+    <button type="button" class="zero" data-key="0">0</button><button type="button" class="back" data-key="back">⌫</button>
   </div>
   <div class="lock-msg" id="lockMsg"></div>
 </div></div>
@@ -1932,13 +1936,44 @@ function mSetSrc(pid, d, v) {
   const s = monthExtra.src; s[mKey] = s[mKey] || {}; s[mKey][pid] = s[mKey][pid] || {};
   if (v) s[mKey][pid][d] = v; else delete s[mKey][pid][d];
 }
-const mTicket = d => { const x = (((monthExtra.ticket || {})[mKey]) || {})[d] || {}; return { count: Number(x.count) || 0, price: Number(x.price) || 0 }; };
+// ticket price history: [{from:'YYYY-MM-DD', price}] - a price applies from its date on; earlier days are not changed
+const priceFor = dk => {
+  const hist = (Array.isArray(monthExtra.priceHist) && monthExtra.priceHist.length) ? monthExtra.priceHist : [{ from: '0000-00-00', price: 20 }];
+  let best = null;
+  hist.forEach(h => { if (h.from <= dk && (!best || h.from >= best.from)) best = h; });
+  return best ? Number(best.price) : 20;
+};
+const mPriceOn = d => priceFor(`${mKey}-${pad(d)}`);
+const priceNow = () => priceFor(todayISO());
+const mTicket = d => { const x = (((monthExtra.ticket || {})[mKey]) || {})[d] || {}; return { count: Number(x.count) || 0 }; };
 function mSetTicket(d, f, v) {
   const t = monthExtra.ticket; t[mKey] = t[mKey] || {};
   t[mKey][d] = Object.assign({}, t[mKey][d] || {}, { [f]: v });
   saveMonth();
 }
-const mTicketTotal = d => { const t = mTicket(d); return t.count * t.price; };
+const mTicketTotal = d => mTicket(d).count * mPriceOn(d);
+// ticket books on the gates: each gate has its own serial numbers
+const gateGet = (d, g) => ((((monthExtra.gates || {})[mKey]) || {})[d] || {})[g] || {};
+function setGate(d, g, f, v) {
+  monthExtra.gates = monthExtra.gates || {};
+  const gm = monthExtra.gates[mKey] = monthExtra.gates[mKey] || {};
+  gm[d] = gm[d] || {};
+  gm[d][g] = Object.assign({}, gm[d][g] || {}, { [f]: v });
+  saveMonth();
+}
+// the serial a gate starts from: typed value, else the last serial stopped at on an earlier day this month
+function gatePrevStop(d, g) {
+  for (let k = d - 1; k >= 1; k--) { const st = gateGet(k, g).stop; if (st !== undefined && st !== '') return Number(st); }
+  return '';
+}
+const gateStart = (d, g) => { const x = gateGet(d, g); if (x.start !== undefined && x.start !== '') return Number(x.start); return gatePrevStop(d, g); };
+const gateCount = (d, g) => {
+  const a = gateStart(d, g), b = gateGet(d, g).stop;
+  if (a === '' || b === undefined || b === '') return 0;
+  return Number(b) >= Number(a) ? Number(b) - Number(a) : 0;
+};
+const gateTotal = d => gateCount(d, 1) + gateCount(d, 2);
+const gateHasStop = d => [1, 2].some(g => { const x = gateGet(d, g).stop; return x !== undefined && x !== ''; });
 const mDiscs = d => (((monthExtra.disc || {})[mKey]) || {})[d] || [];
 function mSetDiscs(d, arr) {
   const x = monthExtra.disc; x[mKey] = x[mKey] || {};
@@ -2087,9 +2122,11 @@ function renderMDay(n) {
       <div><label>📱 انستا</label><input id="mInsta" type="number" inputmode="numeric" min="0" placeholder="0" value="${inc.insta || ''}"><button type="button" class="ghost small" id="mToCash" style="width:100%;margin-top:6px">⬅️ تحويل للكاش</button></div>
     </div>
     <div class="inc-row">
-      <div><label>🎫 عدد التكت</label><input id="mTCount" type="number" inputmode="numeric" min="0" placeholder="0" value="${tk.count || ''}"></div>
-      <div><label>سعر التكت</label><input id="mTPrice" type="number" inputmode="numeric" min="0" placeholder="0" value="${tk.price || ''}"></div>
+      <div><label>🎫 عدد التكت <small>(السعر ${mPriceOn(mDay)} ج.م)</small></label><input id="mTCount" type="number" inputmode="numeric" min="0" placeholder="0" value="${tk.count || ''}"></div>
     </div>
+    <div style="margin-top:12px"><b>🎟 السريال</b> <small>اكتب رقم السريال اللي وقفت عنده</small></div>
+    ${[1, 2].map(g => `<div class="inc-row"><div><label>🚪 بوابة ${g} · بدأت من سريال</label><input data-gs="${g}" data-gf="start" type="number" inputmode="numeric" placeholder="-" value="${gateStart(mDay, g)}"></div><div><label>وقفت عند سريال</label><input data-gs="${g}" data-gf="stop" type="number" inputmode="numeric" placeholder="-" value="${gateGet(mDay, g).stop ?? ''}"></div></div><div class="mline"><span>قطعت من بوابة ${g}</span><b id="gc${g}">${gateCount(mDay, g)} تكت</b></div>`).join('')}
+    <div class="mline"><span>إجمالي التكت من البوابتين</span><b id="mGateTot">${gateTotal(mDay)} تكت</b></div>
     <div id="mSummary" style="margin-top:10px">
       <div class="mline"><span>إجمالي التكت اليومي (عدد × سعر)</span><b id="mTickTot"></b></div>
       <div class="mline"><span>إجمالي اليوم (كاش + انستا)</span><b id="mIncTot"></b></div>
@@ -2107,16 +2144,23 @@ function renderMDay(n) {
     </div>
     <button type="button" id="mdAdd" style="margin-top:8px;width:100%">➕ ضيف خصم</button>
     <div style="margin-top:6px">${discRows || ''}</div>
-    <div style="margin-top:12px"><b>🚫 الغياب</b> <small>اضغط على الزرار لو الشخص غاب</small></div>
+    <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>🚫 الغياب</b> <small>اضغط على الزرار لو الشخص غاب</small></div><button type="button" class="ghost small" id="mAllPresent" style="white-space:nowrap">✅ الكل حاضر</button></div>
     <div style="margin-top:6px">${monthPeople.map(p => `<div class="drow"><div class="d-main"><b>${esc(p.name)}</b></div><div class="d-side"><button type="button" class="${mAbs(p.id, mDay) ? 'danger' : 'ghost'} small" data-abs="${p.id}">${mAbs(p.id, mDay) ? '🚫 غايب' : '✅ حاضر'}</button></div></div>`).join('') || '<div class="empty-note">ضيف أسامي الأول</div>'}</div>
     <div style="margin-top:12px"><b>المصاريف</b></div>
     <div style="margin-top:6px">${rows || '<div class="empty-note">مفيش مصاريف في اليوم ده</div>'}</div>`;
   $('mdPrev').onclick = () => { mDay = mDay > 1 ? mDay - 1 : n; renderMonth(); };
   $('mdNext').onclick = () => { mDay = mDay < n ? mDay + 1 : 1; renderMonth(); };
-  $('mCash').oninput = e => { mSetInc(mDay, 'cash', Number(e.target.value) || 0); mRefreshSummary(); };
-  $('mInsta').oninput = e => { mSetInc(mDay, 'insta', Number(e.target.value) || 0); mRefreshSummary(); };
+  $('mAllPresent').onclick = () => { monthPeople.forEach(p => mSetAbs(p.id, mDay, false)); renderMDay(n); mRefreshTotals(); };
+  // money typed -> tickets are worked out from the total
+  const moneyChanged = () => {
+    const i = mInc(mDay), c = Math.round((i.cash + i.insta) / mPriceOn(mDay));
+    mSetInc(mDay, 'basis', 'money'); mSetTicket(mDay, 'count', c);
+    $('mTCount').value = c || ''; mRefreshSummary();
+  };
+  $('mCash').oninput = e => { mSetInc(mDay, 'cash', Number(e.target.value) || 0); moneyChanged(); };
+  $('mInsta').oninput = e => { mSetInc(mDay, 'insta', Number(e.target.value) || 0); moneyChanged(); };
   // OK button beside each input of the day card
-  ['mCash', 'mInsta', 'mTCount', 'mTPrice', 'mdName', 'mdAmt'].forEach(id => {
+  ['mCash', 'mInsta', 'mTCount', 'mdName', 'mdAmt'].forEach(id => {
     const el = $(id); if (!el) return;
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;gap:6px;align-items:center';
@@ -2137,8 +2181,12 @@ function renderMDay(n) {
     mSetInc(mDay, 'cash', now.cash + moved);
     renderMDay(mDaysIn(mKey)); mRefreshTotals();
   };
-  $('mTCount').oninput = e => { mSetTicket(mDay, 'count', Number(e.target.value) || 0); mRefreshSummary(); };
-  $('mTPrice').oninput = e => { mSetTicket(mDay, 'price', Number(e.target.value) || 0); mRefreshSummary(); };
+  // tickets typed -> cash is worked out from the count
+  $('mTCount').oninput = e => {
+    const c = Number(e.target.value) || 0;
+    mSetTicket(mDay, 'count', c); mSetInc(mDay, 'basis', 'count'); mSetInc(mDay, 'cash', c * mPriceOn(mDay));
+    $('mCash').value = c ? c * mPriceOn(mDay) : ''; mRefreshSummary();
+  };
   $('mdAdd').onclick = () => {
     const name = $('mdName').value.trim(), amount = Number($('mdAmt').value) || 0;
     if (!name) { appToast('اكتب اسم الشخص'); return; }
@@ -2302,6 +2350,19 @@ $('mDayBox').addEventListener('click', e => {
   if (e.target.closest('[data-ok-for]')) { closeAndShow(); return; }
   const ab = e.target.closest('[data-abs]');
   if (ab) { mSetAbs(ab.dataset.abs, mDay, !mAbs(ab.dataset.abs, mDay)); renderMDay(mDaysIn(mKey)); mRefreshTotals(); }
+});
+$('mDayBox').addEventListener('input', e => {
+  const g = Number(e.target.dataset.gs); if (!g) return;
+  const v = e.target.value === '' ? '' : Number(e.target.value);
+  setGate(mDay, g, e.target.dataset.gf, v);
+  [1, 2].forEach(k => { const el = $('gc' + k); if (el) el.textContent = gateCount(mDay, k) + ' تكت'; });
+  if ($('mGateTot')) $('mGateTot').textContent = gateTotal(mDay) + ' تكت';
+  if (gateHasStop(mDay)) {
+    const t = gateTotal(mDay);
+    mSetTicket(mDay, 'count', t); mSetInc(mDay, 'basis', 'count'); mSetInc(mDay, 'cash', t * mPriceOn(mDay));
+    $('mTCount').value = t || ''; $('mCash').value = t ? t * mPriceOn(mDay) : '';
+  }
+  mRefreshSummary();
 });
 $('mDayBox').addEventListener('keydown', e => {
   if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
@@ -2668,6 +2729,11 @@ function openSettings() {
       <div class="set-row"><div>استيراد نسخة<small>ارجع نسخة اتعملت قبل كده</small></div><button type="button" class="ghost small" id="setImport">استيراد</button></div>
     </div>
     <div class="panel">
+      <h2>🎫 سعر التكت</h2>
+      <div class="set-row"><div>سعر التكت الثابت<small>السعر الجديد بيشتغل من النهارده، والأيام اللي فاتت بتفضل بالسعر القديم</small></div>
+        <div style="display:flex;gap:6px;align-items:center"><input id="tkPrice" type="number" inputmode="numeric" min="1" value="${priceNow()}" style="width:90px"><button type="button" class="ghost small" id="tkSave">حفظ</button></div></div>
+    </div>
+    <div class="panel">
       <h2>🗂 النسخ التلقائية</h2>
       <div class="set-row"><div>نسخة كل يوم تلقائي<small>بتتحفظ على الموبايل ده، وبيتحفظ آخر نسخة كاملة بس والقديم بيتمسح</small></div><button type="button" class="ghost small" id="snapNow">خد نسخة الآن</button></div>
       <div id="snapList"><small>جاري التحميل...</small></div>
@@ -2687,6 +2753,16 @@ function openSettings() {
   window.scrollTo({ top: 0 });
 
   $('setClose').onclick = () => { pg.style.display = 'none'; };
+  $('tkSave').onclick = () => {
+    const v = Number($('tkPrice').value);
+    if (!(v > 0)) { appToast('اكتب سعر صح'); return; }
+    const today = todayISO();
+    const hist = (monthExtra.priceHist || []).filter(h => h.from !== today);
+    hist.push({ from: today, price: v });
+    monthExtra.priceHist = hist.sort((x, y) => (x.from < y.from ? -1 : 1));
+    saveMonth(); renderMonth();
+    appToast('اتحفظ السعر من النهارده ✅');
+  };
   $('snapNow').onclick = async () => {
     try {
       const data = buildBackup();
@@ -2736,26 +2812,51 @@ let pinBuf = '';
 const isUnlocked = () => { try { return sessionStorage.getItem('mokhtar_unlocked') === '1'; } catch (e) { return false; } };
 function renderDots() { document.querySelectorAll('#lockDots i').forEach((d, i) => d.classList.toggle('on', i < pinBuf.length)); }
 function showLock() { pinBuf = ''; renderDots(); $('lockMsg').textContent = ''; $('lock').style.display = 'flex'; }
-$('lock').addEventListener('click', e => {
-  const k = e.target.closest('[data-key]');
-  if (!k) return;
-  const v = k.dataset.key;
-  if (v === 'back') pinBuf = pinBuf.slice(0, -1);
-  else if (pinBuf.length < 4) pinBuf += v;
+let pinAudio = null, pinBusy = false;
+function keyClick() {
+  try {
+    pinAudio = pinAudio || new (window.AudioContext || window.webkitAudioContext)();
+    if (pinAudio.state === 'suspended') pinAudio.resume();
+    const t = pinAudio.currentTime, o = pinAudio.createOscillator(), g = pinAudio.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(700, t + 0.03);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+    o.connect(g); g.connect(pinAudio.destination); o.start(t); o.stop(t + 0.05);
+  } catch (e) {}
+  if (navigator.vibrate) navigator.vibrate(8);
+}
+function pressKey(v) {
+  if (pinBusy) return;
+  if (v === 'back') { if (!pinBuf.length) return; pinBuf = pinBuf.slice(0, -1); }
+  else { if (pinBuf.length >= 4) return; pinBuf += v; }
+  keyClick();
   $('lockMsg').textContent = '';
   renderDots();
-  if (pinBuf.length === 4) {
-    if (hashPin(pinBuf) === currentPinHash()) {
-      try { sessionStorage.setItem('mokhtar_unlocked', '1'); } catch (err) {}
-      $('lock').style.display = 'none';
-      pinBuf = ''; renderDots();
-    } else {
-      $('lockMsg').textContent = 'الباسورد غلط، حاول تاني';
-      $('lock').classList.add('shake');
-      setTimeout(() => $('lock').classList.remove('shake'), 450);
-      pinBuf = ''; renderDots();
-    }
+  if (pinBuf.length !== 4) return;
+  if (hashPin(pinBuf) === currentPinHash()) {
+    try { sessionStorage.setItem('mokhtar_unlocked', '1'); } catch (err) {}
+    $('lock').style.display = 'none';
+    pinBuf = ''; renderDots();
+    return;
   }
+  pinBusy = true;
+  $('lockMsg').textContent = 'الباسورد غلط، حاول تاني';
+  $('lockDots').classList.add('bad');
+  $('lock').classList.add('shake');
+  setTimeout(() => {
+    $('lock').classList.remove('shake');
+    $('lockDots').classList.remove('bad');
+    pinBuf = ''; renderDots(); pinBusy = false;
+  }, 450);
+}
+$('lock').addEventListener('click', e => {
+  const k = e.target.closest('[data-key]');
+  if (k) pressKey(k.dataset.key);
+});
+document.addEventListener('keydown', e => {
+  if (!$('lock') || $('lock').style.display === 'none') return;
+  if (/^\d$/.test(e.key)) pressKey(e.key);
+  else if (e.key === 'Backspace') pressKey('back');
 });
 $('lockBtn').onclick = () => { try { sessionStorage.removeItem('mokhtar_unlocked'); } catch (e) {} showLock(); };
 if (!isUnlocked()) showLock();
