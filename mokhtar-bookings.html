@@ -325,6 +325,16 @@ main{padding:16px 14px 130px}
 #mLive{padding:12px 16px}
 /* hide the page tabs while typing in the month page so the whole screen is free */
 body.typing nav.pagebar{display:none}
+.vtabs{display:flex;gap:4px}
+.vtabs button{padding:6px 10px;font-size:12px;background:var(--chip);color:var(--text);border:1px solid var(--line);white-space:nowrap}
+.vtabs button.on{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.rwrap{padding:12px}
+.rwrap .kpis{grid-template-columns:1fr 1fr}
+.rscroll{overflow:auto;margin-top:6px;border:1px solid var(--line);border-radius:10px}
+.rtable{border-collapse:collapse;min-width:620px;width:100%;font-size:12px}
+.rtable th,.rtable td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+.rtable thead th{background:var(--chip);position:sticky;top:0}
+.rtable tr.rrow{cursor:pointer}
 </style>
 </head>
 <body>
@@ -562,7 +572,7 @@ body.typing nav.pagebar{display:none}
     </div>
 
   </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="mlegend" id="mGridLegend" style="flex:1;min-width:180px"></div><button type="button" class="ghost small" id="mViewBtn" style="white-space:nowrap"></button></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="mlegend" id="mGridLegend" style="flex:1;min-width:180px"></div><div class="vtabs" id="mViews"><button type="button" data-mv="day">يوم</button><button type="button" data-mv="month">الشهر</button><button type="button" data-mv="report">📊 تقرير</button></div></div>
   <div class="panel" style="padding:0;overflow:hidden"><div id="mGrid" style="overflow:auto"></div></div>
 </div>
 
@@ -2008,6 +2018,43 @@ function askTransfer(max) {
     setTimeout(() => { const i = ov.querySelector('#trAmt'); if (i) { i.focus(); i.select(); } }, 50);
   });
 }
+function reportHtml(n) {
+  const T = { cash: 0, insta: 0, tot: 0, tick: 0, tickExp: 0, tipExp: 0, disc: 0, left: 0 };
+  let rows = '';
+  for (let d = 1; d <= n; d++) {
+    const inc = mInc(d), tk = mTicketTotal(d), tkExp = mSumSrc(d, 'ticket');
+    const tipExp = mDayTotal(d) - tkExp, disc = mDiscTotal(d);
+    if (!(inc.cash || inc.insta || tk || tkExp || tipExp || disc)) continue;
+    const tot = inc.cash + inc.insta, left = tot - tkExp;
+    T.cash += inc.cash; T.insta += inc.insta; T.tot += tot; T.tick += tk;
+    T.tickExp += tkExp; T.tipExp += tipExp; T.disc += disc; T.left += left;
+    rows += `<tr class="rrow" data-rday="${d}"><td><b>${d}</b></td><td>${money(inc.cash)}</td><td>${money(inc.insta)}</td><td>${money(tot)}</td><td>${money(tk)}</td><td>${money(tkExp)}</td><td>${money(tipExp)}</td><td>${money(disc)}</td><td><b>${money(left)}</b></td></tr>`;
+  }
+  const people = monthPeople.map(p => `<div class="mline"><span>${esc(p.name)}</span><b>${money(mPersonTotal(p.id))}</b></div>`).join('');
+  return `<div class="rwrap">
+    <div class="kpis">
+      <div><span>💵 كاش</span><b>${money(T.cash)}</b></div>
+      <div><span>📱 انستا</span><b>${money(T.insta)}</b></div>
+      <div><span>إجمالي الفلوس</span><b>${money(T.tot)}</b></div>
+      <div><span>🎫 إجمالي التكت</span><b>${money(T.tick)}</b></div>
+      <div><span>مصاريف تكت</span><b>${money(T.tickExp)}</b></div>
+      <div><span>مصاريف تبس</span><b>${money(T.tipExp)}</b></div>
+      <div><span>خصومات (معلومة)</span><b>${money(T.disc)}</b></div>
+      <div><span>الباقي</span><b style="color:${T.left < 0 ? 'var(--warn-text)' : 'var(--ok)'}">${money(T.left)}</b></div>
+    </div>
+    <div style="margin-top:14px"><b>الأيام</b></div>
+    <div class="rscroll"><table class="rtable">
+      <thead><tr><th>اليوم</th><th>كاش</th><th>انستا</th><th>الإجمالي</th><th>التكت</th><th>مصاريف تكت</th><th>مصاريف تبس</th><th>خصومات</th><th>الباقي</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="9" class="empty-note">مفيش بيانات في الشهر ده</td></tr>'}</tbody>
+    </table></div>
+    <div style="margin-top:14px"><b>إجمالي كل شخص في الشهر</b></div>
+    <div style="margin-top:6px">${people || '<div class="empty-note">مفيش أسامي</div>'}</div>
+  </div>`;
+}
+function closeAndShow() {
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  setTimeout(() => { const el = $('mSummary'); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 200);
+}
 const mDayTotal = d => monthPeople.reduce((s, p) => s + mGet(p.id, d), 0);
 const mPersonTotal = pid => { let t = 0; const n = mDaysIn(mKey); for (let d = 1; d <= n; d++) t += mGet(pid, d); return t; };
 const mMonthTotal = () => monthPeople.reduce((s, p) => s + mPersonTotal(p.id), 0);
@@ -2033,7 +2080,7 @@ function renderMDay(n) {
       <div><label>🎫 عدد التكت</label><input id="mTCount" type="number" inputmode="numeric" min="0" placeholder="0" value="${tk.count || ''}"></div>
       <div><label>سعر التكت</label><input id="mTPrice" type="number" inputmode="numeric" min="0" placeholder="0" value="${tk.price || ''}"></div>
     </div>
-    <div style="margin-top:10px">
+    <div id="mSummary" style="margin-top:10px">
       <div class="mline"><span>إجمالي التكت اليومي (عدد × سعر)</span><b id="mTickTot"></b></div>
       <div class="mline"><span>إجمالي اليوم (كاش + انستا)</span><b id="mIncTot"></b></div>
       <div class="mline"><span>مصاريف من التكت (بتتخصم)</span><b id="mTickExp"></b></div>
@@ -2055,6 +2102,18 @@ function renderMDay(n) {
   $('mdNext').onclick = () => { mDay = mDay < n ? mDay + 1 : 1; renderMonth(); };
   $('mCash').oninput = e => { mSetInc(mDay, 'cash', Number(e.target.value) || 0); mRefreshSummary(); };
   $('mInsta').oninput = e => { mSetInc(mDay, 'insta', Number(e.target.value) || 0); mRefreshSummary(); };
+  // OK button beside each input of the day card
+  ['mCash', 'mInsta', 'mTCount', 'mTPrice', 'mdName', 'mdAmt'].forEach(id => {
+    const el = $(id); if (!el) return;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:6px;align-items:center';
+    el.parentNode.insertBefore(wrap, el);
+    wrap.appendChild(el); el.style.flex = '1'; el.style.minWidth = '0';
+    const ok = document.createElement('button');
+    ok.type = 'button'; ok.className = 'ghost small'; ok.textContent = 'OK';
+    ok.style.flex = 'none'; ok.dataset.okFor = id;
+    wrap.appendChild(ok);
+  });
   $('mToCash').onclick = async () => {
     const cur = mInc(mDay);
     if (cur.insta <= 0) { appToast('مفيش فلوس انستا تتحول'); return; }
@@ -2101,9 +2160,14 @@ function renderMonth() {
   const n = mDaysIn(mKey);
   if (mDay > n) mDay = n;
   renderMDay(n);
+  paintViews();
+  if (mView === 'report') {
+    $('mGridLegend').textContent = 'ملخص الشهر كله · اضغط على أي يوم عشان تفتحه';
+    $('mGrid').innerHTML = reportHtml(n);
+    return;
+  }
   const days = mView === 'day' ? [mDay] : Array.from({ length: n }, (_, i) => i + 1);
   $('mGridLegend').textContent = 'اضغط على الاسم لتفاصيله · Enter للي تحته · أحمر = تكت · أخضر = تبس';
-  $('mViewBtn').textContent = mView === 'day' ? '📅 الشهر كله' : '📆 اليوم بس';
   if (!monthPeople.length) { $('mGrid').innerHTML = '<div class="empty">ضيف الأسامي فوق، كل اسم مرة واحدة</div>'; return; }
   const head = `<tr><th class="sticky">الاسم</th>${days.map(d => `<th>${d}</th>`).join('')}<th>الشهر</th></tr>`;
   const totRow = `<tr class="mtot"><th class="sticky">مصاريف اليوم</th>${days.map(d => `<td id="mt-${d}">${mDayTotal(d) || ''}</td>`).join('')}<td id="mt-all"><b>${mMonthTotal()}</b></td></tr>`;
@@ -2117,7 +2181,8 @@ function mRefreshTotals() {
   const all = $('mt-all'); if (all) all.innerHTML = `<b>${mMonthTotal()}</b>`;
   renderMDay(n);
 }
-$('mViewBtn').onclick = () => { mView = mView === 'day' ? 'month' : 'day'; renderMonth(); };
+document.querySelectorAll('#mViews [data-mv]').forEach(b => b.onclick = () => { mView = b.dataset.mv; renderMonth(); });
+function paintViews() { document.querySelectorAll('#mViews [data-mv]').forEach(b => b.classList.toggle('on', b.dataset.mv === mView)); }
 // opening a month: today if it's the current month, otherwise day 1
 const mDefaultDay = () => { const n = new Date(); const tk = `${n.getFullYear()}-${pad(n.getMonth() + 1)}`; return mKey === tk ? n.getDate() : 1; };
 $('mMonth').onchange = () => { if ($('mMonth').value) { mKey = $('mMonth').value; mDay = mDefaultDay(); renderMonth(); } };
@@ -2175,6 +2240,7 @@ function paintLiveSrc() {
   b.dataset.pid = pid; b.dataset.md = d;
 }
 $('mLive').addEventListener('click', e => {
+  if (e.target.closest('#mLiveOk')) { closeAndShow(); return; }
   if (!e.target.closest('#mLiveSrc') || !liveInp) return;
   const pid = liveInp.dataset.mp, d = Number(liveInp.dataset.md);
   if (mGet(pid, d) > 0) mSetSrc(pid, d, mSrc(pid, d) === 'tip' ? 'ticket' : 'tip');
@@ -2195,7 +2261,7 @@ document.addEventListener('focusout', () => setTimeout(syncTyping, 120));
 function showLive(inp) {
   const p = monthPeople.find(x => x.id === inp.dataset.mp);
   placeLive();
-  liveBar.innerHTML = `<span>${esc(p ? p.name : '')} · يوم ${esc(inp.dataset.md)}</span><span class="v" id="mLiveV"></span><button type="button" class="ghost" id="mLiveSrc"></button>`;
+  liveBar.innerHTML = `<span>${esc(p ? p.name : '')} · يوم ${esc(inp.dataset.md)}</span><span class="v" id="mLiveV"></span><button type="button" class="ghost" id="mLiveSrc"></button><button type="button" id="mLiveOk">OK</button>`;
   $('mLiveV').textContent = inp.value || '0';
   liveInp = inp; paintLiveSrc();
   liveBar.style.display = 'flex';
@@ -2217,6 +2283,24 @@ $('mGrid').addEventListener('focusin', e => {
   if (t.dataset && t.dataset.mp) { showLive(t); setTimeout(() => { kbFollow(); }, 300); }
 });
 $('mGrid').addEventListener('focus', e => { if (e.target.dataset && e.target.dataset.mp) { e.target.dataset.prev = e.target.value; e.target.select(); } }, true);
+$('mDayBox').addEventListener('click', e => { if (e.target.closest('[data-ok-for]')) closeAndShow(); });
+$('mDayBox').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+  e.preventDefault();
+  if (e.target.id === 'mdName') { $('mdAmt').focus(); return; }
+  if (e.target.id === 'mdAmt') { $('mdAdd').click(); }
+  closeAndShow();
+});
+$('mName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('mAddPerson').click(); } });
+// Enter closes the keyboard in every input of the app (the month page has its own rules above)
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.isComposing) return;
+  const t = e.target;
+  if (!t || t.tagName !== 'INPUT' || t.type === 'checkbox' || t.type === 'radio' || t.type === 'button' || t.type === 'submit') return;
+  if (t.closest('#pageMonth')) return;
+  e.preventDefault();
+  t.blur();
+});
 $('mGrid').addEventListener('keydown', e => {
   if (e.key !== 'Enter' || !(e.target.dataset && e.target.dataset.mp)) return;
   e.preventDefault();
@@ -2240,6 +2324,8 @@ $('mGrid').addEventListener('focusout', () => setTimeout(() => {
   if (!(a && a.dataset && a.dataset.mp)) liveBar.style.display = 'none';
 }, 120));
 $('mGrid').addEventListener('click', async e => {
+  const rr = e.target.closest('[data-rday]');
+  if (rr) { mDay = Number(rr.dataset.rday); mView = 'day'; renderMonth(); return; }
   const pn = e.target.closest('[data-mperson]');
   if (pn) { openPersonPanel(pn.dataset.mperson); return; }
   const id = e.target.closest('[data-mdel]') ? e.target.closest('[data-mdel]').dataset.mdel : null;
@@ -2482,6 +2568,69 @@ $('importFile').addEventListener('change', e => {
 });
 
 
+// ---- Automatic daily backup (kept on this phone: the newest full copy only) ----
+const SNAP_KEEP = 1; // only the newest full snapshot is kept (it already contains everything)
+function snapDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('mokhtar-backups', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('snaps', { keyPath: 'date' });
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function snapRun(mode, fn) {
+  const db = await snapDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('snaps', mode);
+    const req = fn(tx.objectStore('snaps'));
+    tx.oncomplete = () => { db.close(); res(req ? req.result : undefined); };
+    tx.onerror = tx.onabort = () => { db.close(); rej(tx.error); };
+  });
+}
+const snapPut = rec => snapRun('readwrite', s => s.put(rec));
+const snapDel = date => snapRun('readwrite', s => s.delete(date));
+const snapGet = date => snapRun('readonly', s => s.get(date));
+const snapAll = () => snapRun('readonly', s => s.getAll());
+async function snapPrune() {
+  const keys = (await snapAll()).map(x => x.date).sort().reverse();
+  for (const d of keys.slice(SNAP_KEEP)) await snapDel(d);
+}
+async function autoBackupDaily() {
+  try {
+    const today = todayISO();
+    if (!(await snapGet(today))) {
+      const data = buildBackup();
+      await snapPut({ date: today, savedAt: data.savedAt, json: JSON.stringify(data) });
+    }
+    await snapPrune();
+  } catch (e) {}
+}
+// put a full backup back (same rules as import: bookings merge, the rest replaced)
+async function applyBackup(data) {
+  mergeBookings((data.bookings || []).map(normalize));
+  if (Array.isArray(data.people)) { people = data.people; savePeople(); }
+  if (Array.isArray(data.notes)) { notes = data.notes; saveNotes(); }
+  if (Array.isArray(data.gear)) { gear = data.gear; saveGear(); }
+  if (Array.isArray(data.sups)) sups = data.sups;
+  if (Array.isArray(data.supMoves)) supMoves = data.supMoves;
+  if (Array.isArray(data.golfClients)) golfClients = data.golfClients;
+  if (Array.isArray(data.monthPeople)) monthPeople = data.monthPeople;
+  if (data.monthData && typeof data.monthData === 'object') monthData = data.monthData;
+  if (data.monthIncome && typeof data.monthIncome === 'object') monthIncome = data.monthIncome;
+  if (data.monthExtra && typeof data.monthExtra === 'object') monthExtra = Object.assign({ src: {}, ticket: {}, disc: {} }, data.monthExtra);
+  saveMonth(); saveSupply();
+  persist(); render(); renderGear(); renderSupply();
+}
+async function renderSnapList() {
+  const box = $('snapList'); if (!box) return;
+  try {
+    const list = (await snapAll()).sort((a, b) => (a.date < b.date ? 1 : -1));
+    if (!list.length) { box.innerHTML = '<small>لسه مفيش نسخ تلقائية</small>'; return; }
+    box.innerHTML = list.map(x => `<div class="set-row"><div>${esc(x.date)}<small>${new Date(x.savedAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })} · ${Math.round(x.json.length / 1024)} كيلو</small></div>
+      <div style="display:flex;gap:6px"><button type="button" class="ghost small" data-snapr="${esc(x.date)}">استرجاع</button><button type="button" class="danger small" data-snapd="${esc(x.date)}">حذف</button></div></div>`).join('');
+  } catch (e) { box.innerHTML = '<small>النسخ التلقائية مش متاحة على المتصفح ده</small>'; }
+}
+
 // ---- Settings page ----
 function openSettings() {
   const pg = $('settingsPage');
@@ -2500,6 +2649,11 @@ function openSettings() {
       <div class="set-row"><div>استيراد نسخة<small>ارجع نسخة اتعملت قبل كده</small></div><button type="button" class="ghost small" id="setImport">استيراد</button></div>
     </div>
     <div class="panel">
+      <h2>🗂 النسخ التلقائية</h2>
+      <div class="set-row"><div>نسخة كل يوم تلقائي<small>بتتحفظ على الموبايل ده، وبيتحفظ آخر نسخة كاملة بس والقديم بيتمسح</small></div><button type="button" class="ghost small" id="snapNow">خد نسخة الآن</button></div>
+      <div id="snapList"><small>جاري التحميل...</small></div>
+    </div>
+    <div class="panel">
       <h2>🧹 تنظيف</h2>
       <div class="set-row"><div>امسح مسودة الحجز<small>لو فيه حجز اتكتب بالغلط وعايز تبدأ من أول</small></div><button type="button" class="ghost small" id="setDraft">امسح</button></div>
       <div class="set-row"><div>اقفل التطبيق دلوقتي<small>هيطلب الباسورد تاني</small></div><button type="button" class="ghost small" id="setLock">🔒 قفل</button></div>
@@ -2514,6 +2668,26 @@ function openSettings() {
   window.scrollTo({ top: 0 });
 
   $('setClose').onclick = () => { pg.style.display = 'none'; };
+  $('snapNow').onclick = async () => {
+    try {
+      const data = buildBackup();
+      await snapPut({ date: todayISO(), savedAt: data.savedAt, json: JSON.stringify(data) });
+      await snapPrune(); appToast('اتعملت نسخة ✅'); renderSnapList();
+    } catch (e) { appToast('متعرفش تحفظ النسخة على المتصفح ده'); }
+  };
+  pg.onclick = async e => {
+    const r = e.target.closest('[data-snapr]'), d = e.target.closest('[data-snapd]');
+    if (r) {
+      const rec = await snapGet(r.dataset.snapr);
+      if (!rec) return;
+      if (!(await appConfirm(`ترجع نسخة ${rec.date}؟ الحجوزات هتتدمج، والباقي هيتبدل بالنسخة دي.`))) return;
+      try { await applyBackup(JSON.parse(rec.json)); appToast('اتسترجعت النسخة ✅'); } catch (err) { appToast('النسخة دي مش صالحة'); }
+    } else if (d) {
+      if (!(await appConfirm(`تمسح نسخة ${d.dataset.snapd}؟`))) return;
+      await snapDel(d.dataset.snapd); renderSnapList();
+    }
+  };
+  renderSnapList();
   $('setExport').onclick = () => $('exportBtn').click();
   $('setImport').onclick = () => $('importBtn').click();
   $('setDraft').onclick = async () => {
@@ -2676,6 +2850,8 @@ $('gearReset').onclick = async () => {
 resetForm();
 restoreDraft();
 render();
+autoBackupDaily();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) autoBackupDaily(); });
 </script>
 <script>
 // Offline support once installed (needs https, e.g. GitHub Pages)
