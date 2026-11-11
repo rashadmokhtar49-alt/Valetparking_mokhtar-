@@ -344,6 +344,9 @@ body.typing nav.pagebar{display:none}
 .rtools{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:10px}
 .ralert{background:var(--alert-bg);border:1px solid var(--warn-text);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--warn-text)}
 .ralert b{display:block;margin-bottom:4px}
+#settleFab{position:fixed;left:14px;bottom:18px;z-index:60;border-radius:999px;padding:12px 18px;background:var(--gold);color:var(--bg);border:0;font-weight:bold;font-size:14px;box-shadow:0 6px 18px var(--shadow)}
+.settle-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);gap:10px}
+.settle-row b{font-size:16px}
 </style>
 <script>try{var t=localStorage.getItem('mokhtar_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 </head>
@@ -569,6 +572,7 @@ body.typing nav.pagebar{display:none}
 <div id="settingsPage"></div>
 <div id="pageMonth" style="display:none">
   <div id="mLive" style="display:none"></div>
+  <button type="button" id="settleFab">📊 التسوية</button>
   <div class="panel" id="mDayBox"></div>
   <div class="panel">
     <div class="mh">
@@ -673,7 +677,7 @@ $('fab').onclick = () => {
 };
 
 // ---- Storage ----
-function persist() {
+function persist() { scheduleSnap();
   try {
     localStorage.setItem(KEY, JSON.stringify(bookings));
     storageOk = true;
@@ -1092,9 +1096,10 @@ function renderDash() {
 }
 function renderBackupAlert() {
   const last = Number(localStorage.getItem('mokhtar_last_backup') || 0);
-  const stale = !last || (Date.now() - last) > 7 * 86400000;
-  $('backupAlert').innerHTML = (bookings.length && stale)
-    ? `<div class="alert">💾 ${last ? 'مفيش نسخة احتياطية من أكتر من أسبوع' : 'لسه متعملتش نسخة احتياطية'}.
+  const lastDay = last ? new Date(last).toLocaleDateString('en-CA') : '';
+  const stale = lastDay !== todayISO(); // reminder every day until a backup is exported today
+  $('backupAlert').innerHTML = stale
+    ? `<div class="alert">💾 ${last ? 'لسه متعملتش نسخة احتياطية النهارده' : 'لسه متعملتش نسخة احتياطية خالص'}.
        <button type="button" class="ghost small" id="goBackup" style="margin-top:6px">📤 اعمل نسخة دلوقتي</button></div>`
     : '';
   const g = $('goBackup');
@@ -1229,7 +1234,7 @@ function loadPeople() {
   // first time: start the roster from people already in past bookings
   return staffDirectory().map((d, i) => ({ id: 'p' + Date.now() + i, name: d.name, phone: d.phone }));
 }
-function savePeople() { try { localStorage.setItem(PEOPLE_KEY, JSON.stringify(people)); } catch (e) {} }
+function savePeople() { scheduleSnap(); try { localStorage.setItem(PEOPLE_KEY, JSON.stringify(people)); } catch (e) {} }
 const samePerson = (p, s) => {
   const a = phoneKey(p.phone), b = phoneKey(s.phone);
   return a && b ? a === b : (p.name || '').trim() === (s.name || '').trim();
@@ -1297,7 +1302,7 @@ const NOTES_KEY = 'mokhtar_notes';
 let notes = (() => {
   try { const v = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
 })();
-function saveNotes() { try { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); } catch (e) {} }
+function saveNotes() { scheduleSnap(); try { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); } catch (e) {} }
 const eventsOn = date => bookings.filter(b => b.date === date);
 function evLabel(b) { return `${b.venue || '-'} · ${colloquial(b.time)} · ${b.type}`; }
 // asks which event (or the whole day) the note belongs to. Resolves: event id string, 'day', or undefined if cancelled
@@ -1441,7 +1446,7 @@ let showSupArch = false;
 const isSupArchived = id => { const st = supStats(id); return (st.count > 0 || st.paid > 0) && st.cost > 0 && st.owed <= 0; };
 let showSupList = false;
 const newId = p => p + Date.now() + Math.random().toString(36).slice(2, 6);
-function saveSupply() {
+function saveSupply() { scheduleSnap();
   try {
     localStorage.setItem('mokhtar_suppliers', JSON.stringify(sups));
     localStorage.setItem('mokhtar_supply_moves', JSON.stringify(supMoves));
@@ -1920,7 +1925,7 @@ let mDay = new Date().getDate();
 let mView = 'day'; // 'day' = one day column (default), 'month' = all days
 const DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 const MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-function saveMonth() {
+function saveMonth() { scheduleSnap();
   try { localStorage.setItem(MP_KEY, JSON.stringify(monthPeople)); localStorage.setItem(MD_KEY, JSON.stringify(monthData)); localStorage.setItem(MI_KEY, JSON.stringify(monthIncome)); localStorage.setItem(MX_KEY, JSON.stringify(monthExtra)); } catch (e) {}
 }
 const mDaysIn = key => { const [y, m] = key.split('-').map(Number); return new Date(y, m, 0).getDate(); };
@@ -1979,6 +1984,17 @@ const gateCount = (d, g) => {
 };
 const gateTotal = d => gateCount(d, 1) + gateCount(d, 2);
 const gateHasStop = d => [1, 2].some(g => { const x = gateGet(d, g).stop; return x !== undefined && x !== ''; });
+// ticket money split (fixed) and the daily tips box (starts on TIP_START)
+const UNI_PCT = 40, CO_PCT = 60, TIP_START = '2026-11-11';
+const dayKeyOf = d => `${mKey}-${pad(d)}`;
+const tipOn = d => dayKeyOf(d) >= TIP_START;
+const tipIn = d => Number((((monthExtra.tipIn || {})[mKey]) || {})[d]) || 0;
+function setTipIn(d, v) {
+  monthExtra.tipIn = monthExtra.tipIn || {};
+  const t = monthExtra.tipIn; t[mKey] = t[mKey] || {};
+  if (v > 0) t[mKey][d] = v; else delete t[mKey][d];
+  saveMonth();
+}
 const mDiscs = d => (((monthExtra.disc || {})[mKey]) || {})[d] || [];
 function mSetDiscs(d, arr) {
   const x = monthExtra.disc; x[mKey] = x[mKey] || {};
@@ -2093,6 +2109,7 @@ function reportHtml(n) {
       <div><span>خصومات (معلومة)</span><b>${money(T.disc)}</b></div>
       <div><span>الباقي</span><b style="color:${T.left < 0 ? 'var(--warn-text)' : 'var(--ok)'}">${money(T.left)}</b></div>
     </div>
+    ${splitHtml(n, T)}
     ${compareHtml()}
     <div style="margin-top:14px"><b>الأيام</b></div>
     <div class="rscroll"><table class="rtable">
@@ -2141,6 +2158,11 @@ function alertsHtml(n) {
   monthPeople.forEach(p => { const st = maxAbsStreak(p.id); if (st >= 3) items.push(`${esc(p.name)} غاب ${st} أيام متتالية`); });
   return items.length ? `<div class="ralert"><b>⚠️ تنبيهات</b>${items.map(x => `<div>• ${x}</div>`).join('')}</div>` : '';
 }
+function splitHtml(n, T) {
+  let tipLeft = 0;
+  for (let d = 1; d <= n; d++) if (tipOn(d)) tipLeft += tipIn(d) - dayFigures(d).tipExp;
+  return `<div class="kpis" style="margin-top:10px"><div><span>🎓 الجامعة ${UNI_PCT}%</span><b>${money(T.tot * UNI_PCT / 100)}</b></div><div><span>🏢 الشركة ${CO_PCT}%</span><b>${money(T.tot * CO_PCT / 100)}</b></div><div><span>💰 التبس المتبقي</span><b style="color:${tipLeft < 0 ? 'var(--warn-text)' : 'var(--ok)'}">${money(tipLeft)}</b></div></div>`;
+}
 function compareHtml() {
   const cur = monthSums(mKey), pk = prevMonthKey(), prev = monthSums(pk);
   const row = (label, a, b) => {
@@ -2173,7 +2195,7 @@ function receiptText(d) {
     const en = gateGet(d, g).stop;
     return `🚪 بوابة ${g}: من ${gateStart(d, g) === '' ? '-' : gateStart(d, g)} إلى ${en === undefined || en === '' ? '-' : en} (${gateCount(d, g)} تكت)`;
   }).join('\n');
-  return `🧾 إيصال يوم ${d} ${MONTHS_AR[m - 1]} ${y}\n💵 كاش: ${money(f.cash)}\n📱 انستا: ${money(f.insta)}\nإجمالي اليوم: ${money(f.tot)}\n🎫 التكت: ${f.tkCount} × ${mPriceOn(d)} = ${money(f.tkTot)}\n${gates}\nمصاريف تكت: ${money(f.tkExp)}\nمصاريف تبس: ${money(f.tipExp)}\nخصومات: ${money(f.disc)}\nالباقي: ${money(f.left)}\n🚫 غياب: ${f.absNames.join('، ') || 'مفيش'}`;
+  return `🧾 إيصال يوم ${d} ${MONTHS_AR[m - 1]} ${y}\n💵 كاش: ${money(f.cash)}\n📱 انستا: ${money(f.insta)}\nإجمالي اليوم: ${money(f.tot)}\n🎓 الجامعة ${UNI_PCT}%: ${money(f.tot * UNI_PCT / 100)}\n🏢 الشركة ${CO_PCT}%: ${money(f.tot * CO_PCT / 100)}\n${tipOn(d) ? `💰 التبس: ${money(tipIn(d))} − ${money(f.tipExp)} = ${money(tipIn(d) - f.tipExp)}\n` : ''}🎫 التكت: ${f.tkCount} × ${mPriceOn(d)} = ${money(f.tkTot)}\n${gates}\nمصاريف تكت: ${money(f.tkExp)}\nمصاريف تبس: ${money(f.tipExp)}\nخصومات: ${money(f.disc)}\nالباقي: ${money(f.left)}\n🚫 غياب: ${f.absNames.join('، ') || 'مفيش'}`;
 }
 function shareText(text) { window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank'); }
 function setTheme(v) {
@@ -2184,6 +2206,126 @@ function setTheme(v) {
 function paintTheme() {
   let cur = 'auto'; try { cur = localStorage.getItem('mokhtar_theme') || 'auto'; } catch (e) {}
   document.querySelectorAll('[data-theme-set]').forEach(b => b.classList.toggle('on', b.dataset.themeSet === cur));
+}
+// ---- settlement: day / week / month. University 40% (net), company 60% minus ticket expenses ----
+let sState = { type: 'month', i: 1 };
+function setSType(t) { sState.type = t; sState.i = t === 'day' ? mDay : t === 'week' ? Math.ceil(mDay / 7) : 1; }
+function settleRange() {
+  const n = mDaysIn(mKey);
+  if (sState.type === 'day') return [sState.i, sState.i];
+  if (sState.type === 'week') return [(sState.i - 1) * 7 + 1, Math.min(sState.i * 7, n)];
+  return [1, n];
+}
+function settleMax() { const n = mDaysIn(mKey); return sState.type === 'day' ? n : sState.type === 'week' ? Math.ceil(n / 7) : 1; }
+function settleNums() {
+  const [a, b] = settleRange();
+  let tot = 0, exp = 0;
+  for (let d = a; d <= b; d++) { const f = dayFigures(d); tot += f.tot; exp += f.tkExp; }
+  const [y, m] = mKey.split('-').map(Number), mon = MONTHS_AR[m - 1];
+  const label = sState.type === 'month' ? `شهر ${mon} ${y}`
+    : sState.type === 'week' ? `أسبوع ${sState.i} (من ${a} لـ ${b} ${mon})`
+    : `يوم ${a} ${mon} ${y}`;
+  return { tot, uni: tot * UNI_PCT / 100, co: tot * CO_PCT / 100, exp, net: tot * CO_PCT / 100 - exp, label };
+}
+function settleHtml() {
+  const x = settleNums();
+  const tabs = `<div style="display:flex;gap:6px;justify-content:center;margin-bottom:12px">${[['day', 'يومية'], ['week', 'أسبوعية'], ['month', 'شهرية']].map(([t, l]) => `<button type="button" data-stype="${t}" class="${sState.type === t ? 'on' : 'ghost'}" style="flex:1">${l}</button>`).join('')}</div>`;
+  const nav = sState.type === 'month' ? '' : `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px"><button type="button" class="ghost small" data-snav="-1">‹ السابق</button><b style="font-size:13px">${x.label}</b><button type="button" class="ghost small" data-snav="1">التالي ›</button></div>`;
+  return `${tabs}${nav}
+    <div class="app-modal-msg"><b>📊 التسوية</b>${sState.type === 'month' ? `<br><small>${x.label}</small>` : ''}</div>
+    <div class="settle-row"><span>إجمالي فلوس التكت (قبل أي مصروفات)</span><b>${money(x.tot)}</b></div>
+    <div class="settle-row"><span>🎓 الجامعة ${UNI_PCT}% (صافي، بدون مصروفات)</span><b>${money(x.uni)}</b></div>
+    <div class="settle-row"><span>🏢 الشركة ${CO_PCT}%</span><b>${money(x.co)}</b></div>
+    <div class="settle-row"><span>− مصاريف العمال المصروفة من التكت</span><b>${money(x.exp)}</b></div>
+    <div class="settle-row"><span>صافي الشركة</span><b style="color:${x.net < 0 ? 'var(--warn-text)' : 'var(--ok)'}">${money(x.net)}</b></div>
+    <div class="app-modal-btns" style="margin-top:14px"><button type="button" class="ghost" id="settleWa">🖼️ صورة واتساب</button><button type="button" data-v="0">إغلاق</button></div>`;
+}
+function settleText() {
+  const x = settleNums();
+  return `📊 تسوية ${x.label}\nإجمالي فلوس التكت: ${money(x.tot)}\n🎓 الجامعة ${UNI_PCT}% (صافي): ${money(x.uni)}\n🏢 الشركة ${CO_PCT}%: ${money(x.co)}\n− مصاريف العمال من التكت: ${money(x.exp)}\n💼 صافي الشركة: ${money(x.net)}`;
+}
+// ---- settlement as a white-page image with the Mokhtar logo in the background ----
+function loadLogoFaded() {
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => {
+      try {
+        // turn the black background of the logo transparent (alpha = brightest channel)
+        const c = document.createElement('canvas');
+        c.width = im.width; c.height = im.height;
+        const g = c.getContext('2d'); g.drawImage(im, 0, 0);
+        const d = g.getImageData(0, 0, c.width, c.height), p = d.data;
+        for (let i = 0; i < p.length; i += 4) { const m = Math.max(p[i], p[i + 1], p[i + 2]); p[i + 3] = Math.max(0, Math.min(255, (m - 90) * 255 / 165)); }
+        g.putImageData(d, 0, 0);
+        res(c);
+      } catch (e) { res(null); }
+    };
+    im.onerror = () => res(null);
+    im.src = 'icon-512.png';
+  });
+}
+async function settleCanvasBlob() {
+  const x = settleNums(), W = 1240, H = 1754;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const GOLD = '#9c7a12', INK = '#1b1b1b', MUTED = '#6b6b6b';
+  const F = (sz, w = 'normal') => `${w} ${sz}px Tahoma, Arial, sans-serif`;
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+  // logo in the background (faded)
+  const logo = await loadLogoFaded();
+  g.save(); g.globalAlpha = 0.22;
+  if (logo) {
+    const lw = 980, lh = lw * logo.height / logo.width;
+    g.drawImage(logo, (W - lw) / 2, (H - lh) / 2, lw, lh);
+  } else {
+    g.translate(W / 2, H / 2); g.rotate(-0.5);
+    g.fillStyle = GOLD; g.font = F(150, 'bold'); g.textAlign = 'center'; g.fillText('مختار فاليه', 0, 0);
+  }
+  g.restore();
+  // header
+  g.direction = 'ltr'; g.textAlign = 'center';
+  g.fillStyle = INK; g.font = F(56, 'bold'); g.fillText('VALET PARKING MOKHTAR', W / 2, 200);
+  g.fillStyle = MUTED; g.font = F(34); g.fillText('مختار فاليه · القاهرة', W / 2, 255);
+  // title
+  g.direction = 'rtl';
+  g.fillStyle = INK; g.font = F(56, 'bold'); g.fillText('تسوية', W / 2, 400);
+  g.fillStyle = MUTED; g.font = F(34); g.fillText(x.label, W / 2, 455);
+  // figures
+  const rows = [
+    ['إجمالي فلوس التكت (قبل أي مصروفات)', money(x.tot)],
+    [`الجامعة ${UNI_PCT}% (صافي، بدون مصروفات)`, money(x.uni)],
+    [`الشركة ${CO_PCT}%`, money(x.co)],
+    ['− مصاريف العمال المصروفة من التكت', money(x.exp)],
+    ['صافي الشركة', money(x.net)]
+  ];
+  let y = 580;
+  rows.forEach(([l, v], i) => {
+    g.fillStyle = INK; g.font = F(38, i === 4 ? 'bold' : 'normal');
+    g.textAlign = 'right'; g.fillText(l, W - 110, y);
+    g.textAlign = 'left'; g.fillText(v, 110, y);
+    g.fillStyle = '#dcd9d0'; g.fillRect(90, y + 30, W - 180, 2);
+    y += 120;
+  });
+  // footer
+  g.textAlign = 'center';
+  g.fillStyle = MUTED; g.font = F(24);
+  g.fillText('صادر من برنامج الحجوزات · ' + new Date().toLocaleString('ar-EG'), W / 2, H - 90);
+  return new Promise(res => c.toBlob(res, 'image/png'));
+}
+async function settleImg() {
+  try {
+    const blob = await settleCanvasBlob();
+    const name = `mokhtar-settlement-${todayISO()}-${sState.type}.png`;
+    const file = new File([blob], name, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: 'تسوية' }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    // the browser can't send an image straight from the page: send the text summary to WhatsApp instead
+    if (/Android|iPhone|iPad/i.test(navigator.userAgent)) { shareText(settleText()); return; }
+    downloadFile(name, 'image/png', blob);
+    appToast('اتحملت صورة التسوية، ابعتها من الملفات على واتساب');
+  } catch (e) { appToast('متعرفش تعمل الصورة على المتصفح ده'); }
 }
 function closeAndShow() {
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -2201,6 +2343,7 @@ function renderMDay(n) {
   const discs = mDiscs(mDay);
   const discRows = discs.map(x => `<div class="drow"><div class="d-main"><b>${esc(x.name)}</b></div><div class="d-side"><b>${money(Number(x.amount) || 0)}</b> <button type="button" class="danger small" data-dcdel="${x.id}">✕</button></div></div>`).join('');
   const inc = mInc(mDay), tk = mTicket(mDay);
+  const tipBoxHtml = tipOn(mDay) ? `<div class="inc-row"><div><label>💰 فلوس التبس اليومية</label><input id="mTipIn" type="number" inputmode="numeric" min="0" placeholder="0" value="${tipIn(mDay) || ''}"></div></div><div class="mline"><span>الباقي من التبس</span><b id="mTipBal"></b></div>` : '';
   $('mDayBox').innerHTML = `<div class="sec-h">
       <button type="button" class="ghost small" id="mdPrev">›</button>
       <b>${DAYS_AR[dt.getDay()]} ${mDay} ${MONTHS_AR[m - 1]}</b>
@@ -2213,12 +2356,15 @@ function renderMDay(n) {
     <div class="inc-row">
       <div><label>🎫 عدد التكت <small>(السعر ${mPriceOn(mDay)} ج.م)</small></label><input id="mTCount" type="number" inputmode="numeric" min="0" placeholder="0" value="${tk.count || ''}"></div>
     </div>
+    ${tipBoxHtml}
     <div style="margin-top:12px"><b>🎟 السريال</b> <small>اكتب رقم السريال اللي وقفت عنده</small></div>
     ${[1, 2].map(g => `<div class="inc-row"><div><label>🚪 بوابة ${g} · بدأت من سريال</label><input data-gs="${g}" data-gf="start" type="number" inputmode="numeric" placeholder="-" value="${gateStart(mDay, g)}"></div><div><label>وقفت عند سريال</label><input data-gs="${g}" data-gf="stop" type="number" inputmode="numeric" placeholder="-" value="${gateGet(mDay, g).stop ?? ''}"></div></div><div class="mline"><span>قطعت من بوابة ${g}</span><b id="gc${g}">${gateCount(mDay, g)} تكت</b></div>`).join('')}
     <div class="mline"><span>إجمالي التكت من البوابتين</span><b id="mGateTot">${gateTotal(mDay)} تكت</b></div>
     <div id="mSummary" style="margin-top:10px"><div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button type="button" class="ghost small" id="mReceipt">🧾 إيصال اليوم واتساب</button></div>
       <div class="mline"><span>إجمالي التكت اليومي (عدد × سعر)</span><b id="mTickTot"></b></div>
       <div class="mline"><span>إجمالي اليوم (كاش + انستا)</span><b id="mIncTot"></b></div>
+      <div class="mline"><span>🎓 الجامعة (${UNI_PCT}%)</span><b id="mUni"></b></div>
+      <div class="mline"><span>🏢 الشركة (${CO_PCT}%)</span><b id="mCo"></b></div>
       <div class="mline"><span>مصاريف من التكت (بتتخصم)</span><b id="mTickExp"></b></div>
       <div class="mline"><span>مصاريف من التبس (مش بتتخصم)</span><b id="mTipExp"></b></div>
       <div class="mline"><span>الخصومات (معلومة بس، مش بتتخصم)</span><b id="mDiscTot"></b></div>
@@ -2240,6 +2386,23 @@ function renderMDay(n) {
   $('mdPrev').onclick = () => { mDay = mDay > 1 ? mDay - 1 : n; renderMonth(); };
   $('mdNext').onclick = () => { mDay = mDay < n ? mDay + 1 : 1; renderMonth(); };
   $('mReceipt').onclick = () => shareText(receiptText(mDay));
+$('settleFab').onclick = () => {
+  setSType(sState.type || 'month');
+  const ov = document.createElement('div');
+  ov.className = 'app-modal-bg';
+  ov.innerHTML = '<div class="app-modal person-modal"></div>';
+  const draw = () => { ov.querySelector('.app-modal').innerHTML = settleHtml(); };
+  ov.addEventListener('click', e => {
+    const t = e.target.closest('[data-stype]');
+    if (t) { setSType(t.dataset.stype); draw(); return; }
+    const nv = e.target.closest('[data-snav]');
+    if (nv) { sState.i = Math.min(settleMax(), Math.max(1, sState.i + Number(nv.dataset.snav))); draw(); return; }
+    if (e.target.closest('#settleWa')) { settleImg(); return; }
+    if (e.target === ov || e.target.closest('button[data-v]')) ov.remove();
+  });
+  draw();
+  document.body.appendChild(ov);
+};
   $('mAllPresent').onclick = () => { monthPeople.forEach(p => mSetAbs(p.id, mDay, false)); renderMDay(n); mRefreshTotals(); };
   // money typed -> tickets are worked out from the total
   const moneyChanged = () => {
@@ -2250,7 +2413,7 @@ function renderMDay(n) {
   $('mCash').oninput = e => { mSetInc(mDay, 'cash', Number(e.target.value) || 0); moneyChanged(); };
   $('mInsta').oninput = e => { mSetInc(mDay, 'insta', Number(e.target.value) || 0); moneyChanged(); };
   // OK button beside each input of the day card
-  ['mCash', 'mInsta', 'mTCount', 'mdName', 'mdAmt'].forEach(id => {
+  ['mCash', 'mInsta', 'mTCount', 'mTipIn', 'mdName', 'mdAmt'].forEach(id => {
     const el = $(id); if (!el) return;
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;gap:6px;align-items:center';
@@ -2305,6 +2468,8 @@ function mRefreshSummary() {
   $('mDiscTot').textContent = money(disc);
   $('mLeft').textContent = money(left);
   $('mLeft').style.color = left < 0 ? 'var(--warn-text)' : 'var(--ok)';
+  if ($('mUni')) { $('mUni').textContent = money(tot * UNI_PCT / 100); $('mCo').textContent = money(tot * CO_PCT / 100); }
+  if ($('mTipBal')) { const tl = tipIn(mDay) - tip; $('mTipBal').textContent = money(tl); $('mTipBal').style.color = tl < 0 ? 'var(--warn-text)' : 'var(--ok)'; }
   const ab = monthPeople.filter(p => mAbs(p.id, mDay));
   if ($('mAbsTot')) $('mAbsTot').textContent = ab.length ? ab.map(p => p.name).join('، ') : 'مفيش';
 }
@@ -2444,6 +2609,7 @@ $('mDayBox').addEventListener('click', e => {
   if (ab) { mSetAbs(ab.dataset.abs, mDay, !mAbs(ab.dataset.abs, mDay)); renderMDay(mDaysIn(mKey)); mRefreshTotals(); }
 });
 $('mDayBox').addEventListener('input', e => {
+  if (e.target.id === 'mTipIn') { setTipIn(mDay, Number(e.target.value) || 0); mRefreshSummary(); return; }
   const g = Number(e.target.dataset.gs); if (!g) return;
   const v = e.target.value === '' ? '' : Number(e.target.value);
   setGate(mDay, g, e.target.dataset.gf, v);
@@ -2767,13 +2933,14 @@ async function snapPrune() {
   const keys = (await snapAll()).map(x => x.date).sort().reverse();
   for (const d of keys.slice(SNAP_KEEP)) await snapDel(d);
 }
+// always refreshes today's copy (overwrites it), and keeps only the newest one
+var snapTimer = null;
+function scheduleSnap() { clearTimeout(snapTimer); snapTimer = setTimeout(autoBackupDaily, 2000); }
 async function autoBackupDaily() {
   try {
     const today = todayISO();
-    if (!(await snapGet(today))) {
-      const data = buildBackup();
-      await snapPut({ date: today, savedAt: data.savedAt, json: JSON.stringify(data) });
-    }
+    const data = buildBackup();
+    await snapPut({ date: today, savedAt: data.savedAt, json: JSON.stringify(data) });
     await snapPrune();
   } catch (e) {}
 }
@@ -2916,23 +3083,31 @@ const isUnlocked = () => { try { return sessionStorage.getItem('mokhtar_unlocked
 function renderDots() { document.querySelectorAll('#lockDots i').forEach((d, i) => d.classList.toggle('on', i < pinBuf.length)); }
 function showLock() { pinBuf = ''; renderDots(); $('lockMsg').textContent = ''; $('lock').style.display = 'flex'; }
 let pinAudio = null, pinBusy = false;
-function keyClick() {
+function keyClick(v) {
   try {
     pinAudio = pinAudio || new (window.AudioContext || window.webkitAudioContext)();
     if (pinAudio.state === 'suspended') pinAudio.resume();
-    const t = pinAudio.currentTime, o = pinAudio.createOscillator(), g = pinAudio.createGain();
-    o.type = 'square';
-    o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(700, t + 0.03);
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
-    o.connect(g); g.connect(pinAudio.destination); o.start(t); o.stop(t + 0.05);
+    const t = pinAudio.currentTime;
+    // soft guitar pluck: one string note per digit, a lower note for backspace
+    const notes = [392, 294, 330, 370, 415, 440, 494, 523, 587, 659];
+    const f = v === 'back' ? 196 : (notes[Number(v)] || 392);
+    [[1, 0.1, 1.1], [2, 0.035, 0.45], [3, 0.012, 0.2]].forEach(([h, vol, dur]) => {
+      const o = pinAudio.createOscillator(), g = pinAudio.createGain();
+      o.type = 'sine'; o.frequency.value = f * h;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(pinAudio.destination);
+      o.start(t); o.stop(t + dur + 0.05);
+    });
   } catch (e) {}
-  if (navigator.vibrate) navigator.vibrate(8);
+  if (navigator.vibrate) navigator.vibrate(6);
 }
 function pressKey(v) {
   if (pinBusy) return;
   if (v === 'back') { if (!pinBuf.length) return; pinBuf = pinBuf.slice(0, -1); }
   else { if (pinBuf.length >= 4) return; pinBuf += v; }
-  keyClick();
+  keyClick(v);
   $('lockMsg').textContent = '';
   renderDots();
   if (pinBuf.length !== 4) return;
@@ -2988,7 +3163,7 @@ if (localStorage.getItem('mokhtar_gear_v') !== '3') {
   });
   try { localStorage.setItem(GEAR_KEY, JSON.stringify(gear)); localStorage.setItem('mokhtar_gear_v', '3'); } catch (e) {}
 }
-function saveGear() {
+function saveGear() { scheduleSnap();
   try { localStorage.setItem(GEAR_KEY, JSON.stringify(gear)); } catch (e) {}
 }
 function renderGear() {
@@ -3074,7 +3249,8 @@ resetForm();
 restoreDraft();
 render();
 autoBackupDaily();
-document.addEventListener('visibilitychange', () => { if (!document.hidden) autoBackupDaily(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) autoBackupDaily(); else autoBackupDaily(); });
+window.addEventListener('pagehide', autoBackupDaily);
 </script>
 <script>
 // Offline support once installed (needs https, e.g. GitHub Pages)
