@@ -347,6 +347,11 @@ body.typing nav.pagebar{display:none}
 #settleFab{position:fixed;left:14px;bottom:18px;z-index:60;border-radius:999px;padding:12px 18px;background:var(--gold);color:var(--bg);border:0;font-weight:bold;font-size:14px;box-shadow:0 6px 18px var(--shadow)}
 .settle-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);gap:10px}
 .settle-row b{font-size:16px}
+.jchips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.jchip{padding:8px 12px;border-radius:20px;border:1px solid var(--line);background:var(--chip);font-size:14px;color:inherit}
+.jchip.on{background:var(--gold);color:#000;border-color:var(--gold)}
+.job-card{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.job-card h3{margin:0 0 4px;font-size:16px}
 </style>
 <script>try{var t=localStorage.getItem('mokhtar_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 </head>
@@ -491,6 +496,7 @@ body.typing nav.pagebar{display:none}
         <input id="rosterPhone" placeholder="الرقم">
         <button id="rosterAdd" type="button">إضافة</button>
       </div>
+      <button type="button" class="ghost" id="rosterImport" style="width:100%;margin-top:8px">📇 رفع العمال من جهات الاتصال</button>
       <div id="rosterList" style="margin-top:10px"></div>
     </div>
   </div>
@@ -1248,15 +1254,21 @@ function renderTeam() {
   const evs = dayEvents();
   let html = '';
   if (!evs.length) html = '<p style="color:var(--muted)">مفيش مناسبات في اليوم ده</p>';
-  else if (!people.length) html = '<p style="color:var(--muted)">ضيف عمال من القايمة تحت الأول</p>';
-  else {
-    html = `<div class="tm-head"><span style="flex:1;text-align:right">العامل</span>${evs.map(e =>
-      `<span>${esc(e.venue || '-')}<small>${esc(colloquial(e.time))}</small></span>`).join('')}</div>`;
-    html += people.map((p, i) => `<div class="tm-row"><span style="color:var(--gold);font-weight:bold;min-width:22px">${i + 1}</span><b>${esc(p.name) || '-'}</b>${evs.map(e => {
-      const on = (e.staff || []).some(s => samePerson(p, s));
-      return `<button type="button" class="sq${on ? ' on' : ''}" data-p="${esc(p.id)}" data-e="${esc(String(e.id))}">${on ? '✓' : ''}</button>`;
-    }).join('')}</div>`).join('');
-  }
+  else if (!people.length) html = '<p style="color:var(--muted)">ارفع العمال من جهات الاتصال أو ضيفهم تحت الأول</p>';
+  else html = evs.map(e => {
+    const picked = e.staff || [];
+    const chips = picked.map((s, i) => `<button type="button" class="jchip on" data-ue="${esc(String(e.id))}" data-ui="${i}">✓ ${esc(s.name) || '-'} ✕</button>`).join('');
+    const opts = people.filter(p => !picked.some(s => samePerson(p, s))).map(p => {
+      const elsewhere = dayEvents().some(ev => ev !== e && (ev.staff || []).some(s => samePerson(p, s)));
+      return `<option value="${esc(p.id)}">${esc(p.name) || '-'}${elsewhere ? ' (في مناسبة تانية)' : ''}</option>`;
+    }).join('');
+    return `<div class="job-card">
+      <h3>${esc(e.venue || '-')}</h3>
+      <small>${esc(colloquial(e.time))} · ${esc(e.client || '')} · محتاج ${Number(e.valetCount) || 0} · اتختار ${picked.length}</small>
+      <div class="jchips">${chips || '<small style="color:var(--muted)">مفيش عمال لسه</small>'}</div>
+      <select class="addsel" data-ue="${esc(String(e.id))}" style="width:100%"><option value="">➕ ضيف عامل من القايمة...</option>${opts}</select>
+    </div>`;
+  }).join('');
   $('teamGrid').innerHTML = html;
   $('rosterList').innerHTML = people.length
     ? `<div style="color:var(--muted);font-size:13px;margin-bottom:6px">عدد العمال: ${people.length}</div>` + people.map((p, i) => `<div class="staffrow" style="grid-template-columns:auto 1fr 1fr auto auto"><b style="color:var(--gold);align-self:center">${i + 1}</b><span>${esc(p.name)}</span><span style="direction:ltr">${esc(p.phone)}</span><button type="button" class="ghost small" data-ep="${esc(p.id)}">✏️</button><button type="button" class="danger small" data-dp="${esc(p.id)}">✕</button></div>`).join('')
@@ -1264,17 +1276,68 @@ function renderTeam() {
 }
 $('teamDate').onchange = renderTeam;
 $('teamGrid').addEventListener('click', e => {
-  const sq = e.target.closest('.sq');
-  if (!sq) return;
-  const p = people.find(x => x.id === sq.dataset.p);
-  const target = bookings.find(b => String(b.id) === sq.dataset.e);
-  if (!p || !target) return;
-  const was = (target.staff || []).some(s => samePerson(p, s));
-  // one event per person per day: remove from every event of that day first
-  dayEvents().forEach(ev => { ev.staff = (ev.staff || []).filter(s => !samePerson(p, s)); });
-  if (!was) target.staff = [...(target.staff || []), { name: p.name, phone: p.phone, paid: 0 }];
+  const rm = e.target.closest('[data-ui]');
+  if (!rm) return;
+  const t = bookings.find(b => String(b.id) === rm.dataset.ue);
+  if (!t) return;
+  t.staff = (t.staff || []).filter((_, i) => i !== Number(rm.dataset.ui));
   persist(); renderTeam(); render();
 });
+$('teamGrid').addEventListener('change', async e => {
+  const sel = e.target.closest('select.addsel');
+  if (!sel || !sel.value) return;
+  const p = people.find(x => x.id === sel.value);
+  const target = bookings.find(b => String(b.id) === sel.dataset.ue);
+  if (!p || !target) { renderTeam(); return; }
+  const other = dayEvents().find(ev => ev !== target && (ev.staff || []).some(s => samePerson(p, s)));
+  if (other && !(await appConfirm(`${p.name} شغال في "${other.client || 'مناسبة تانية'}" (${other.venue || '-'}) في نفس اليوم.\nتنقله للمناسبة دي؟`))) { renderTeam(); return; }
+  dayEvents().forEach(ev => { if (ev !== target) ev.staff = (ev.staff || []).filter(s => !samePerson(p, s)); });
+  target.staff = [...(target.staff || []), { name: p.name, phone: p.phone, paid: 0 }];
+  persist(); renderTeam(); render();
+});
+// asks which number to keep when a contact has more than one (resolves null if skipped)
+function askNumber(name, nums) {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'app-modal-bg';
+    ov.innerHTML = `<div class="app-modal">
+      <div class="app-modal-msg">${esc(name || 'جهة اتصال')}: أي رقم تحفظه؟</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${nums.map((n, i) => `<button type="button" data-n="${i}" style="direction:ltr">${esc(n)}</button>`).join('')}
+        <button type="button" class="ghost" data-n="-1">تخطي الجهة دي</button>
+      </div>
+    </div>`;
+    ov.addEventListener('click', e => {
+      const v = e.target.closest('button')?.dataset.n;
+      if (v === undefined) return;
+      ov.remove();
+      resolve(Number(v) >= 0 ? nums[Number(v)] : null);
+    });
+    document.body.appendChild(ov);
+  });
+}
+async function importContacts() {
+  if (!(navigator.contacts && navigator.contacts.select)) { appToast('المتصفح ده مش بيدعم جهات الاتصال، اكتب الأسماء بإيدك'); return; }
+  if (!people) people = loadPeople();
+  try {
+    const list = await navigator.contacts.select(['name', 'tel'], { multiple: true });
+    let added = 0, skipped = 0;
+    for (const c of list) {
+      const name = ((c.name && c.name[0]) || '').trim();
+      const nums = [...new Set((c.tel || []).map(x => String(x).trim()).filter(Boolean))];
+      const nk = name.toLowerCase().replace(/\s+/g, ' ');
+      if (!name || !nums.length || people.some(p => (p.name || '').trim().toLowerCase().replace(/\s+/g, ' ') === nk)) { skipped++; continue; }
+      const phone = nums.length > 1 ? await askNumber(name, nums) : nums[0];
+      const k = phoneKey(phone);
+      if (!phone || (k && people.some(p => phoneKey(p.phone) === k))) { skipped++; continue; }
+      people.push({ id: 'p' + Date.now() + added, name, phone });
+      added++;
+    }
+    savePeople(); renderTeam();
+    appToast(`اتضاف ${added} عامل` + (skipped ? ` — واتخطى ${skipped} (مكرر أو من غير اسم)` : ''));
+  } catch (e) { if (e && e.name !== 'AbortError') appToast('الاستيراد اتلغى'); }
+}
+$('rosterImport').onclick = importContacts;
 $('rosterAdd').onclick = async () => {
   if (!people) { people = loadPeople(); }
   const name = $('rosterName').value.trim(), phone = $('rosterPhone').value.trim();
